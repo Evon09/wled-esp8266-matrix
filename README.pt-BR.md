@@ -189,6 +189,14 @@ Outros prints (editor do relógio, Estúdio de GIFs, menu do PixelForge) podem s
 - O heap livre fica em torno de 12 a 19 KB. O WLED recusa alocações abaixo de 9 KB; mantenha poucas abas
   abertas na placa e evite presets muito grandes ou muitos segmentos.
 - Com o MQTT ligado, GIFs grandes podem não tocar enquanto o painel web está ocupado.
+- **Enquanto um GIF toca, a memória livre é de só uns 9 KB** (uns 17 KB parada; volta a 16,5 KB ao sair do efeito Imagem).
+  A proteção de memória do WLED age quando a memória livre fica abaixo de 8 KB: aos 15 s ela tira os efeitos, aos 30 s reinicia
+  os segmentos e aos 45 s reinicia a tira e as conexões. Na prática a matriz apaga e a página para de responder.
+  Custos medidos: uma conexão WebSocket aberta uns 0,6 KB; a pré-visualização da matriz (live view) uns 2,2 KB a mais.
+  **Regra prática: enquanto um GIF toca, mantenha só uma aba do navegador aberta na placa e evite a pré-visualização ao vivo**
+  (o PixelForge a mantém ligada). Se a matriz ficar preta depois de escolher um GIF, feche as outras abas; a imagem aparece
+  sozinha quando houver memória (até uns 10 s, mais se a memória continuar curta).
+  Para sair de um travamento: desligue e ligue a placa.
 - A flash está em 86 %. Para abrir espaço é preciso remover recursos, não acrescentar.
 
 **Rede**

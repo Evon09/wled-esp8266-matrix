@@ -189,6 +189,14 @@ More screenshots (clock editor, GIF studio, PixelForge menu) can be added in `do
 - Free heap is about 12 to 19 KB. WLED refuses allocations below 9 KB, so keep few browser tabs open
   on the board and avoid very large presets or many segments.
 - With MQTT on, large GIFs may not play while the web UI is busy.
+- **While a GIF is playing, free heap is only about 9 KB** (about 17 KB when idle, 16.5 KB back after leaving the Image effect).
+  WLED's heap guard acts when free heap stays below 8 KB: after 15 s it drops the effects, after 30 s it resets the
+  segments, after 45 s it resets the strip and the connections. In practice the matrix goes dark and the web page stops
+  answering. Measured costs: an open WebSocket about 0.6 KB, the live view (matrix preview) about 2.2 KB more.
+  **Rule of thumb: while a GIF plays, keep only one browser tab open on the board and avoid the live preview**
+  (PixelForge keeps it on). If you see a black matrix after choosing a GIF, close the other tabs; the image
+  appears by itself when memory is available (up to about 10 s, longer if heap stays short).
+  Recovery after a lock-up: power-cycle the board.
 - Flash is at 86 %. Removing more features is the way to make room, not adding them.
 
 **Network**
