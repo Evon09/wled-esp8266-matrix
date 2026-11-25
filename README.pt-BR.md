@@ -10,20 +10,24 @@ Este projeto faz o efeito funcionar, enxuga o firmware para abrir espaço e acre
 e um motor de regras MQTT, tudo rodando na própria placa.
 
 > Tudo foi feito e testado em uma placa real. É um projeto pessoal, não uma versão oficial do WLED.
-> Parte do código foi escrita com ajuda de IA (marcada com `AI:` nos fontes).
+> Parte do código foi escrita com ajuda de IA (marcada com `AI:` nos fontes). As ferramentas web estão em português do Brasil.
 
 ## Índice
 
-- [O que você ganha](#o-que-você-ganha)
-- [O que foi alterado e por quê](#o-que-foi-alterado-e-por-quê)
-- [As ferramentas web](#as-ferramentas-web)
-- [Usermod de regras MQTT](#usermod-de-regras-mqtt)
-- [Compilar e instalar](#compilar-e-instalar)
-- [Prints](#prints)
-- [Limitações](#limitações)
-- [Segurança](#segurança)
-- [O que não foi feito](#o-que-não-foi-feito)
-- [Estrutura do repositório](#estrutura-do-repositório)
+1. [O que você ganha](#o-que-você-ganha)
+2. [Começo rápido](#começo-rápido)
+3. [O que foi alterado e por quê](#o-que-foi-alterado-e-por-quê)
+4. [O ESP8266 e a memória dele](#o-esp8266-e-a-memória-dele) (gráficos)
+5. [Ferramenta 1: Relógio LED](#ferramenta-1-relógio-led)
+6. [Ferramenta 2: Estúdio de GIFs](#ferramenta-2-estúdio-de-gifs)
+7. [Ferramenta 3: Regras MQTT](#ferramenta-3-regras-mqtt)
+8. [Usermod de regras MQTT](#usermod-de-regras-mqtt)
+9. [Arquivos e API usados na placa](#arquivos-e-api-usados-na-placa)
+10. [Compilar e instalar](#compilar-e-instalar)
+11. [Limitações](#limitações)
+12. [Segurança](#segurança)
+13. [O que não foi feito](#o-que-não-foi-feito)
+14. [Estrutura do repositório](#estrutura-do-repositório)
 
 ## O que você ganha
 
@@ -33,10 +37,18 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 | Firmware enxuto (MQTT mantido; Alexa, Hue, infravermelho, Adalight e Loxone removidos) | `platformio_override.ini` |
 | Relógio, data, clima, sensor, GIFs e efeitos como telas | ferramenta **Relógio LED** |
 | Várias imagens em um GIF, sprite sheets, categorias | ferramenta **Estúdio de GIFs** |
-| Regras: mensagem MQTT → ação na matriz, mudança de estado → mensagem MQTT | usermod `mqtt_rules` + ferramenta **Regras MQTT** |
+| MQTT: mensagem → ação na matriz; mudança de estado → mensagem; regras por hora, dia da semana, temperatura e umidade | usermod `mqtt_rules` + ferramenta **Regras MQTT** |
 
-Tamanho do firmware na D1 R2: flash 86,1 % (899.715 de 1.044.464 bytes), RAM 59,3 % na compilação e
-cerca de 12 a 19 KB de heap livre em funcionamento.
+Tamanho do firmware na D1 R2: flash 86,1 % (899.715 de 1.044.464 bytes), RAM 59,3 % estática na compilação e
+cerca de 17 KB de heap livre parada (veja a [memória](#o-esp8266-e-a-memória-dele)).
+
+## Começo rápido
+
+1. Compile e grave o firmware ([Compilar e instalar](#compilar-e-instalar)).
+2. Abra `http://IP-DA-PLACA/` uma vez e configure a saída dos LEDs (pino, 256 LEDs, ordem de cores) e o tamanho da matriz 2D nas configurações do WLED.
+3. Envie as três páginas das ferramentas (arquivos gzip em `ferramentas/`) e registre-as no `pftools.json`.
+4. Abra `http://IP-DA-PLACA/relogio.htm` para montar o relógio, `/gifstudio.htm` para criar GIFs e `/mqttrules.htm` para criar regras MQTT.
+5. **Mantenha uma única aba do navegador aberta na placa enquanto um GIF toca** (veja a [memória](#o-esp8266-e-a-memória-dele)).
 
 ## O que foi alterado e por quê
 
@@ -52,10 +64,12 @@ cerca de 12 a 19 KB de heap livre em funcionamento.
 | `lib_extra_dirs = lowram_libs` | usa as bibliotecas modificadas no lugar das do registro |
 | ambientes `d1_r2_gif_debug`, `_netdebug`, `_log` | log pela serial, log por UDP e `/giflog`, para diagnosticar a matriz quando o USB não pode ficar ligado |
 
+O `WLED_DISABLE_ESPNOW` foi testado e não compila: a verificação pós-link do projeto exige que o módulo `wled-espnow` esteja presente.
+
 ### 2. Decodificador de GIF reduzido: `lowram_libs/AnimatedGIF`
 
 **Por quê:** a AnimatedGIF original mantém um dicionário LZW de 4096 entradas mais uma pilha de pixels,
-cerca de 24 KB em um único bloco. O ESP8266 tem uns 17 a 19 KB de heap quando está parado, então a
+cerca de 24 KB em um único bloco. O ESP8266 tem uns 17 KB de heap quando está parado, então a
 alocação sempre falhava e a matriz ficava preta.
 
 **O que mudou:**
@@ -84,56 +98,259 @@ alocação sempre falhava e a matriz ficava preta.
 ### 4. Ajustes feitos na placa (não estão no código)
 
 - **Ordem de cores GRB** no barramento de LEDs: no começo vermelho e verde estavam trocados.
-- **Hora:** servidor NTP informado por **IP** (`200.160.0.8`), porque a placa não resolvia nomes; fuso *Brasília*.
-- IDs de preset usados pela ferramenta de relógio: 201 a 205 (telas), 210 (ciclo), 211 a 213 (sensor),
-  221 a 239 (telas extras de GIF/efeito).
+- **Hora:** servidor NTP informado por **IP** (`200.160.0.8`), porque a placa não resolvia nomes. O fuso é o que for escolhido na
+  ferramenta de relógio ou nas configurações do WLED (o relógio segue o fuso da placa).
+- IDs de preset usados pela ferramenta de relógio: 201 hora, 202 data, 203 temperatura, 204 umidade, 205 texto livre, 210 o ciclo (playlist),
+  211 a 213 presets do sensor, 221 a 239 telas extras de GIF/efeito.
 
-## As ferramentas web
+## O ESP8266 e a memória dele
 
-São arquivos HTML únicos guardados na placa (gzip) e listados no PixelForge em *Other tools* pelo
-`pftools.json`. Cada uma lê e escreve na placa pela API JSON normal do WLED, então não precisam de firmware
-extra (exceto o `mqtt_rules` para a ferramenta de regras).
+O ESP8266 é um chip de um núcleo a 80 MHz com **cerca de 80 KB de RAM**, já contando o WiFi. Não tem PSRAM, nem TLS por hardware,
+e a pilha é pequena. Tudo neste projeto é moldado por esses limites.
 
-### Relógio LED (`ferramentas/relogio`)
-Transforma a matriz em relógio.
-- Editor de layout: posição de horas e minutos; dá para **arrastar os números com o mouse** para posicioná-los.
-- 12 h ou 24 h, formatos de data (alguns, como `24/11`, foram acrescentados porque não cabiam), fontes e tamanhos.
-- Tela de clima e tela de sensor (GPIO), transições entre telas.
-- **GIFs e efeitos padrão do WLED como telas extras** (um ou mais, opcional).
-- Pré-visualização ao vivo com a **hora da placa**, não a do PC.
-- Cria os presets e a playlist e guarda backup do que substitui.
+![Para onde vão os 80 KB de RAM](docs/img/chart-ram-budget.svg)
 
-### Estúdio de GIFs (`ferramentas/gifstudio`)
-- Envie várias imagens e receba um GIF; sprite sheets são cortadas em quadros.
-- Ordem e tempo dos quadros, ajuste para o tamanho da matriz.
-- **Categorias:** agrupe GIFs por projeto e arraste um GIF para uma categoria. Ficam em `gifstudio.json`.
+- **Dados estáticos (48,5 KB)** é o que o firmware precisa só para existir (do relatório de compilação do PlatformIO).
+- **Buffer JSON (10,2 KB):** o WLED aloca um buffer compartilhado para a API (`JSON_BUFFER_SIZE`, `const.h`). Ele não foi
+  reduzido: também guarda a configuração na hora de salvar, e o código de OTA exige um tamanho mínimo, então um valor menor arrisca perder configurações.
+- **Heap livre** é o que sobra para tudo que é dinâmico: conexões do servidor web, clientes WebSocket, MQTT, os efeitos e
+  o **decodificador de GIF (7,6 KB)**, que fica alocado enquanto um GIF toca. "Outros" é o resto (uma estimativa).
+- A partição de 1 MB do firmware está 86 % cheia; o sistema de arquivos (LittleFS, 1 MB) guarda GIFs, as páginas das ferramentas e os presets.
 
-### Regras MQTT (`ferramentas/mqtt`)
-Editor do arquivo de regras usado pelo usermod. Abas: Conexão, Mensagem → ação, Evento → mensagem, Testar.
-- Ações: mostrar texto, tocar GIF, mostrar efeito do WLED, aplicar preset, mudar brilho, ligar/desligar, comando JSON.
-- **Seletor de GIF com filtro por categoria e preview** (usa as categorias do Estúdio de GIFs).
-- **Depois da ação:** voltar ao que estava rodando (relógio, GIF, efeito); no texto, **esperar terminar de rolar**;
-  ou voltar a um preset fixo depois de N segundos.
-- Resposta MQTT opcional, aba *Testar* que simula uma mensagem sem broker e log dos últimos acionamentos.
-- **Regras por hora e clima** (aba *Por hora e clima*): disparam em um horário, a cada N minutos (com janela de horário
-  opcional) ou quando a temperatura/umidade mudar, nos dias da semana que você marcar. Condição opcional (por exemplo, só
-  se a temperatura passar de 28), ação opcional na matriz e mensagem MQTT opcional, que pode incluir `{hm}`, `{dw}`, `{t}`, `{h}`.
-- Fontes de temperatura/umidade: um tópico onde um sensor publica, ou o clima da cidade escolhida na ferramenta de relógio.
-- Atalhos para brokers públicos com aviso e botão que gera um tópico único.
+### O que gasta memória
+
+![Heap livre em cada situação](docs/img/chart-heap-scenarios.svg)
+
+| Situação (medida na placa) | Heap livre |
+|---|---|
+| Parada, relógio rodando, MQTT conectado, sem aba aberta | cerca de 17,1 KB (estável por minutos: não há vazamento) |
+| Um cliente WebSocket (qualquer página do WLED) | −0,6 KB |
+| Live view (a pré-visualização da matriz na página) | −2,2 KB a mais, um cliente por vez |
+| **Um GIF tocando** | **8,9 KB** (o decodificador usa 7,6 KB) |
+| De volta a um efeito normal ou ao relógio | 16,5 KB de novo |
+
+### A proteção de memória e o incidente
+
+O WLED vigia o heap livre. Se ele ficar **abaixo de 8 KB (`MIN_HEAP_SIZE` de 9 KB menos 1 KB)** por 15 s, tira os efeitos; aos 30 s
+reinicia os segmentos; aos 45 s reinicia a tira toda e as conexões (`wled.cpp`). Com um GIF tocando a placa tem só
+0,9 KB de folga, então uma ou duas abas a mais do navegador a empurram para baixo da linha:
+
+![Linha do tempo do incidente](docs/img/chart-incident.svg)
+
+O que o usuário vê: depois de escolher um GIF, a matriz fica preta por um tempo (o carregador espera memória), depois a matriz apaga
+e a página para de responder. Fechar as abas e desligar e ligar a placa resolve. Não é vazamento: a memória voltou a 16,5 KB assim que
+o GIF parou.
+
+**Regra prática: enquanto um GIF toca, mantenha só uma aba do navegador aberta na placa e evite a pré-visualização ao vivo** (o PixelForge a mantém ligada).
+O relógio e os efeitos normais não têm esse problema.
+
+### Outros fatos do ESP8266 que moldaram o projeto
+
+| Assunto | Fato | Consequência |
+|---|---|---|
+| TLS | sem suporte a TLS neste build | sem brokers `mqtts://`; use um broker MQTT simples (um público para testes) |
+| DNS | nomes de host são resolvidos de forma pouco confiável | use o **IP** do broker MQTT e do servidor NTP |
+| Exceções | não existem: um `new` que falha aborta e reinicia | o carregador de GIF verifica o heap antes de cada alocação |
+| Flash | 4 MB: ~1 MB de firmware, ~1 MB de sistema de arquivos, o resto para o OTA e o sistema | o firmware precisa ficar abaixo de 1.044.464 bytes; recursos desligados pagam os novos |
+| Energia | uma matriz 16x16 pode puxar vários ampères no branco total | alimentar pelo USB derruba a conexão e reinicia; use uma fonte de 5 V adequada (e reduza o brilho / o limite de corrente do WLED) |
+| Pinos | poucos GPIOs utilizáveis; as ferramentas os mostram como D1, D2… | a aba do sensor esconde os pinos já usados por LEDs e botões |
+| Relógio | sem RTC; a hora vem do NTP ou do navegador | as regras e o relógio precisam que a placa saiba a hora (a aba *Placa e hora* mostra) |
+
+## Ferramenta 1: Relógio LED
+
+`http://IP-DA-PLACA/relogio.htm`. Transforma a matriz em relógio e cria os presets e a playlist para você. Uma pré-visualização ao vivo
+à direita mostra o que a matriz vai exibir (usando a hora **da placa**) e tem os botões **Enviar relógio para a placa** e **Parar o relógio**.
+Os chips do topo mostram a conexão, o tamanho da matriz, a memória livre e a hora da placa.
+Antes de substituir qualquer coisa, a ferramenta guarda na placa um backup dos presets e da configuração anteriores.
+
+### Aba ⏱ Relógio (layout)
+
+![Aba Relógio: layout](docs/img/clock-1-layout.png)
+
+1. **Como mostrar a hora:** *Empilhado* (horas em cima e minutos embaixo), *Lado a lado* ou *Personalizado*, onde **você arrasta as horas (laranja) e
+   os minutos (azul) com o mouse ou o dedo direto na pré-visualização**; eles encaixam nos pixels da matriz. Também dá para digitar
+   x (coluna) e y (linha) de cada número.
+2. **Tamanho dos números:** uma lista de fontes (de *Mini 3x6* a *Alta 5x12*); as que não cabem no layout escolhido ficam desativadas.
+   Chaves para o zero na hora (09 em vez de 9) e para o ":" entre horas e minutos.
+3. **Cores e brilho:** uma cor para as horas, uma para os minutos e uma para o ":", e o brilho da matriz.
+
+### Aba 🖼 Telas
+
+![Aba Telas](docs/img/clock-2-screens.png)
+
+- **Ordem das telas:** o relógio passa pelas telas uma depois da outra, sem parar (uma playlist). O resumo mostra cada
+  tela com o tempo e a duração total do ciclo.
+- Cada tela tem uma chave, quanto tempo fica (segundos), tamanho da fonte e cor: **Hora** (usa o layout da primeira aba),
+  **Data** (formatos como `24 / 11`, dia da semana e dia, dia da semana e DD/MM, ou uma linha DD/MM), **Temperatura** (com
+  unidade opcional), **Umidade**, **Texto livre** (aceita os tokens do WLED `#HH0 #MM0 #DAY #DD0 #MO0`).
+- **Telas extras:** coloque **seus GIFs** (da placa) e/ou **efeitos prontos do WLED** (arco-íris, fogo, plasma…) no ciclo; cada um pode ser ligado ou
+  desligado, com duração própria. Telas com GIF trocam sem mistura suave para poupar memória, e o GIF precisa ter até 318 pixels
+  por quadro.
+- **Transição:** instantânea ou mistura suave de 3 s.
+
+### Aba ☁ Clima
+
+![Aba Clima](docs/img/clock-3-weather.png)
+
+1. **Sua cidade:** digite um nome e busque; os dados vêm do [Open-Meteo](https://open-meteo.com/) (sem cadastro). O cartão mostra a cidade,
+   a temperatura e a umidade, e o botão **Atualizar agora**. (O nome da cidade foi escondido neste print.)
+2. **Atualização:** atualização automática a cada N minutos. **Só funciona enquanto esta página estiver aberta em algum aparelho**; com ela fechada a placa
+   continua mostrando o último valor. Opções avançadas: latitude, longitude e o símbolo da temperatura (`C`, `'C`, `c`).
+- Os valores também são enviados à placa para as regras MQTT (`{"mqttr":{"set":{"t":..,"h":..}}}`).
+- A placa não tem sensor e não alcança a internet por nome, então a página faz o download e entrega os números à placa.
+
+### Aba 📡 Sensor (botão, movimento, porta)
+
+![Aba Sensor](docs/img/clock-4-sensor.png)
+
+Ligue **Usar um sensor ou botão** e depois:
+1. **O que você ligou?** Sensor de movimento (PIR), porta ou chave, botão para o GND (o mais comum) ou botão para 3,3 V.
+2. **Em que pino?** Uma grade com as etiquetas da própria placa (D1, D2…); pinos já usados por LEDs ou botões ficam desativados.
+3. **O que a matriz faz?** Ao ativar, ao desativar e no clique duplo: *nada*, *mostrar o relógio*, *mostrar uma mensagem* (texto, quanto tempo, tamanho,
+   cor) ou *apagar*. Sensores de temperatura (DHT, DS18B20) precisam de um módulo no firmware e não estão incluídos.
+
+É gravado pela aba **Placa e hora** (a placa reinicia uma vez).
+
+### Aba ⚙ Placa e hora
+
+![Aba Placa e hora](docs/img/clock-5-board-time.png)
+
+- **Hora da placa:** mostra a hora que a placa tem, diz se está certa e tem **Acertar pelo navegador** (temporário: se perde quando a placa é desligada).
+- **1 · Hora pela internet:** chave do NTP, lista de **fusos horários** e **servidor de hora** (use o IP; `200.160.0.8` é o NTP.br).
+- **2 · Formato da hora:** 24 h ou 12 h.
+- **3 · Ao ligar a placa:** abrir o relógio sozinho (preset de boot).
+- **4 · Gravar na placa:** grava hora, fuso, formato, comportamento ao ligar e sensor na configuração da placa. **A placa reinicia uma vez
+  (uns 10 s)** e uma cópia da configuração anterior é guardada antes.
+
+## Ferramenta 2: Estúdio de GIFs
+
+`http://IP-DA-PLACA/gifstudio.htm`. Cria GIFs no navegador e os salva na placa, organizados em categorias. O topo mostra o
+tamanho da matriz e o uso do sistema de arquivos (arquivos, KB).
+
+### Aba 🎬 Criar GIF
+
+![Estúdio de GIFs: criar](docs/img/gifstudio-create.png)
+
+1. **Suas imagens:** arraste ou escolha várias imagens de uma vez (PNG, JPG, GIF…) ou cole uma (Ctrl+V). Cada uma vira um quadro, na ordem da lista (dá para **arrastar os quadros para reordenar**); nomes
+   como `sprite1`, `sprite2`… entram em ordem sozinhos. Botões: *Ordenar por nome*, *Inverter ordem*, *Limpar tudo* e **✂ Cortar folha de sprites**
+   (colunas, linhas, pular quadros vazios) para transformar uma folha em quadros.
+2. **Velocidade e tamanho:** tempo por quadro (ms, ou os atalhos Rápido / Normal / Lento / Bem lento), *ir e voltar* (ping-pong), largura e
+   altura (**Usar o tamanho da matriz**), como encaixar (*caber inteira com barras*, *preencher cortando as bordas*, *esticar*), modo de redução (*automática*, *nítida* para pixel
+   art, *suave* para fotos) e cor de fundo. Cada quadro pode ter um tempo próprio na caixinha "ms".
+3. **Salvar:** nome do GIF, categoria, **Tocar na matriz depois de salvar**, **Gerar e salvar na placa** ou **Baixar no computador**.
+   Uma **pré-visualização ao vivo** (com Pausar) mostra a animação no tamanho da matriz. Aparece um aviso acima de 318 pixels por quadro, o limite do
+   decodificador da placa.
+
+### Aba 🗂 Biblioteca
+
+- Uma grade dos GIFs da placa com miniaturas animadas, nome, tamanho e a categoria de cada um; **caixa de busca** e lista de **ordenação** (por nome ou por tamanho).
+- **Categorias** ao lado: *Todos*, *Sem categoria* e as suas (nome e cor, com contagem). Crie, renomeie ou apague uma categoria (os
+  GIFs dela não são apagados, vão para "Sem categoria"). **Arraste um GIF para uma categoria** para movê-lo. As categorias ficam em
+  `gifstudio.json` e também são usadas pelo seletor de GIF da ferramenta de Regras MQTT.
+- O menu de cada GIF: **Renomear**, **Baixar**, **Usar no relógio** (adiciona como tela extra da ferramenta de relógio), **Mover para** uma categoria (ou uma nova) e **Apagar**.
+- Seleção múltipla para mover ou apagar vários GIFs de uma vez, e **↻ Atualizar**.
+- (Sem print: a biblioteca mostra as suas próprias imagens.)
+
+## Ferramenta 3: Regras MQTT
+
+`http://IP-DA-PLACA/mqttrules.htm`. Escreve o arquivo de regras usado pelo usermod `mqtt_rules` (veja abaixo). Chips do topo: placa conectada,
+**MQTT conectado ao broker**, e quantas regras há na placa e quantas já dispararam. A barra de baixo mostra se há alterações não salvas e tem o botão
+**Salvar regras na placa**. As regras são verificadas enquanto você digita (os erros aparecem nessa barra).
+
+### Aba 🔌 Conexão
+
+1. **O que é isso?** Uma explicação curta de MQTT e brokers.
+2. **Broker:** endereço (use o **IP**), porta, usuário (se tiver) e o **nome desta placa no broker** (client id). Atalhos preenchem um
+   broker público (`broker.hivemq.com`, `test.mosquitto.org`); aparece um **aviso vermelho** quando um broker público está selecionado.
+3. **Tópico:** o tópico-base da placa (`wled/...`); **Gerar tópico único** cria um aleatório. Uma chave guarda (retém) as mensagens de estado no broker.
+4. **Gravar na placa:** **Gravar conexão e reiniciar a placa** (antes é salvo um backup da configuração antiga).
+   Um aviso lembra que o MQTT usa uns 3 a 5 KB da memória da placa.
+
+### Aba 📥 Quando chegar mensagem (mensagem → ação)
+
+![Ferramenta MQTT: regra de mensagem](docs/img/mqtt-message-rule.png)
+
+Cada regra tem uma chave liga/desliga, um nome e botões para subir, descer, duplicar e apagar. Seções:
+1. **Quando chegar uma mensagem em:** o tópico (`%dev%` = o tópico da placa; `+` e `#` são curingas) e uma condição sobre o conteúdo: *qualquer*, *igual a*,
+   *contiver*, *maior que*, *menor que*, *entre a,b*.
+2. **A matriz faz:** *Mostrar um texto* (`{p}` = o texto recebido; cor, tamanho, velocidade), *Tocar um GIF* (fixo, ou o nome vem na mensagem), *Mostrar um efeito do WLED*
+   (qualquer efeito 2D ou de fita, com os próprios controles, cores e paleta), *Aplicar um preset* (fixo ou o número vem na mensagem), *Mudar o brilho*,
+   *Ligar / desligar / alternar*, *Comando JSON* (avançado, com `{p}` e `{n}`) ou *Nada (só responder)*.
+3. **Depois:** *Voltar ao que estava antes*, com duas opções: **esperar o texto terminar de rolar** (um texto curto que cabe na matriz fica por N
+   segundos) e **voltar ao que estava rodando** (relógio, GIF ou efeito), com um preset de reserva quando nada estava rodando.
+4. **Responder:** opcionalmente publica uma mensagem (tópico e conteúdo com `{p}`).
+
+**Seletor de GIF:** quando a ação é um GIF, aparecem um **filtro por categoria** (com contagem) e uma grade de **miniaturas animadas**, além de um **preview** grande do
+GIF escolhido com o tamanho e a categoria:
+
+![Ferramenta MQTT: seletor de GIF com filtro por categoria e preview](docs/img/mqtt-rules-gif-picker.jpg)
+
+O menu **✨ Exemplos prontos** adiciona regras como: mostrar o texto recebido, tocar um GIF pelo nome, brilho pelo MQTT, ligar/desligar, aplicar um preset pelo número,
+avisar quando o preset mudar e avisar ao ligar/desligar.
+
+### Aba 📤 Quando algo mudar (estado → mensagem)
+
+![Ferramenta MQTT: regras de aviso](docs/img/mqtt-events.png)
+
+Regras que **publicam** quando a placa muda de estado, para o Home Assistant, o Node-RED ou outra placa saberem o que está acontecendo:
+- **Evento:** um preset é aplicado, a matriz liga ou desliga, ou o brilho muda; condição opcional sobre o valor.
+- **Publicar em:** tópico e conteúdo (`{n}` = número, `{p}` = on/off ou valor).
+
+### Aba ⏰ Por hora e clima
+
+![Ferramenta MQTT: regras por hora e clima, parte 1](docs/img/mqtt-timed-1.png)
+
+**De onde vêm a temperatura e a umidade.** A placa não tem sensor. Ligue um tópico para cada valor (um sensor, por exemplo outra placa com DHT22, que
+publica um número) ou use o clima da cidade escolhida na ferramenta de relógio (só enquanto aquela página estiver aberta). A linha "Agora na placa" mostra os valores atuais
+e se a hora é conhecida.
+
+**As regras** disparam:
+- **Em um horário**, **a cada N minutos** (opcionalmente só dentro de uma janela de horário, que pode passar da meia-noite) ou **quando a temperatura/umidade mudar**;
+- nos **dias da semana** que você marcar (Dom a Sáb);
+- opcionalmente **só se** a temperatura ou a umidade for maior que / menor que / igual a / estiver entre valores;
+- fazendo uma **ação na matriz** (as mesmas ações acima, com as opções de *voltar*) e/ou **publicando uma mensagem MQTT** cujo conteúdo pode usar `{hm}` (hora),
+  `{dw}` (dia da semana, 0 = domingo), `{t}` (temperatura) e `{h}` (umidade).
+
+![Ferramenta MQTT: regras por hora e clima, parte 2](docs/img/mqtt-timed-2.png)
+
+Uma regra disparada por valor dispara quando a condição fica verdadeira e só dispara de novo depois que ela voltar a ser falsa, então não repete a cada leitura.
+
+### Aba 🧪 Testar
+
+Um painel de teste: envie uma **mensagem simulada** (tópico e conteúdo) para a placa sem precisar de broker e leia o **log** da placa com os últimos eventos (regras
+disparadas, mensagens recebidas, erros). Também mostra o comando exato para publicar de outro cliente. (Sem print: ele mostra o tópico da placa.)
 
 ## Usermod de regras MQTT
 
 `usermods/mqtt_rules` guarda as regras em `/mqttrules.jsonl` (um objeto JSON por linha, até 760 caracteres,
 até 10 tópicos assinados). As regras são lidas da flash quando preciso, então quase não usam RAM.
-O formato das regras, os marcadores (`%dev%`, `{p}`, `{n}`), as opções `b` (voltar ao anterior) e `w`
-(esperar o texto) e a API JSON estão em [usermods/mqtt_rules/readme.md](usermods/mqtt_rules/readme.md).
+O formato das regras, os marcadores (`%dev%`, `{p}`, `{n}`, `{t}`, `{h}`, `{hm}`, `{dw}`), as opções `b` (voltar ao anterior) e `w`
+(esperar o texto), as regras por hora e de fonte de valor e a API JSON estão em [usermods/mqtt_rules/readme.md](usermods/mqtt_rules/readme.md).
 
 Como funciona o "voltar ao anterior": antes da primeira ação temporária o usermod guarda a playlist ou o
 preset em execução e, quando a ação termina, aplica de novo. O "esperar o texto" acompanha a posição de
 rolagem do efeito Scrolling Text e termina quando ela volta a zero, com limite de segurança de 3 minutos.
 
 Verificado na placa: um texto longo voltou depois de rolar inteiro (cerca de 18 s, e não os 3 s do
-temporizador), um texto que cabe voltou no tempo configurado e a playlist do relógio foi restaurada todas as vezes.
+temporizador), um texto que cabe voltou no tempo configurado, a playlist do relógio foi restaurada todas as vezes, uma regra de hora disparou no minuto escolhido e não em um dia da semana excluído,
+as condições de temperatura bloquearam e liberaram corretamente, e as regras disparadas por valor dispararam uma vez por cruzamento.
+
+## Arquivos e API usados na placa
+
+| Na placa (LittleFS) | O que é |
+|---|---|
+| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz` | as três páginas das ferramentas |
+| `pftools.json` | a lista mostrada no PixelForge → *Other tools* |
+| `relogio-config.json` | estado da ferramenta de relógio |
+| `relogio-cfg-backup.json`, `relogio-presets-backup.json`, `mqtt-cfg-backup.json` | backups feitos antes de as ferramentas mudarem a configuração |
+| `gifstudio.json` | categorias de GIF e a categoria de cada GIF |
+| `mqttrules.jsonl` | as regras que o usermod executa |
+| `mqttrules-ui.json` | as regras como aparecem na ferramenta (e os tópicos dos sensores) |
+| `*.gif` | os seus GIFs |
+
+As ferramentas usam só a API normal do WLED: `/json/state`, `/json/info`, `/json/effects`, `/json/fxdata`, `/json/palettes`, `/presets.json`,
+`/cfg.json` (enviá-lo restaura a configuração e reinicia), `/edit?list=/`, `/edit?func=delete`, `/upload`, o live view por WebSocket e, com
+`GIF_LOG`, `/giflog`. O usermod acrescenta o objeto `mqttr` ao `/json/state` (`reload`, `test`, `set`) e ao `/json/info`.
 
 ## Compilar e instalar
 
@@ -165,17 +382,11 @@ que apareça no PixelForge. As páginas também abrem direto em `http://IP-DA-PL
 e `/mqttrules.htm`. Para mudar uma ferramenta, edite o `*.src.htm` e rode o `build.py` dela.
 
 Dicas aprendidas na prática:
-- OTA: feche as outras abas do navegador que apontam para a placa e use `curl -H "Expect:"`.
+- OTA: feche as outras abas do navegador que apontam para a placa e use `curl -H "Expect:"`. Se a placa responder ao ping mas não ao HTTP depois de uma gravação, desligue e ligue e confira se a
+  versão mudou de verdade (o objeto `mqttr` em `/json/info` tem os campos mais novos).
 - O USB pode cair com a matriz ligada (consumo de corrente); alimente a matriz separadamente ou use OTA.
 - Use o ambiente `d1_r2_gif_log` e leia `http://IP-DA-PLACA/giflog` para ver o que o carregador de GIF está fazendo.
-
-## Prints
-
-Ferramenta de regras com o seletor de GIF (filtro por categoria, miniaturas e preview grande):
-
-![Regras MQTT, seletor de GIF](docs/img/mqtt-rules-gif-picker.jpg)
-
-Outros prints (editor do relógio, Estúdio de GIFs, menu do PixelForge) podem ser colocados em `docs/img/`.
+- Confira o heap livre em `http://IP-DA-PLACA/json/info` (`freeheap`) ao testar recursos novos.
 
 ## Limitações
 
@@ -186,23 +397,17 @@ Outros prints (editor do relógio, Estúdio de GIFs, menu do PixelForge) podem s
 - A troca de imagem pode esperar até uns 10 s se o heap estiver curto (por exemplo com muitas páginas abertas).
 
 **Memória**
-- O heap livre fica em torno de 12 a 19 KB. O WLED recusa alocações abaixo de 9 KB; mantenha poucas abas
-  abertas na placa e evite presets muito grandes ou muitos segmentos.
+- Enquanto um GIF toca, o heap livre é de só uns 9 KB: **mantenha uma aba aberta** e evite a pré-visualização ao vivo (veja a [seção de memória](#o-esp8266-e-a-memória-dele)).
+- O WLED recusa alocações abaixo de 9 KB; evite presets muito grandes ou muitos segmentos.
 - Com o MQTT ligado, GIFs grandes podem não tocar enquanto o painel web está ocupado.
-- **Enquanto um GIF toca, a memória livre é de só uns 9 KB** (uns 17 KB parada; volta a 16,5 KB ao sair do efeito Imagem).
-  A proteção de memória do WLED age quando a memória livre fica abaixo de 8 KB: aos 15 s ela tira os efeitos, aos 30 s reinicia
-  os segmentos e aos 45 s reinicia a tira e as conexões. Na prática a matriz apaga e a página para de responder.
-  Custos medidos: uma conexão WebSocket aberta uns 0,6 KB; a pré-visualização da matriz (live view) uns 2,2 KB a mais.
-  **Regra prática: enquanto um GIF toca, mantenha só uma aba do navegador aberta na placa e evite a pré-visualização ao vivo**
-  (o PixelForge a mantém ligada). Se a matriz ficar preta depois de escolher um GIF, feche as outras abas; a imagem aparece
-  sozinha quando houver memória (até uns 10 s, mais se a memória continuar curta).
-  Para sair de um travamento: desligue e ligue a placa.
 - A flash está em 86 %. Para abrir espaço é preciso remover recursos, não acrescentar.
+- Para sair de um travamento: desligue e ligue a placa.
 
 **Rede**
 - Sem TLS no ESP8266 neste build, então não há brokers `mqtts://` (HiveMQ Cloud e a maioria dos serviços hospedados).
 - A placa não resolve nomes de forma confiável. Use **IPs** para o broker MQTT e para o servidor NTP.
-- Brokers públicos exigem um tópico que ninguém mais use.
+- Brokers públicos exigem um tópico que ninguém mais use. Um cliente como o MQTT Explorer precisa estar conectado no **mesmo broker** da placa e, no
+  `broker.hivemq.com`, deve assinar tópicos específicos (por exemplo `wled/<seu-topico>/#`): o curinga `#` em tudo pode não entregar nada.
 
 **Regras MQTT**
 - 10 tópicos, 4 mensagens na fila, 760 caracteres por regra, texto de até 40 caracteres.
@@ -211,15 +416,15 @@ Outros prints (editor do relógio, Estúdio de GIFs, menu do PixelForge) podem s
 - "Esperar o texto" vale para o efeito Scrolling Text no segmento 0.
 - A placa não tem sensor de temperatura/umidade. Os valores vêm de um tópico MQTT ou do clima da ferramenta de relógio, que
   só é enviado enquanto a página do relógio estiver aberta (e se perde ao reiniciar). Se as duas fontes forem usadas, vale a última a escrever.
-- As regras de hora só funcionam depois que a placa tem a hora (NTP) e usam o fuso configurado nela. Confira se o fuso está
-  certo: um fuso errado desloca todas as regras.
+- As regras de hora só funcionam depois que a placa tem a hora (NTP) e usam o fuso configurado nela. Um fuso errado desloca todas as regras.
 - As regras disparadas por valor guardam o estado "armado" só para as 32 primeiras regras; o log mostra os últimos 6 eventos.
 
 **Ferramentas**
 - Feitas para uma matriz 16x16 de um segmento. Outros tamanhos funcionam em princípio, mas não foram testados.
 - O PixelForge pode reescrever o `pftools.json` e apagar as três entradas personalizadas; acrescente-as de novo se acontecer.
-- As ferramentas não definem o preset de boot, então o relógio não inicia sozinho depois de reiniciar até que
-  você defina um preset de boot nas configurações do WLED.
+- As ferramentas só definem o preset de boot se você marcar na aba *Placa e hora*, então o relógio não inicia sozinho depois de reiniciar até que
+  você defina um preset de boot.
+- A interface está em português do Brasil.
 
 ## Segurança
 
@@ -228,12 +433,14 @@ Outros prints (editor do relógio, Estúdio de GIFs, menu do PixelForge) podem s
   (Mosquitto, Home Assistant) na rede local e configure usuário e senha.
 - Nunca publique senhas ou tokens digitados em tutoriais ou prints; troque-os se vazarem.
 - O arquivo de regras pode executar qualquer comando JSON do WLED. Só deixe clientes de confiança publicarem nos tópicos assinados.
+- Os prints deste repositório têm o nome da cidade escondido; o tópico da placa e as configurações do broker não aparecem.
 
 ## O que não foi feito
 
 - Redesenho para enviar quadros brutos (empurrar pixels direto).
 - TLS no MQTT e correção da resolução de nomes (DNS).
 - Iniciar o relógio automaticamente ao ligar.
+- Um decodificador de GIF menor: ainda dá para economizar algumas centenas de bytes nos buffers, mas não os 3 KB ou mais necessários para um GIF conviver com várias abas do navegador.
 
 ## Estrutura do repositório
 
@@ -243,7 +450,7 @@ lowram_libs/             AnimatedGIF (tabelas reduzidas) e GifDecoder (todas as 
 usermods/mqtt_rules/     motor de regras + readme
 ferramentas/             ferramentas relogio, gifstudio, mqtt (fonte, script de build, gzip)
 platformio_override.ini  ambientes de compilação para a D1 R2
-docs/img/                prints
+docs/img/                prints e gráficos de memória
 ```
 
 O WLED usa licença MIT; a AnimatedGIF usa Apache-2.0. Confira a licença de cada projeto de origem antes de reutilizar o código.
