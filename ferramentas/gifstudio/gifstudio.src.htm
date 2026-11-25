@@ -510,5 +510,24 @@ function initEvents(){
   rebuild();
 })();
 </script>
+<!--PFNAV-->
+<script>
+/* Barra de navegação comum às ferramentas: WLED, PixelForge e as outras ferramentas. Respeita ?ip= quando a página é aberta pelo PC. */
+(function(){
+  var q=new URLSearchParams(location.search),ip=q.get('ip'),base=ip?'http://'+ip:'';
+  if(!ip&&location.protocol==='file:'){try{ip=localStorage.getItem('pxs.ip')||'';if(ip)base='http://'+ip}catch(e){}}
+  var items=[['/','🏠 WLED'],['/pixelforge.htm','🧰 PixelForge'],['/relogio.htm','⏱ Relógio'],['/gifstudio.htm','🎞 GIFs'],['/mqttrules.htm','📡 MQTT'],['/pixelstudio.htm','🎨 Pixel Estúdio']];
+  var here=location.pathname.replace(/\.gz$/,'').split('/').pop();
+  var bar=document.createElement('nav');bar.id='pfnav';
+  var css=document.createElement('style');
+  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch}'+
+    '#pfnav a{color:#aab2c0;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid transparent}'+
+    '#pfnav a:hover{color:#fff;border-color:#38465c}#pfnav a.on{color:#1a1205;background:#ffb020;border-color:#ffb020}';
+  items.forEach(function(it){var a=document.createElement('a');var file=it[0].split('/').pop();
+    a.textContent=it[1];a.href=base+it[0];if(file&&file===here)a.className='on';if(!file&&(here===''||here==='index.htm'))a.className='on';bar.appendChild(a)});
+  document.head.appendChild(css);document.body.insertBefore(bar,document.body.firstChild);
+})();
+</script>
+<!--/PFNAV-->
 </body>
 </html>
