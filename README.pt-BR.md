@@ -6,7 +6,7 @@ Conjunto de mudanças sobre o [WLED](https://github.com/wled/WLED) (17.0.0-devV5
 **matriz de LEDs 16x16 controlada por uma Wemos D1 R2 (ESP8266, 4 MB de flash, cerca de 80 KB de RAM)**.
 
 O WLED desliga o efeito Imagem/GIF no ESP8266 porque o decodificador de GIF precisa de uns 24 KB de RAM.
-Este projeto faz o efeito funcionar, enxuga o firmware para abrir espaço e acrescenta três ferramentas web
+Este projeto faz o efeito funcionar, enxuga o firmware para abrir espaço e acrescenta quatro ferramentas web
 e um motor de regras MQTT, tudo rodando na própria placa.
 
 > Tudo foi feito e testado em uma placa real. É um projeto pessoal, não uma versão oficial do WLED.
@@ -21,13 +21,14 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 5. [Ferramenta 1: Relógio LED](#ferramenta-1-relógio-led)
 6. [Ferramenta 2: Estúdio de GIFs](#ferramenta-2-estúdio-de-gifs)
 7. [Ferramenta 3: Regras MQTT](#ferramenta-3-regras-mqtt)
-8. [Usermod de regras MQTT](#usermod-de-regras-mqtt)
-9. [Arquivos e API usados na placa](#arquivos-e-api-usados-na-placa)
-10. [Compilar e instalar](#compilar-e-instalar)
-11. [Limitações](#limitações)
-12. [Segurança](#segurança)
-13. [O que não foi feito](#o-que-não-foi-feito)
-14. [Estrutura do repositório](#estrutura-do-repositório)
+8. [Ferramenta 4: Pixel Estúdio (pixel art, sprites, GIF, espelho de tela)](#ferramenta-4-pixel-estúdio-pixel-art-sprites-gif-e-espelho-de-tela)
+9. [Usermod de regras MQTT](#usermod-de-regras-mqtt)
+10. [Arquivos e API usados na placa](#arquivos-e-api-usados-na-placa)
+11. [Compilar e instalar](#compilar-e-instalar)
+12. [Limitações](#limitações)
+13. [Segurança](#segurança)
+14. [O que não foi feito](#o-que-não-foi-feito)
+15. [Estrutura do repositório](#estrutura-do-repositório)
 
 ## O que você ganha
 
@@ -37,6 +38,7 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 | Firmware enxuto (MQTT mantido; Alexa, Hue, infravermelho, Adalight e Loxone removidos) | `platformio_override.ini` |
 | Relógio, data, clima, sensor, GIFs e efeitos como telas | ferramenta **Relógio LED** |
 | Várias imagens em um GIF, sprite sheets, categorias | ferramenta **Estúdio de GIFs** |
+| Editor de pixel art com quadros, sprites, exportação de GIF e **espelho de tela** | ferramenta **Pixel Estúdio** |
 | MQTT: mensagem → ação na matriz; mudança de estado → mensagem; regras por hora, dia da semana, temperatura e umidade | usermod `mqtt_rules` + ferramenta **Regras MQTT** |
 
 Tamanho do firmware na D1 R2: flash 86,1 % (899.715 de 1.044.464 bytes), RAM 59,3 % estática na compilação e
@@ -46,8 +48,8 @@ cerca de 17 KB de heap livre parada (veja a [memória](#o-esp8266-e-a-memória-d
 
 1. Compile e grave o firmware ([Compilar e instalar](#compilar-e-instalar)).
 2. Abra `http://IP-DA-PLACA/` uma vez e configure a saída dos LEDs (pino, 256 LEDs, ordem de cores) e o tamanho da matriz 2D nas configurações do WLED.
-3. Envie as três páginas das ferramentas (arquivos gzip em `ferramentas/`) e registre-as no `pftools.json`.
-4. Abra `http://IP-DA-PLACA/relogio.htm` para montar o relógio, `/gifstudio.htm` para criar GIFs e `/mqttrules.htm` para criar regras MQTT.
+3. Envie as quatro páginas das ferramentas (arquivos gzip em `ferramentas/`) e registre-as no `pftools.json`.
+4. Abra `http://IP-DA-PLACA/relogio.htm` para montar o relógio, `/gifstudio.htm` para criar GIFs e `/mqttrules.htm` para criar regras MQTT e `/pixelstudio.htm` para desenhar, criar sprites e espelhar a tela.
 5. **Mantenha uma única aba do navegador aberta na placa enquanto um GIF toca** (veja a [memória](#o-esp8266-e-a-memória-dele)).
 
 ## O que foi alterado e por quê
@@ -320,6 +322,75 @@ Uma regra disparada por valor dispara quando a condição fica verdadeira e só 
 Um painel de teste: envie uma **mensagem simulada** (tópico e conteúdo) para a placa sem precisar de broker e leia o **log** da placa com os últimos eventos (regras
 disparadas, mensagens recebidas, erros). Também mostra o comando exato para publicar de outro cliente. (Sem print: ele mostra o tópico da placa.)
 
+## Ferramenta 4: Pixel Estúdio (pixel art, sprites, GIF e espelho de tela)
+
+Um editor de pixel art no estilo do *Pixel Paint* do próprio WLED, mas completo: tem **quadros**, **biblioteca de sprites**, salva **GIFs** na placa e
+**espelha a tela do computador** na matriz. Abra `http://IP-DA-PLACA/pixelstudio.htm`. A tela de desenho começa com o tamanho da matriz (16x16) e pode ser mudada (1 a 64).
+Tudo o que você desenha é salvo sozinho no navegador, então fechar a aba não perde o trabalho.
+
+![Pixel Estúdio, editor](docs/img/pixelstudio-editor.jpg)
+
+### Aba ✏️ Editor
+
+- **Ferramentas** (barra da esquerda, ou a tecla entre colchetes): lápis `P`, borracha `E`, balde `B` (Shift troca todos os pixels daquela cor), linha `L`, retângulo `R`,
+  elipse `O`, conta-gotas `I`, seleção e mover `S`, carimbo de sprite `T`. O botão direito apaga; Alt+clique pega uma cor.
+- **Opções**: pincel de 1 a 4 pixels, **simetria** horizontal e vertical, formas cheias, **cebola** (o quadro anterior ao fundo), grade
+  e "preto = transparente" para colar e carimbar.
+- **Seleção**: desenhe um retângulo, arraste para mover (com Ctrl copia), as setas empurram, `Ctrl+C`, `Ctrl+X`, `Ctrl+V`, `Del`; `Enter` posiciona.
+- **Cor**: seletor de cor, campo hex, 32 cores prontas e as 16 mais recentes.
+- **Desfazer / refazer**: `Ctrl+Z` / `Ctrl+Y`, 60 passos.
+- **Quadros** (linha do tempo abaixo do desenho): novo, duplicar, excluir, mover (botões ou arrastando), copiar e colar quadro, tempo de cada quadro em ms
+  ou um valor para todos, **tocar** na prévia (`Espaço`), ida e volta opcional.
+- **Quadro atual**: espelhar, virar, girar 90° (só em tela quadrada), inverter cores, limpar, deslocar com volta pelo outro lado; a chave "em todos os quadros" aplica em todos.
+- **Prévia** em estilo LED e **Ao vivo na matriz**: o que você desenha aparece na matriz de verdade na hora, e tocar a animação toca lá também, sem salvar arquivo.
+- **Salvar GIF**: nome, "ping-pong", "tocar na matriz depois" e **Gerar e salvar na placa** (envia o `.gif`, pergunta antes de substituir). Também **baixar o GIF**,
+  **salvar o projeto** (`.pxs.json`) e **abrir / importar**.
+- **Importar**: imagens (também coladas com `Ctrl+V`), GIFs animados (cada quadro vira um quadro) e folhas de sprites (cortadas em quadros ou em sprites), e projetos `.pxs.json`.
+- Uma tela com mais de 318 pixels por quadro (por exemplo 20x20) é permitida, mas a placa não toca esse GIF; a ferramenta avisa.
+
+### Aba 🧩 Sprites
+
+![Pixel Estúdio, sprites](docs/img/pixelstudio-sprites.jpg)
+
+Sprite é um desenho pequeno que você reaproveita. Selecione uma área no editor e use **Salvar seleção como sprite** (ou salve o quadro inteiro, ou comece um em branco).
+A biblioteca fica no navegador; **Guardar sprites na placa** grava o `pixelstudio-sprites.json` para outro computador buscar, e a lista pode ser exportada em JSON.
+
+- **Carimbar no editor** troca para o carimbo: clique para colocar o sprite, quantas vezes quiser.
+- **Editar** abre o sprite em um quadro novo; salve de novo com o mesmo nome para atualizar.
+- Renomear, duplicar, excluir, espelhar, girar 90°.
+- **Animar sprite (movimento)** cria quadros de um sprite indo de um ponto a outro: X/Y de início e fim, número de quadros, tempo, tipo de movimento (constante, acelera,
+  freia, suave), fundo (o quadro atual ou preto), inserir depois do quadro atual ou substituir todos, "dar a volta na tela" e "voltar ao início" (ida e volta).
+  O resultado são quadros normais, prontos para editar e salvar como GIF.
+
+### Aba 🖥 Espelho de tela
+
+![Pixel Estúdio, espelho de tela](docs/img/pixelstudio-mirror.jpg)
+
+Mostra na matriz, em tempo real, o que está na tela do computador (a tela inteira, uma janela ou uma aba do navegador) ou a câmera. A imagem acima mostra o aviso que a
+página dá quando é aberta pela placa, com uma imagem de teste sintética.
+
+- **Como funciona**: o navegador captura o vídeo, recorta a parte escolhida (arraste sobre a imagem; "Tela inteira" desfaz), encaixa no tamanho da matriz tirando a média
+  dos pixels, aplica os ajustes e envia só os pixels que mudaram pelo WebSocket, em mensagens pequenas (o ESP8266 aceita uns 528 bytes por mensagem).
+  Ele espera a placa responder antes de mandar mais.
+- **Ajustes**: quadros por segundo (1 a 20, padrão 8), brilho da imagem, contraste, saturação, gama, espelhar na horizontal / vertical, encaixe (esticar, imagem inteira, preencher)
+  e o **brilho da placa**.
+- **Gravar no editor**: grava N quadros do espelho como quadros do editor (vira um GIF), ou captura um único quadro.
+- **Iniciar e parar**: o espelho assume a matriz inteira como um segmento. Ao parar, a ferramenta devolve a placa como estava (os segmentos, o preset ou a playlist de antes).
+  Se o relógio estava sendo desenhado pela página do Relógio LED, ele volta quando essa página enviar de novo.
+- **Capturar a tela exige uma página segura.** A placa serve as páginas em `http` simples, e os navegadores só permitem capturar a tela em `https` ou em arquivo local. Por isso a página mostra o
+  botão **Baixar a ferramenta para abrir no PC**: salve o `pixelstudio.html`, dê dois cliques e digite o IP da placa na primeira vez (ou abra como `pixelstudio.html?ip=192.168.0.170`).
+  O resto (desenhar, salvar, ao vivo) funciona nas duas páginas.
+
+### O que foi verificado
+
+- Na placa: ferramentas de desenho, desfazer, seleção, criação de sprite, o gerador de movimento (8 quadros), criação do GIF (o GIF gerado foi lido de volta: 16x16, 8 quadros), salvar na
+  placa e tocar.
+- Edição ao vivo: a matriz mostrou exatamente os pixels desenhados no editor (comparado pixel a pixel pela visualização ao vivo).
+- Espelho: testado com um vídeo sintético (metades vermelha e azul e um círculo branco em movimento) no lugar da tela. A matriz reproduziu a imagem a uns 8 quadros por segundo, com cerca de 13,7 KB de
+  heap livre durante o teste, e ao parar voltou o layout do relógio com dois segmentos.
+- De outra origem (`localhost` com `?ip=`) a página alcançou a placa (informações, WebSocket, envio de arquivo e a biblioteca de GIFs), que é o que a cópia baixada faz.
+- **Não verificado**: capturar uma tela ou janela de verdade (o navegador pede permissão à pessoa, e um script não consegue dar), a câmera, a cópia baixada aberta como página `file://` e telas de toque.
+
 ## Usermod de regras MQTT
 
 `usermods/mqtt_rules` guarda as regras em `/mqttrules.jsonl` (um objeto JSON por linha, até 760 caracteres,
@@ -339,13 +410,14 @@ as condições de temperatura bloquearam e liberaram corretamente, e as regras d
 
 | Na placa (LittleFS) | O que é |
 |---|---|
-| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz` | as três páginas das ferramentas |
+| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz`, `pixelstudio.htm.gz` | as quatro páginas das ferramentas |
 | `pftools.json` | a lista mostrada no PixelForge → *Other tools* |
 | `relogio-config.json` | estado da ferramenta de relógio |
 | `relogio-cfg-backup.json`, `relogio-presets-backup.json`, `mqtt-cfg-backup.json` | backups feitos antes de as ferramentas mudarem a configuração |
 | `gifstudio.json` | categorias de GIF e a categoria de cada GIF |
 | `mqttrules.jsonl` | as regras que o usermod executa |
 | `mqttrules-ui.json` | as regras como aparecem na ferramenta (e os tópicos dos sensores) |
+| `pixelstudio-sprites.json` | sprites guardados pelo Pixel Estúdio (opcional) |
 | `*.gif` | os seus GIFs |
 
 As ferramentas usam só a API normal do WLED: `/json/state`, `/json/info`, `/json/effects`, `/json/fxdata`, `/json/palettes`, `/presets.json`,
@@ -421,10 +493,15 @@ Dicas aprendidas na prática:
 
 **Ferramentas**
 - Feitas para uma matriz 16x16 de um segmento. Outros tamanhos funcionam em princípio, mas não foram testados.
-- O PixelForge pode reescrever o `pftools.json` e apagar as três entradas personalizadas; acrescente-as de novo se acontecer.
+- O PixelForge pode reescrever o `pftools.json` e apagar as quatro entradas personalizadas; acrescente-as de novo se acontecer.
 - As ferramentas só definem o preset de boot se você marcar na aba *Placa e hora*, então o relógio não inicia sozinho depois de reiniciar até que
   você defina um preset de boot.
 - A interface está em português do Brasil.
+- **Pixel Estúdio**: o modo ao vivo e o espelho usam um WebSocket e pegam a matriz inteira como um segmento, então a memória livre cai uns 1 a 3 KB enquanto rodam; mantenha uma aba só.
+- O espelho envia pixel a pixel pela API JSON, então roda a uns 8 quadros por segundo (dá para escolher até 20, mas a placa pode não acompanhar). Não é transmissão de vídeo: para
+  vídeo fluido use um emissor DDP/E1.31, o que uma página web não consegue fazer (não tem UDP).
+- Capturar a tela só funciona em página segura (veja [a aba do espelho](#aba--espelho-de-tela)): baixe a página e abra pelo computador.
+- Os sprites e o projeto salvo automaticamente ficam no armazenamento do navegador (por navegador e por endereço); use *Guardar sprites na placa* ou *Salvar projeto* para levar de um lugar a outro.
 
 ## Segurança
 
@@ -440,6 +517,7 @@ Dicas aprendidas na prática:
 - Redesenho para enviar quadros brutos (empurrar pixels direto).
 - TLS no MQTT e correção da resolução de nomes (DNS).
 - Iniciar o relógio automaticamente ao ligar.
+- Testes reais do espelho com captura de tela e câmera (só um vídeo sintético foi usado) e um modo de vídeo fluido com DDP/E1.31.
 - Um decodificador de GIF menor: ainda dá para economizar algumas centenas de bytes nos buffers, mas não os 3 KB ou mais necessários para um GIF conviver com várias abas do navegador.
 
 ## Estrutura do repositório
@@ -448,7 +526,7 @@ Dicas aprendidas na prática:
 patches/                 diff contra o WLED (commit em WLED_BASE_COMMIT.txt)
 lowram_libs/             AnimatedGIF (tabelas reduzidas) e GifDecoder (todas as arquiteturas)
 usermods/mqtt_rules/     motor de regras + readme
-ferramentas/             ferramentas relogio, gifstudio, mqtt (fonte, script de build, gzip)
+ferramentas/             ferramentas relogio, gifstudio, mqtt, pixelstudio (fonte, script de build, gzip)
 platformio_override.ini  ambientes de compilação para a D1 R2
 docs/img/                prints e gráficos de memória
 ```

@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pixel Estúdio</title>
+<style>
+:root{--bg:#0d0f13;--card:#151921;--card2:#1b212b;--bd:#262d39;--tx:#e9edf3;--mu:#8e98aa;--ac:#ffb020;--ac2:#38d6ff;--ok:#3ddc84;--er:#ff5d5d;--r:14px}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 500px at 70% -10%,#1a2030 0,var(--bg) 60%) no-repeat,var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding:0 14px 40px}
+button,input,select{font:inherit;color:var(--tx)}
+.hide{display:none!important}.mu{color:var(--mu)}.small{font-size:12.5px}.ok{color:var(--ok)}.er{color:var(--er)}
+.top{max-width:1320px;margin:0 auto;padding:16px 0 8px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#ff5d9e,#ffb020);display:grid;place-items:center;font-size:22px}
+h1{font-size:21px;margin:0;line-height:1.15}.sub{color:var(--mu);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:4px 12px;font-size:12.5px;color:var(--mu);white-space:nowrap}
+.chip.good{color:var(--ok);border-color:#215a3a}.chip.bad{color:var(--er);border-color:#6a2b2b}.chip.warn{color:var(--ac);border-color:#6a5220}
+.wrap{max-width:1320px;margin:0 auto}
+.tabs{display:flex;gap:6px;padding:4px;background:var(--card);border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;max-width:560px}
+.tabs button{flex:1;background:transparent;border:0;border-radius:10px;padding:9px 14px;color:var(--mu);cursor:pointer;font-weight:600;white-space:nowrap}
+.tabs button.on{background:var(--card2);color:var(--tx);box-shadow:inset 0 -2px 0 var(--ac)}
+.pane{display:none}.pane.on{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 4px;display:flex;gap:10px;align-items:center}.card h3{font-size:14px;margin:0 0 6px}
+.hint{color:var(--mu);font-size:13px;margin:2px 0 10px}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:8px 0}
+.col{display:flex;flex-direction:column;gap:4px}.lbl{font-size:12.5px;color:var(--mu)}
+input[type=text],input[type=number],select{background:#10141b;border:1px solid var(--bd);border-radius:10px;padding:7px 10px;min-height:36px;outline:none}
+input:focus,select:focus{border-color:var(--ac)}input[type=number]{width:78px}input[type=text]{min-width:120px}
+input[type=color]{width:46px;height:40px;border-radius:10px;border:1px solid var(--bd);padding:2px;background:#10141b;cursor:pointer}
+input[type=range]{accent-color:var(--ac);min-width:120px}
+.btn{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:7px 12px;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ac)}.btn:disabled{opacity:.5;cursor:default}.btn.sm{padding:4px 9px;font-size:13px}
+.btn.primary{background:var(--ac);border-color:var(--ac);color:#1a1205}.btn.danger{color:#ff9b9b}.btn.big{padding:11px 16px;font-size:16px;width:100%}
+.btn.on{border-color:var(--ac);background:#2a2110;color:var(--ac)}
+.sw{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;position:relative}
+.sw>input{position:absolute;opacity:0;pointer-events:none}
+.sw i{width:40px;height:23px;background:#2a303c;border-radius:999px;position:relative;transition:.2s;flex:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#aab2c0;transition:.2s}
+.sw>input:checked+i{background:var(--ac)}.sw>input:checked+i::after{left:20px;background:#1a1205}
+.infobox{background:#11222c;border:1px solid #245062;color:#a9dcf0;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:13px}
+.warnbox{background:#2a2110;border:1px solid #6a5220;color:#ffd58a;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:13px}
+
+/* editor */
+.ed{display:grid;grid-template-columns:64px minmax(0,1fr) 330px;gap:14px;align-items:start}
+@media(max-width:1060px){.ed{grid-template-columns:56px minmax(0,1fr)}.ed .rside{grid-column:1/-1}}
+@media(max-width:640px){.ed{grid-template-columns:minmax(0,1fr)}.tools{flex-direction:row!important;flex-wrap:wrap}}
+.tools{display:flex;flex-direction:column;gap:6px;position:sticky;top:10px}
+.tl-btn{width:100%;aspect-ratio:1;min-height:44px;background:var(--card);border:1px solid var(--bd);border-radius:11px;cursor:pointer;font-size:19px;display:grid;place-items:center;position:relative;padding:0}
+.tl-btn:hover{border-color:var(--ac)}.tl-btn.on{background:#2a2110;border-color:var(--ac)}
+.tl-btn small{position:absolute;right:4px;bottom:1px;font-size:10px;color:var(--mu)}
+.stage{background:#07080a;border:1px solid var(--bd);border-radius:12px;padding:10px;display:grid;place-items:center;overflow:auto}
+#cv{touch-action:none;cursor:crosshair;image-rendering:pixelated;max-width:100%}
+.bar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 10px}
+.tline{display:flex;gap:8px;overflow-x:auto;padding:8px 2px 10px}
+.th{flex:none;background:var(--card2);border:2px solid var(--bd);border-radius:10px;padding:5px;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;position:relative}
+.th.on{border-color:var(--ac)}.th.play{box-shadow:0 0 0 2px var(--ac2)}.th.over{border-color:var(--ac2)}
+.th canvas{width:56px;height:56px;image-rendering:pixelated;background:#000;border-radius:5px}
+.th .n{font-size:11px;color:var(--mu)}
+.pal{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}
+.pal button{aspect-ratio:1;border:1px solid #0006;border-radius:6px;cursor:pointer;padding:0}
+.pal button:hover{outline:2px solid var(--ac)}
+.cur{width:42px;height:42px;border-radius:10px;border:2px solid #fff3}
+.ledwrap{display:grid;place-items:center;background:#07080a;border:1px solid var(--bd);border-radius:12px;padding:8px;margin:8px 0}
+.ledwrap canvas{width:100%;max-width:240px;height:auto;display:block}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+/* sprites */
+.sp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px}
+.sp{background:var(--card2);border:2px solid var(--bd);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:5px;align-items:center;cursor:pointer}
+.sp.on{border-color:var(--ac)}
+.sp canvas{width:64px;height:64px;image-rendering:pixelated;background:repeating-conic-gradient(#1d232d 0 25%,#12161d 0 50%) 0 0/12px 12px;border-radius:6px}
+.sp .nm{font-size:12px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cols2{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}
+@media(max-width:980px){.cols2{grid-template-columns:minmax(0,1fr)}}
+/* espelho */
+#mrView{width:100%;max-width:560px;background:#000;border:1px solid var(--bd);border-radius:10px;cursor:crosshair;touch-action:none;display:block}
+#mrLed{width:100%;max-width:300px}
+#modal{position:fixed;inset:0;background:#000a;display:grid;place-items:center;z-index:70}
+.mbox{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;min-width:min(92vw,380px);max-width:92vw;max-height:90vh;overflow:auto}
+.mbox input[type=text]{width:100%;margin:8px 0}
+#toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:80;max-width:min(92vw,380px)}
+.toast{background:#202733;border:1px solid var(--bd);border-left:4px solid var(--ac2);border-radius:10px;padding:10px 14px;box-shadow:0 6px 24px #0008;font-size:14px;transition:.4s}
+.toast.ok{border-left-color:var(--ok)}.toast.er{border-left-color:var(--er)}.toast.out{opacity:0;transform:translateY(8px)}
+kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5px;font-size:11.5px}
+</style>
+</head>
+<body>
+<div id="toasts"></div><div id="modal" class="hide"></div>
+<header class="top">
+  <div class="brand"><div class="logo">🎨</div><div><h1>Pixel Estúdio</h1><div class="sub">Desenhe, crie sprites, monte GIFs quadro a quadro e espelhe a tela do PC na matriz</div></div></div>
+  <div class="chips"><span class="chip" id="chipConn">conectando…</span><span class="chip" id="chipMat"></span><span class="chip" id="chipLive">ao vivo: desligado</span></div>
+</header>
+<main class="wrap">
+<nav class="tabs" id="tabs"><button data-tab="ed">✏️ Editor</button><button data-tab="sp">🧩 Sprites <span class="mu" id="spCount"></span></button><button data-tab="mr">🖥 Espelho de tela</button></nav>
+
+<!-- ================= EDITOR ================= -->
+<section class="pane on" data-pane="ed">
+<div class="ed">
+  <div class="tools" id="tools"></div>
+  <div>
+    <div class="bar">
+      <label class="sw"><input type="checkbox" id="symX"><i></i><span class="small">Simetria ↔</span></label>
+      <label class="sw"><input type="checkbox" id="symY"><i></i><span class="small">Simetria ↕</span></label>
+      <label class="col" style="flex-direction:row;align-items:center;gap:6px"><span class="lbl">Pincel</span><select id="size"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+      <label class="sw"><input type="checkbox" id="fillShape"><i></i><span class="small">Formas cheias</span></label>
+      <label class="sw"><input type="checkbox" id="onion" checked><i></i><span class="small">Quadro anterior (cebola)</span></label>
+      <label class="sw"><input type="checkbox" id="grid" checked><i></i><span class="small">Grade</span></label>
+      <label class="sw"><input type="checkbox" id="blackT" checked><i></i><span class="small">Preto = transparente (colar/carimbar)</span></label>
+    </div>
+    <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+    <div class="small mu" id="coord" style="margin:4px 2px 0">&nbsp;</div>
+    <div class="card" style="margin-top:10px;padding:10px">
+      <div class="bar" style="margin:0">
+        <b>Quadros</b>
+        <button class="btn sm" id="fNew">＋ Novo</button><button class="btn sm" id="fDup">⧉ Duplicar</button><button class="btn sm" id="fDel">🗑 Excluir</button>
+        <button class="btn sm" id="fL">◀</button><button class="btn sm" id="fR">▶</button>
+        <button class="btn sm" id="fCopy">Copiar</button><button class="btn sm" id="fPaste">Colar</button>
+        <span class="small mu">Tempo do quadro (ms)</span><input type="number" id="fMs" min="20" max="5000" step="10" value="100">
+        <button class="btn sm" id="fMsAll">Aplicar a todos</button>
+        <button class="btn sm primary" id="btnPlay">▶ Tocar</button>
+      </div>
+      <div class="tline" id="tline"></div>
+    </div>
+    <div class="card" style="padding:10px">
+      <div class="bar" style="margin:0">
+        <b>Quadro atual</b>
+        <button class="btn sm" data-x="fh">↔ Espelhar</button><button class="btn sm" data-x="fv">↕ Virar</button><button class="btn sm" data-x="rot">⟳ Girar 90°</button>
+        <button class="btn sm" data-x="inv">◐ Inverter cores</button><button class="btn sm" data-x="clr">Limpar</button>
+        <span class="small mu">Deslocar:</span><button class="btn sm" data-x="sl">←</button><button class="btn sm" data-x="su">↑</button><button class="btn sm" data-x="sd">↓</button><button class="btn sm" data-x="sr">→</button>
+        <label class="sw"><input type="checkbox" id="xAll"><i></i><span class="small">em todos os quadros</span></label>
+      </div>
+      <div class="small mu" style="margin-top:6px">Atalhos: <kbd>P</kbd> lápis <kbd>E</kbd> borracha <kbd>B</kbd> balde <kbd>L</kbd> linha <kbd>R</kbd> retângulo <kbd>O</kbd> elipse <kbd>I</kbd> conta-gotas <kbd>S</kbd> seleção <kbd>T</kbd> carimbo · <kbd>Ctrl+Z/Y</kbd> desfazer · <kbd>Ctrl+C/X/V</kbd> · <kbd>Del</kbd> · <kbd>Espaço</kbd> tocar · botão direito apaga</div>
+    </div>
+  </div>
+  <aside class="rside">
+    <div class="card">
+      <h3>Cor</h3>
+      <div class="row" style="margin-top:0"><div class="cur" id="curCol"></div><input type="color" id="colIn" value="#ff5030"><input type="text" id="colHex" value="#FF5030" style="width:96px;min-width:0"></div>
+      <div class="pal" id="pal"></div>
+      <div class="small mu" style="margin:8px 0 4px">Recentes</div><div class="pal" id="recent"></div>
+    </div>
+    <div class="card">
+      <h3>Tamanho da tela de desenho</h3>
+      <div class="row" style="margin-top:0"><input type="number" id="cw" min="1" max="64" value="16"> × <input type="number" id="ch" min="1" max="64" value="16"><button class="btn sm" id="cApply">Aplicar</button><button class="btn sm" id="cMat">Tamanho da matriz</button></div>
+      <div id="cWarn"></div>
+    </div>
+    <div class="card">
+      <h3>Prévia</h3>
+      <div class="ledwrap"><canvas id="pv" width="240" height="240"></canvas></div>
+      <label class="sw"><input type="checkbox" id="liveSw"><i></i><span>Ao vivo na matriz</span></label>
+      <div class="small mu" style="margin-top:4px">Mostra o que você desenha, em tempo real, na matriz de verdade (e a animação quando você toca).</div>
+    </div>
+    <div class="card">
+      <h3>Salvar GIF</h3>
+      <div class="row" style="margin-top:0"><label class="col" style="flex:1"><span class="lbl">Nome</span><input type="text" id="gname" placeholder="ex.: personagem" maxlength="28"></label></div>
+      <label class="sw"><input type="checkbox" id="pingpong"><i></i><span class="small">Ir e voltar (ping-pong)</span></label><br>
+      <label class="sw" style="margin-top:6px"><input type="checkbox" id="playAfter" checked><i></i><span class="small">Tocar na matriz depois</span></label>
+      <div class="row"><button class="btn primary big" id="btnSave">Gerar e salvar na placa</button></div>
+      <div class="row" style="margin:0"><button class="btn" id="btnDl">⬇ Baixar GIF</button><button class="btn" id="btnPjSave">💾 Projeto</button><button class="btn" id="btnImp">📂 Abrir/importar</button></div>
+      <input type="file" id="impFile" class="hide" accept="image/*,.json,.pxs">
+      <div class="small mu" id="gInfo" style="margin-top:6px"></div>
+    </div>
+  </aside>
+</div>
+</section>
+
+<!-- ================= SPRITES ================= -->
+<section class="pane" data-pane="sp">
+<div class="cols2">
+  <div>
+    <div class="card">
+      <h2>Biblioteca de sprites</h2>
+      <div class="hint">Sprite é um desenho pequeno que você reaproveita. No Editor, use a <b>Seleção</b> (S) e clique em “Salvar seleção como sprite”; depois pegue o <b>Carimbo</b> (T) para colar onde quiser, quantas vezes quiser.</div>
+      <div class="row">
+        <button class="btn" id="spFromSel">✂ Salvar seleção como sprite</button>
+        <button class="btn" id="spFromFrame">🖼 Salvar quadro atual como sprite</button>
+        <button class="btn" id="spNew">＋ Sprite em branco</button>
+        <label class="sw"><input type="checkbox" id="spBlack" checked><i></i><span class="small">preto vira transparente</span></label>
+      </div>
+      <div class="sp-grid" id="spGrid"></div>
+      <div class="small mu" id="spEmpty" style="margin-top:10px"></div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="spToBoard">⬆ Guardar sprites na placa</button><button class="btn" id="spFromBoard">⬇ Buscar da placa</button><button class="btn" id="spExport">Exportar (.json)</button></div>
+      <div class="small mu">Os sprites ficam salvos neste navegador. “Guardar na placa” cria o arquivo <code>pixelstudio-sprites.json</code> e permite usar em outro computador.</div>
+    </div>
+  </div>
+  <div>
+    <div class="card" id="spSel"><h3>Sprite escolhido</h3><div class="small mu">Clique em um sprite da lista.</div></div>
+    <div class="card">
+      <h2>🎬 Animar sprite (movimento)</h2>
+      <div class="hint">Cria vários quadros com o sprite andando de um ponto a outro, sobre o fundo escolhido. Depois é só salvar como GIF.</div>
+      <div class="row">
+        <label class="col"><span class="lbl">Início X / Y</span><span><input type="number" id="mx0" value="0"> <input type="number" id="my0" value="0"></span></label>
+        <label class="col"><span class="lbl">Fim X / Y</span><span><input type="number" id="mx1" value="8"> <input type="number" id="my1" value="0"></span></label>
+      </div>
+      <div class="row">
+        <label class="col"><span class="lbl">Quadros</span><input type="number" id="mN" min="2" max="120" value="12"></label>
+        <label class="col"><span class="lbl">Tempo (ms)</span><input type="number" id="mMs" min="20" max="2000" step="10" value="90"></label>
+        <label class="col"><span class="lbl">Movimento</span><select id="mEase"><option value="lin">Constante</option><option value="in">Acelera</option><option value="out">Freia</option><option value="io">Suave</option></select></label>
+      </div>
+      <div class="row">
+        <label class="col"><span class="lbl">Fundo</span><select id="mBg"><option value="cur">Quadro atual</option><option value="black">Preto</option></select></label>
+        <label class="col"><span class="lbl">Inserir</span><select id="mWhere"><option value="after">Depois do quadro atual</option><option value="replace">Substituindo todos</option></select></label>
+      </div>
+      <div class="row"><label class="sw"><input type="checkbox" id="mWrap"><i></i><span class="small">Dar a volta na tela (sai de um lado, entra no outro)</span></label></div>
+      <div class="row"><label class="sw"><input type="checkbox" id="mBack"><i></i><span class="small">Voltar ao início (ida e volta)</span></label></div>
+      <button class="btn primary big" id="mGo">Criar quadros</button>
+    </div>
+    <div class="card">
+      <h2>Folha de sprites</h2>
+      <div class="hint">Use o botão “Abrir/importar” do Editor com uma imagem ou GIF: dá para cortar em quadros ou em sprites.</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ================= ESPELHO ================= -->
+<section class="pane" data-pane="mr">
+<div class="cols2">
+  <div>
+    <div class="card">
+      <h2>🖥 Espelho de tela</h2>
+      <div class="hint">Mostra na matriz o que está na tela do computador (ou na câmera), em tempo real. A imagem é reduzida para o tamanho da matriz e enviada pelo WebSocket da placa.</div>
+      <div id="mrSecure"></div>
+      <div class="row">
+        <label class="col"><span class="lbl">Fonte</span><select id="mrSrc"><option value="screen">Tela / janela / aba</option><option value="cam">Câmera</option></select></label>
+        <button class="btn primary" id="mrStart">▶ Iniciar espelho</button>
+        <button class="btn danger hide" id="mrStop">■ Parar e restaurar a placa</button>
+        <label class="sw"><input type="checkbox" id="mrSend" checked><i></i><span class="small">Enviar para a matriz</span></label>
+      </div>
+      <canvas id="mrView" width="560" height="315"></canvas>
+      <div class="row small mu" style="margin-bottom:0"><span>Arraste na imagem para escolher só uma parte da tela.</span><button class="btn sm" id="mrFull">Tela inteira</button><span id="mrInfo"></span></div>
+    </div>
+    <div class="card">
+      <h3>Gravar no editor</h3>
+      <div class="hint">Grava o que está sendo espelhado como quadros do editor — vira um GIF.</div>
+      <div class="row"><label class="col"><span class="lbl">Quadros</span><input type="number" id="recN" min="2" max="120" value="30"></label><button class="btn" id="mrRec">⏺ Gravar</button><button class="btn" id="mrSnap">📷 Capturar 1 quadro</button></div>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h3>Como fica na matriz</h3>
+      <div class="ledwrap"><canvas id="mrLed" width="300" height="300"></canvas></div>
+    </div>
+    <div class="card">
+      <h3>Ajustes</h3>
+      <div class="row"><label class="col"><span class="lbl">Quadros por segundo: <b id="vFps">8</b></span><input type="range" id="mrFps" min="1" max="20" value="8"></label></div>
+      <div class="row"><label class="col"><span class="lbl">Brilho da imagem: <b id="vBr">100</b>%</span><input type="range" id="mrBr" min="20" max="300" value="100"></label></div>
+      <div class="row"><label class="col"><span class="lbl">Contraste: <b id="vCo">0</b></span><input type="range" id="mrCo" min="-60" max="100" value="0"></label></div>
+      <div class="row"><label class="col"><span class="lbl">Saturação: <b id="vSa">120</b>%</span><input type="range" id="mrSa" min="0" max="300" value="120"></label></div>
+      <div class="row"><label class="col"><span class="lbl">Gama: <b id="vGa">1.0</b></span><input type="range" id="mrGa" min="50" max="300" value="100"></label></div>
+      <div class="row"><label class="col"><span class="lbl">Brilho da placa: <b id="vBd">–</b></span><input type="range" id="mrBd" min="5" max="255" value="64"></label></div>
+      <div class="row">
+        <label class="col"><span class="lbl">Encaixe</span><select id="mrFit"><option value="stretch">Esticar</option><option value="contain">Caber inteira</option><option value="cover">Preencher (corta)</option></select></label>
+        <label class="sw"><input type="checkbox" id="mrFlipH"><i></i><span class="small">Espelhar ↔</span></label>
+        <label class="sw"><input type="checkbox" id="mrFlipV"><i></i><span class="small">Virar ↕</span></label>
+      </div>
+    </div>
+    <div class="warnbox"><b>Memória da placa:</b> o ESP8266 tem pouca RAM. Mantenha só esta aba aberta na placa durante o espelho e evite a pré-visualização ao vivo do WLED.</div>
+  </div>
+</div>
+</section>
+</main>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const qs=new URLSearchParams(location.search);
+let IP=qs.get('ip')||'';
+if(!IP&&location.protocol==='file:'){try{IP=localStorage.getItem('pxs.ip')||''}catch(e){}}
+const BASE=IP?'http://'+IP:'';
+const WSURL=(BASE?BASE.replace('http','ws'):'ws://'+location.host)+'/ws';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const GIF_PX_LIMIT=318; // limite do decodificador de GIF da placa (pixels por quadro)
+const TR=0x1000000;     // marca "transparente" nos sprites (as imagens dos quadros são sempre opacas)
+const hex6=c=>(c&0xFFFFFF).toString(16).padStart(6,'0').toUpperCase();
+const cssC=c=>'#'+hex6(c);
+const rgb=c=>[c>>16&255,c>>8&255,c&255];
+const pack=(r,g,b)=>((r&255)<<16)|((g&255)<<8)|(b&255);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+
+/* ---------- placa ---------- */
+let MW=16,MH=16,INFO=null;
+async function jget(p){const r=await fetch(BASE+p+(p.includes('?')?'&':'?')+'cb='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(p+' → HTTP '+r.status);return r.json()}
+async function jpost(p,o){const r=await fetch(BASE+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});if(!r.ok)throw new Error(p+' → HTTP '+r.status);return r.json().catch(()=>({}))}
+async function upload(name,blob){const fd=new FormData();fd.append('data',blob,name);const r=await fetch(BASE+'/upload',{method:'POST',body:fd});if(!r.ok)throw new Error('upload '+name+' → HTTP '+r.status)}
+function toast(msg,k){const t=document.createElement('div');t.className='toast '+(k||'');t.textContent=msg;$('toasts').appendChild(t);setTimeout(()=>t.classList.add('out'),3800);setTimeout(()=>t.remove(),4400)}
+function modal({title,body,input,value,ok='OK',cancel='Cancelar',danger,html}){
+  return new Promise(res=>{const m=$('modal');
+    m.innerHTML=`<div class="mbox"><h3>${esc(title)}</h3>${body?`<div class="small mu" style="margin:6px 0">${body}</div>`:''}${html||''}${input?`<input type="text" id="mIn" value="${esc(value||'')}">`:''}<div class="row" style="justify-content:flex-end;margin-bottom:0"><button class="btn" id="mNo">${cancel}</button><button class="btn ${danger?'danger':'primary'}" id="mOk">${ok}</button></div></div>`;
+    m.classList.remove('hide');const inp=$('mIn');if(inp){inp.focus();inp.select()}
+    const close=v=>{m.classList.add('hide');m.innerHTML='';res(v)};
+    $('mOk').onclick=()=>close(input?$('mIn').value:(html?true:true));$('mNo').onclick=()=>close(input?null:false);
+    if(inp)inp.onkeydown=e=>{if(e.key==='Enter')$('mOk').click();if(e.key==='Escape')$('mNo').click()}});
+}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error(src));document.head.appendChild(s)})}
+function cleanName(s){return String(s).replace(/\.gif$/i,'').replace(/[\\/:*?"<>|#%&]/g,'_').replace(/\s+/g,' ').trim().slice(0,28)}
+
+/* ---------- projeto ---------- */
+let W=16,H=16,frames=[],cur=0,tool='pencil',color=0xFF5030,hist=[],redo=[],clipFrame=null,clip=null,sel=null,recent=[];
+const newFrame=(px)=>({px:px||new Uint32Array(W*H),ms:100});
+const F=()=>frames[cur];
+const clone=()=>({W,H,cur,frames:frames.map(f=>({px:f.px.slice(),ms:f.ms}))});
+function snap(){hist.push(clone());if(hist.length>60)hist.shift();redo=[]}
+function restore(s){W=s.W;H=s.H;cur=s.cur;frames=s.frames.map(f=>({px:f.px.slice(),ms:f.ms}));sel=null;$('cw').value=W;$('ch').value=H;layout();refreshAll()}
+function undo(){if(!hist.length)return toast('Nada para desfazer.');redo.push(clone());restore(hist.pop())}
+function redoF(){if(!redo.length)return;hist.push(clone());restore(redo.pop())}
+const b64=u8=>{let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s)};
+const unb64=s=>{const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u};
+function projectJson(){return{v:1,W,H,cur,frames:frames.map(f=>({ms:f.ms,px:b64(new Uint8Array(f.px.buffer))}))}}
+function loadProject(o){
+  if(!o||!o.W||!o.H||!Array.isArray(o.frames)||!o.frames.length)throw new Error('projeto inválido');
+  W=clamp(o.W|0,1,64);H=clamp(o.H|0,1,64);
+  frames=o.frames.slice(0,200).map(f=>{const u=unb64(f.px),px=new Uint32Array(W*H);px.set(new Uint32Array(u.buffer,0,Math.min(W*H,u.length>>2)));return{px,ms:clamp(f.ms|0,20,5000)}});
+  cur=clamp(o.cur|0,0,frames.length-1);sel=null;$('cw').value=W;$('ch').value=H;
+}
+let saveT=null;function autosave(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem('pxs.project',JSON.stringify(projectJson()))}catch(e){}},700)}
+
+/* ---------- desenho ---------- */
+const cv=$('cv'),g=cv.getContext('2d');let CS=24,ov=null,hover=null,drag=null;
+function layout(){
+  const st=$('stage'),aw=Math.max(160,st.clientWidth-24);
+  CS=Math.max(6,Math.min(Math.floor(aw/W),Math.floor(Math.max(300,innerHeight-380)/H),40));
+  cv.width=W*CS;cv.height=H*CS;cv.style.width=W*CS+'px';cv.style.height=H*CS+'px';
+}
+function redraw(){
+  g.fillStyle='#000';g.fillRect(0,0,cv.width,cv.height);
+  const px=F().px,pv=($('onion').checked&&cur>0)?frames[cur-1].px:null;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const i=y*W+x,c=px[i];
+    if(c){g.fillStyle=cssC(c);g.fillRect(x*CS,y*CS,CS,CS)}
+    else if(pv&&pv[i]){g.globalAlpha=.3;g.fillStyle=cssC(pv[i]);g.fillRect(x*CS,y*CS,CS,CS);g.globalAlpha=1}
+  }
+  if(sel&&sel.buf)drawBuf(sel.buf,sel.w,sel.h,sel.x,sel.y,1);
+  if(ov){g.globalAlpha=.75;for(const p of ov.pts){g.fillStyle=cssC(ov.c);g.fillRect(p[0]*CS,p[1]*CS,CS,CS)}g.globalAlpha=1}
+  if(tool==='stamp'&&hover&&SP.cur){const s=SP.list.find(z=>z.id===SP.cur);if(s)drawBuf(s.px,s.w,s.h,hover[0]-(s.w>>1),hover[1]-(s.h>>1),.6)}
+  if($('grid').checked&&CS>=8){g.strokeStyle='#ffffff14';g.lineWidth=1;g.beginPath();for(let x=1;x<W;x++){g.moveTo(x*CS+.5,0);g.lineTo(x*CS+.5,cv.height)}for(let y=1;y<H;y++){g.moveTo(0,y*CS+.5);g.lineTo(cv.width,y*CS+.5)}g.stroke()}
+  if($('symX').checked){g.strokeStyle='#38d6ff88';g.beginPath();g.moveTo(cv.width/2,0);g.lineTo(cv.width/2,cv.height);g.stroke()}
+  if($('symY').checked){g.strokeStyle='#38d6ff88';g.beginPath();g.moveTo(0,cv.height/2);g.lineTo(cv.width,cv.height/2);g.stroke()}
+  if(sel){g.strokeStyle='#ffb020';g.setLineDash([5,4]);g.lineWidth=2;g.strokeRect(sel.x*CS+1,sel.y*CS+1,sel.w*CS-2,sel.h*CS-2);g.setLineDash([])}
+  if(hover&&['pencil','eraser'].includes(tool)){const o=+$('size').value>>1,n=+$('size').value;g.strokeStyle='#fff8';g.lineWidth=1;g.strokeRect((hover[0]-o)*CS+.5,(hover[1]-o)*CS+.5,n*CS-1,n*CS-1)}
+}
+function drawBuf(buf,w,h,ox,oy,alpha){g.globalAlpha=alpha;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const c=buf[y*w+x];if(c&TR||(c===0&&$('blackT').checked))continue;g.fillStyle=cssC(c);g.fillRect((ox+x)*CS,(oy+y)*CS,CS,CS)}g.globalAlpha=1}
+function cell(e){const r=cv.getBoundingClientRect();return[clamp(Math.floor((e.clientX-r.left)/r.width*W),0,W-1),clamp(Math.floor((e.clientY-r.top)/r.height*H),0,H-1)]}
+function put(x,y,c){if(x>=0&&y>=0&&x<W&&y<H)F().px[y*W+x]=c}
+function plot(x,y,c){const n=+$('size').value,o=n>>1,sx=$('symX').checked,sy=$('symY').checked;
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){const a=x-o+i,b=y-o+j;put(a,b,c);if(sx)put(W-1-a,b,c);if(sy)put(a,H-1-b,c);if(sx&&sy)put(W-1-a,H-1-b,c)}}
+function bres(x0,y0,x1,y1,fn){const dx=Math.abs(x1-x0),dy=-Math.abs(y1-y0),sx=x0<x1?1:-1,sy=y0<y1?1:-1;let e=dx+dy;for(;;){fn(x0,y0);if(x0===x1&&y0===y1)break;const e2=2*e;if(e2>=dy){e+=dy;x0+=sx}if(e2<=dx){e+=dx;y0+=sy}}}
+function shapePts(t,x0,y0,x1,y1,fill){const pts=[],xa=Math.min(x0,x1),xb=Math.max(x0,x1),ya=Math.min(y0,y1),yb=Math.max(y0,y1);
+  if(t==='line'){bres(x0,y0,x1,y1,(x,y)=>pts.push([x,y]))}
+  else if(t==='rect'){for(let y=ya;y<=yb;y++)for(let x=xa;x<=xb;x++)if(fill||x===xa||x===xb||y===ya||y===yb)pts.push([x,y])}
+  else{const cx=(xa+xb)/2,cy=(ya+yb)/2,rx=(xb-xa+1)/2,ry=(yb-ya+1)/2,inE=(x,y)=>x>=xa&&x<=xb&&y>=ya&&y<=yb&&((x-cx)/rx)**2+((y-cy)/ry)**2<=1.0001;
+    for(let y=ya;y<=yb;y++)for(let x=xa;x<=xb;x++)if(inE(x,y)&&(fill||!(inE(x-1,y)&&inE(x+1,y)&&inE(x,y-1)&&inE(x,y+1))))pts.push([x,y])}
+  return pts}
+function flood(x,y,c,all){const px=F().px,t=px[y*W+x];if(t===c)return;
+  if(all){for(let i=0;i<px.length;i++)if(px[i]===t)px[i]=c;return}
+  const st=[[x,y]];while(st.length){const[a,b]=st.pop();if(a<0||b<0||a>=W||b>=H||px[b*W+a]!==t)continue;px[b*W+a]=c;st.push([a+1,b],[a-1,b],[a,b+1],[a,b-1])}}
+function pushRecent(c){recent=recent.filter(v=>v!==c);recent.unshift(c);recent=recent.slice(0,16);renderRecent()}
+function setColor(c,noRecent){color=c&0xFFFFFF;$('curCol').style.background=cssC(color);$('colIn').value=cssC(color).toLowerCase();$('colHex').value=cssC(color);if(!noRecent)pushRecent(color)}
+
+/* seleção */
+const inSel=(x,y)=>sel&&x>=sel.x&&y>=sel.y&&x<sel.x+sel.w&&y<sel.y+sel.h;
+function regionCopy(rx,ry,w,h){const b=new Uint32Array(w*h),px=F().px;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const X=rx+x,Y=ry+y;b[y*w+x]=(X>=0&&Y>=0&&X<W&&Y<H)?px[Y*W+X]:TR}return b}
+function regionClear(rx,ry,w,h){for(let y=0;y<h;y++)for(let x=0;x<w;x++)put(rx+x,ry+y,0)}
+function blit(buf,w,h,ox,oy,skipBlack,dst){const px=dst||F().px;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const c=buf[y*w+x];if(c&TR||(skipBlack&&c===0))continue;const X=ox+x,Y=oy+y;if(X>=0&&Y>=0&&X<W&&Y<H)px[Y*W+X]=c}}
+function commitSel(){if(sel&&sel.buf){blit(sel.buf,sel.w,sel.h,sel.x,sel.y,$('blackT').checked);sel.buf=null;touch()}}
+function dropSel(){commitSel();sel=null}
+
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('pointerdown',e=>{
+  cv.setPointerCapture(e.pointerId);const[x,y]=cell(e),right=e.button===2,c=right?0:color;
+  if(e.altKey&&tool!=='sel'){setColor(F().px[y*W+x]);return}
+  if(tool==='sel'){
+    if(inSel(x,y)){if(!sel.buf){snap();sel.buf=regionCopy(sel.x,sel.y,sel.w,sel.h);if(!e.ctrlKey)regionClear(sel.x,sel.y,sel.w,sel.h)}drag={m:'move',ox:x-sel.x,oy:y-sel.y}}
+    else{commitSel();sel={x,y,w:1,h:1,buf:null};drag={m:'new',x0:x,y0:y}}
+    redraw();return}
+  if(tool==='pick'){setColor(F().px[y*W+x]);return}
+  if(tool==='stamp'){const s=SP.list.find(z=>z.id===SP.cur);if(!s){toast('Escolha um sprite na aba Sprites.');return}snap();blit(s.px,s.w,s.h,x-(s.w>>1),y-(s.h>>1),$('blackT').checked&&false);touch();return}
+  if(sel)dropSel();
+  snap();
+  if(tool==='fill'){flood(x,y,c,e.shiftKey);touch();return}
+  drag={m:tool,x0:x,y0:y,lx:x,ly:y,c};
+  if(tool==='pencil'||tool==='eraser'){plot(x,y,tool==='eraser'?0:c);touch(true)}
+  else{ov={pts:shapePts(tool,x,y,x,y,$('fillShape').checked),c};redraw()}
+});
+cv.addEventListener('pointermove',e=>{
+  const[x,y]=cell(e);hover=[x,y];$('coord').textContent=`x ${x}  y ${y}  ·  cor ${cssC(F().px[y*W+x])}`;
+  if(!drag){if(tool==='stamp'||['pencil','eraser'].includes(tool))redraw();return}
+  if(drag.m==='pencil'||drag.m==='eraser'){bres(drag.lx,drag.ly,x,y,(a,b)=>plot(a,b,drag.m==='eraser'?0:drag.c));drag.lx=x;drag.ly=y;touch(true)}
+  else if(drag.m==='new'){sel.x=Math.min(drag.x0,x);sel.y=Math.min(drag.y0,y);sel.w=Math.abs(x-drag.x0)+1;sel.h=Math.abs(y-drag.y0)+1;redraw()}
+  else if(drag.m==='move'){sel.x=x-drag.ox;sel.y=y-drag.oy;redraw()}
+  else{ov={pts:shapePts(drag.m,drag.x0,drag.y0,x,y,$('fillShape').checked),c:drag.c};redraw()}
+});
+cv.addEventListener('pointerleave',()=>{hover=null;redraw()});
+const endDrag=()=>{
+  if(!drag)return;
+  if(['line','rect','ellipse'].includes(drag.m)&&ov){for(const p of ov.pts){if($('symX').checked)put(W-1-p[0],p[1],drag.c);if($('symY').checked)put(p[0],H-1-p[1],drag.c);if($('symX').checked&&$('symY').checked)put(W-1-p[0],H-1-p[1],drag.c);put(p[0],p[1],drag.c)}ov=null}
+  drag=null;touch();
+};
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+
+/* ---------- quadros / linha do tempo ---------- */
+function thumb(cnv,px,w,h){cnv.width=w;cnv.height=h;const x=cnv.getContext('2d'),d=x.createImageData(w,h);for(let i=0;i<w*h;i++){const c=px[i];d.data[i*4]=c>>16&255;d.data[i*4+1]=c>>8&255;d.data[i*4+2]=c&255;d.data[i*4+3]=255}x.putImageData(d,0,0)}
+let dragFr=null,playIdx=-1;
+function renderTl(){
+  const t=$('tline');t.innerHTML='';
+  frames.forEach((f,i)=>{const d=document.createElement('div');d.className='th'+(i===cur?' on':'')+(i===playIdx?' play':'');d.draggable=true;d.dataset.i=i;
+    const c=document.createElement('canvas');thumb(c,f.px,W,H);d.appendChild(c);const n=document.createElement('div');n.className='n';n.textContent=(i+1)+' · '+f.ms+'ms';d.appendChild(n);
+    d.onclick=()=>{dropSel();cur=i;refreshAll()};
+    d.ondragstart=e=>{dragFr=i;try{e.dataTransfer.setData('text/plain',''+i)}catch(x){}};
+    d.ondragover=e=>{if(dragFr!==null){e.preventDefault();d.classList.add('over')}};d.ondragleave=()=>d.classList.remove('over');
+    d.ondrop=e=>{e.preventDefault();if(dragFr===null||dragFr===i)return;snap();const[m]=frames.splice(dragFr,1);frames.splice(i,0,m);cur=i;dragFr=null;refreshAll()};
+    t.appendChild(d)});
+  const on=t.querySelector('.th.on');if(on)on.scrollIntoView({block:'nearest',inline:'nearest'});
+  $('fMs').value=F().ms;
+}
+function refreshInfo(){const n=frames.length,tot=frames.reduce((s,f)=>s+f.ms,0);$('gInfo').textContent=`${n} quadro(s) · ${W}×${H} px · ${(tot/1000).toFixed(2)} s`;
+  $('cWarn').innerHTML=W*H>GIF_PX_LIMIT?`<div class="warnbox">${W}×${H} = ${W*H} pixels: a placa só toca GIFs de até ${GIF_PX_LIMIT} pixels por quadro (ex.: 16×16 ou 17×18). Dá para baixar o GIF, mas ele não vai tocar na placa.</div>`:''}
+function touch(light){redraw();drawPv(F().px);const c=document.querySelectorAll('.th')[cur];if(c){const cc=c.querySelector('canvas');thumb(cc,F().px,W,H)}
+  autosave();if(!light||true)liveEditor();refreshInfo()}
+function refreshAll(){redraw();renderTl();refreshInfo();drawPv(F().px);autosave();liveEditor()}
+function addFrame(px,at){snap();const f=newFrame(px);frames.splice(at===undefined?cur+1:at,0,f);cur=frames.indexOf(f);refreshAll()}
+function resizeProject(nw,nh){snap();dropSel();const old=frames;frames=old.map(f=>{const px=new Uint32Array(nw*nh);for(let y=0;y<Math.min(H,nh);y++)for(let x=0;x<Math.min(W,nw);x++)px[y*nw+x]=f.px[y*W+x];return{px,ms:f.ms}});W=nw;H=nh;layout();refreshAll()}
+
+/* transformações do quadro */
+function xform(k){commitSel();snap();const list=$('xAll').checked?frames:[F()];
+  for(const f of list){const o=f.px,n=new Uint32Array(W*H);
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=o[y*W+x];let X=x,Y=y;
+      if(k==='fh')X=W-1-x;else if(k==='fv')Y=H-1-y;else if(k==='sl')X=(x-1+W)%W;else if(k==='sr')X=(x+1)%W;else if(k==='su')Y=(y-1+H)%H;else if(k==='sd')Y=(y+1)%H;
+      else if(k==='inv'){n[y*W+x]=v^0xFFFFFF;continue}else if(k==='clr'){n[y*W+x]=0;continue}
+      else if(k==='rot'){if(W!==H){toast('Girar 90° só funciona em tela quadrada.');hist.pop();return}n[x*W+(W-1-y)]=v;continue}
+      n[Y*W+X]=v}
+    f.px.set(n)}
+  refreshAll()}
+
+/* ---------- ferramentas / paleta ---------- */
+const TOOLS=[['pencil','✏️','Lápis (P)','P'],['eraser','🧽','Borracha (E)','E'],['fill','🪣','Balde (B) — Shift troca todas iguais','B'],['line','📏','Linha (L)','L'],['rect','▭','Retângulo (R)','R'],['ellipse','◯','Elipse (O)','O'],['pick','💧','Conta-gotas (I)','I'],['sel','⬚','Seleção / mover (S)','S'],['stamp','🧩','Carimbo de sprite (T)','T']];
+function renderTools(){$('tools').innerHTML=TOOLS.map(t=>`<button class="tl-btn${tool===t[0]?' on':''}" data-t="${t[0]}" title="${t[2]}">${t[1]}<small>${t[3]}</small></button>`).join('')}
+function setTool(t){if(t!==tool&&tool==='sel')commitSel();tool=t;renderTools();redraw()}
+const PAL='000000 ffffff ff0000 ff5030 ff8c00 ffb020 ffee00 b6ff00 00ff00 00c060 00ffd0 38d6ff 0080ff 0000ff 7a5cff c000ff ff00ff ff5d9e 800000 804000 808000 004000 004040 000080 400060 600040 404040 808080 c0c0c0 e8d0a0 a0602a 602010'.split(' ').map(h=>parseInt(h,16));
+function renderPal(){$('pal').innerHTML=PAL.map(c=>`<button style="background:${cssC(c)}" data-c="${c}" title="${cssC(c)}"></button>`).join('')}
+function renderRecent(){$('recent').innerHTML=recent.map(c=>`<button style="background:${cssC(c)}" data-c="${c}"></button>`).join('')||'<span class="small mu" style="grid-column:1/-1">—</span>'}
+
+/* ---------- prévia e reprodução ---------- */
+function drawLed(cnv,px,w,h){const x=cnv.getContext('2d'),S=Math.min(cnv.width/w,cnv.height/h);x.fillStyle='#050608';x.fillRect(0,0,cnv.width,cnv.height);
+  const ox=(cnv.width-S*w)/2,oy=(cnv.height-S*h)/2;
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){const c=px?px[j*w+i]:0,cx=ox+(i+.5)*S,cy=oy+(j+.5)*S;
+    x.fillStyle=c?cssC(c):'#14171d';x.beginPath();x.arc(cx,cy,S*.4,0,6.3);x.fill();
+    if(c&&S>6){x.globalAlpha=.25;x.beginPath();x.arc(cx,cy,S*.5,0,6.3);x.fill();x.globalAlpha=1}}}
+function drawPv(px){drawLed($('pv'),px,W,H)}
+let playT=null,playing=false;
+function stopPlay(){clearTimeout(playT);playing=false;playIdx=-1;$('btnPlay').textContent='▶ Tocar';renderTl();drawPv(F().px)}
+function startPlay(){if(frames.length<2){toast('Crie mais de um quadro para tocar.');return}dropSel();playing=true;$('btnPlay').textContent='⏸ Parar';let k=0;
+  const list=()=>$('pingpong').checked&&frames.length>2?frames.map((f,i)=>i).concat(frames.map((f,i)=>i).slice(1,-1).reverse()):frames.map((f,i)=>i);
+  const step=()=>{if(!playing)return;const l=list(),i=l[k%l.length];k++;const f=frames[i]||frames[0];playIdx=i;
+    document.querySelectorAll('.th').forEach((d,n)=>d.classList.toggle('play',n===i));drawPv(f.px);if(LIVE.on&&LIVE.owner==='editor')liveSend(fitTo(f.px,W,H,LIVE.sw,LIVE.sh));
+    playT=setTimeout(step,Math.max(30,f.ms))};step()}
+
+/* ---------- GIF ---------- */
+function medianCut(pix){const map=new Map();for(let i=0;i<pix.length;i+=4){const c=(pix[i]<<16)|(pix[i+1]<<8)|pix[i+2];map.set(c,(map.get(c)||0)+1)}
+  let buckets=[Array.from(map,([rgb,count])=>({r:rgb>>16&255,g:rgb>>8&255,b:rgb&255,count}))];
+  while(buckets.length<256&&buckets.some(b=>b.length>1)){buckets.sort((a,b)=>b.length-a.length);const b=buckets.shift();
+    const ch=['r','g','b'].map(k=>({k,range:Math.max(...b.map(c=>c[k]))-Math.min(...b.map(c=>c[k]))})).reduce((a,c)=>a.range>c.range?a:c).k;
+    b.sort((a,c)=>a[ch]-c[ch]);const m=b.length>>1;buckets.push(b.slice(0,m),b.slice(m))}
+  return buckets.map(b=>{const t=b.reduce((s,c)=>s+c.count,0);return((Math.round(b.reduce((s,c)=>s+c.r*c.count,0)/t))<<16)|((Math.round(b.reduce((s,c)=>s+c.g*c.count,0)/t))<<8)|Math.round(b.reduce((s,c)=>s+c.b*c.count,0)/t)})}
+function makeGif(){
+  let list=frames.slice();if($('pingpong').checked&&list.length>2)list=list.concat(list.slice(1,-1).reverse());
+  const uniq=new Map();let over=false;for(const f of list){for(const c of f.px){if(!uniq.has(c)){uniq.set(c,uniq.size);if(uniq.size>256){over=true;break}}}if(over)break}
+  let pal,idxOf;
+  if(!over){pal=[...uniq.keys()];idxOf=c=>uniq.get(c)}
+  else{const all=new Uint8Array(list.length*W*H*4);list.forEach((f,k)=>{for(let i=0;i<W*H;i++){const c=f.px[i],o=(k*W*H+i)*4;all[o]=c>>16&255;all[o+1]=c>>8&255;all[o+2]=c&255}});
+    pal=medianCut(all);const cache=new Map();idxOf=c=>{let v=cache.get(c);if(v!==undefined)return v;let best=0,min=1e9;const r=c>>16&255,gg=c>>8&255,b=c&255;
+      for(let k=0;k<pal.length;k++){const p=pal[k],d=(r-(p>>16&255))**2+(gg-(p>>8&255))**2+(b-(p&255))**2;if(d<min){min=d;best=k}}cache.set(c,best);return best}}
+  let p2=2;while(p2<pal.length)p2<<=1;const palette=pal.slice();while(palette.length<p2)palette.push(palette[palette.length-1]||0);
+  const buf=[],wr=new GifWriter(buf,W,H,{palette,loop:0});
+  for(const f of list){const idx=new Uint8Array(W*H);for(let j=0;j<W*H;j++)idx[j]=idxOf(f.px[j]);wr.addFrame(0,0,W,H,idx,{delay:Math.max(2,Math.round(f.ms/10)),disposal:2})}
+  const len=wr.end();return{bytes:new Uint8Array(buf.slice(0,len)),colors:over?256:uniq.size};
+}
+async function boardGifs(){try{const l=await jget('/edit?list=/');return l.filter(f=>/\.gif$/i.test(f.name)).map(f=>f.name.replace(/^\//,''))}catch(e){return[]}}
+async function playOnMatrix(name){
+  try{if(LIVE.on)await liveStop();
+    const seg={id:0,start:0,stop:MW,startY:0,stopY:MH,grp:1,spc:0,of:0,on:true,frz:false,bri:255,cct:127,set:0,n:name,col:[[255,255,255],[0,0,0],[0,0,0]],fx:53,sx:128,ix:0,pal:0,c1:0,c2:0,c3:16,sel:true,rev:false,mi:false};
+    const segs=[seg];for(let k=1;k<4;k++)segs.push({id:k,stop:0});await jpost('/json/state',{on:true,pl:-1,seg:segs});toast(`Tocando ${name} na matriz.`,'ok')}
+  catch(e){toast('Erro ao tocar: '+e.message,'er')}}
+async function saveGif(){
+  const name=cleanName($('gname').value);if(!name){toast('Dê um nome ao GIF.','er');return}
+  if(typeof GifWriter==='undefined'){toast('O gerador de GIF não carregou.','er');return}
+  const file=name+'.gif';
+  if((await boardGifs()).includes(file)&&!(await modal({title:'Substituir arquivo?',body:`Já existe <b>${esc(file)}</b> na placa. Quer substituir?`,ok:'Substituir'})))return;
+  $('btnSave').disabled=true;
+  try{commitSel();const gf=makeGif();await upload(file,new Blob([gf.bytes],{type:'image/gif'}));toast(`${file} salvo na placa (${(gf.bytes.length/1024).toFixed(1)} KB, ${gf.colors} cores).`,'ok');if($('playAfter').checked)await playOnMatrix(file)}
+  catch(e){toast('Erro ao salvar: '+e.message,'er')}
+  $('btnSave').disabled=false}
+function download(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+
+/* ---------- importar ---------- */
+function fitDraw(src,sw,sh,tw,th,fit,smooth,ctx){ctx.imageSmoothingEnabled=smooth;ctx.imageSmoothingQuality='high';let dw=tw,dh=th,dx=0,dy=0;
+  if(fit!=='stretch'){const s=fit==='cover'?Math.max(tw/sw,th/sh):Math.min(tw/sw,th/sh);dw=sw*s;dh=sh*s;dx=(tw-dw)/2;dy=(th-dh)/2}ctx.drawImage(src,dx,dy,dw,dh)}
+function canvasToPx(c){const d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,px=new Uint32Array(c.width*c.height);for(let i=0;i<px.length;i++)px[i]=pack(d[i*4],d[i*4+1],d[i*4+2]);return px}
+function toFrameCanvas(src,sw,sh,tw,th,fit){const c=document.createElement('canvas');c.width=tw;c.height=th;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,tw,th);fitDraw(src,sw,sh,tw,th,fit||'contain',sw>tw*1.5||sh>th*1.5,x);return c}
+async function decodeGif(buf){await ensureGif();const r=new GifReader(new Uint8Array(buf)),w=r.width,h=r.height,out=[],work=new Uint8ClampedArray(w*h*4);
+  for(let i=0;i<r.numFrames();i++){const fi=r.frameInfo(i);r.decodeAndBlitFrameRGBA(i,work);const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(work),w,h),0,0);
+    out.push({cv:c,ms:Math.max(20,(fi.delay||10)*10)});if(fi.disposal===2){for(let y=fi.y;y<fi.y+fi.height;y++)for(let x=fi.x;x<fi.x+fi.width;x++)work.fill(0,(y*w+x)*4,(y*w+x)*4+4)}}
+  return{w,h,frames:out}}
+function loadImg(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>res(im);im.onerror=()=>rej(new Error('imagem inválida'));im.src=u})}
+function askImport(srcFrames,iw,ih,name){
+  return new Promise(res=>{const m=$('modal');
+    m.innerHTML=`<div class="mbox"><h3>Importar ${esc(name)}</h3><div class="small mu">Imagem ${iw}×${ih}${srcFrames.length>1?` · ${srcFrames.length} quadros`:''}.</div>
+      <div class="col" style="gap:8px;margin:10px 0">
+      <label class="col"><span class="lbl">O que fazer</span><select id="iMode"><option value="frames">${srcFrames.length>1?'Trazer os quadros do GIF':'Virar um quadro'}</option><option value="sheet">Folha de sprites → quadros</option><option value="sprites">Folha de sprites → sprites</option></select></label>
+      <div class="row" style="margin:0"><label class="col"><span class="lbl">Colunas</span><input type="number" id="iCols" value="4" min="1" max="64"></label><label class="col"><span class="lbl">Linhas</span><input type="number" id="iRows" value="1" min="1" max="64"></label>
+      <label class="col"><span class="lbl">Encaixe</span><select id="iFit"><option value="contain">Caber inteira</option><option value="cover">Preencher</option><option value="stretch">Esticar</option></select></label></div>
+      <label class="sw"><input type="checkbox" id="iRep"><i></i><span class="small">Substituir os quadros atuais</span></label></div>
+      <div class="row" style="justify-content:flex-end;margin-bottom:0"><button class="btn" id="mNo">Cancelar</button><button class="btn primary" id="mOk">Importar</button></div></div>`;
+    m.classList.remove('hide');
+    const close=v=>{m.classList.add('hide');m.innerHTML='';res(v)};
+    $('mNo').onclick=()=>close(null);
+    $('mOk').onclick=()=>close({mode:$('iMode').value,cols:clamp(+$('iCols').value|0,1,64),rows:clamp(+$('iRows').value|0,1,64),fit:$('iFit').value,rep:$('iRep').checked})})}
+async function importFile2(file){
+  try{
+    if(/\.(json|pxs)$/i.test(file.name)){const o=JSON.parse(await file.text());
+      if(o.sprites&&!o.frames){mergeSprites(o.sprites);return toast('Sprites importados.','ok')}
+      if(!(await modal({title:'Abrir projeto',body:'Isto substitui o que está no editor agora.',ok:'Abrir'})))return;snap();loadProject(o);layout();refreshAll();return toast('Projeto aberto.','ok')}
+    const isGif=/gif$/i.test(file.type)||/\.gif$/i.test(file.name);let src=[],iw,ih;
+    if(isGif){const d=await decodeGif(await file.arrayBuffer());src=d.frames;iw=d.w;ih=d.h}
+    else{const im=await loadImg(file);iw=im.naturalWidth;ih=im.naturalHeight;const c=document.createElement('canvas');c.width=iw;c.height=ih;c.getContext('2d').drawImage(im,0,0);src=[{cv:c,ms:100}]}
+    const o=await askImport(src,iw,ih,file.name);if(!o)return;
+    let out=[];
+    if(o.mode==='frames'){out=src.map(s=>({px:canvasToPx(toFrameCanvas(s.cv,iw,ih,W,H,o.fit)),ms:s.ms}))}
+    else{const cw=Math.floor(iw/o.cols),chh=Math.floor(ih/o.rows);
+      for(let r=0;r<o.rows;r++)for(let c=0;c<o.cols;c++){const cc=document.createElement('canvas');cc.width=cw;cc.height=chh;cc.getContext('2d').drawImage(src[0].cv,c*cw,r*chh,cw,chh,0,0,cw,chh);
+        if(o.mode==='sheet')out.push({px:canvasToPx(toFrameCanvas(cc,cw,chh,W,H,o.fit)),ms:+$('fMs').value||100});
+        else{const sz=Math.min(16,Math.max(cw,chh)),sc=Math.min(sz/cw,sz/chh,1),tw=Math.max(1,Math.round(cw*sc)),th=Math.max(1,Math.round(chh*sc));
+          const t=document.createElement('canvas');t.width=tw;t.height=th;const x=t.getContext('2d');fitDraw(cc,cw,chh,tw,th,'stretch',cw>tw*1.5,x);const d=x.getImageData(0,0,tw,th).data,px=new Uint32Array(tw*th);
+          for(let i=0;i<px.length;i++)px[i]=d[i*4+3]<100?TR:pack(d[i*4],d[i*4+1],d[i*4+2]);addSprite(`${cleanName(file.name)}-${r*o.cols+c+1}`,tw,th,px,true)}}
+      if(o.mode==='sprites'){renderSprites();toast('Sprites criados na aba Sprites.','ok');return}}
+    if(!out.length)return;snap();dropSel();
+    if(o.rep){frames=out;cur=0}else{frames.splice(cur+1,0,...out);cur=cur+1}
+    refreshAll();toast(`${out.length} quadro(s) importado(s).`,'ok');
+  }catch(e){toast('Não consegui importar: '+e.message,'er')}}
+
+/* ---------- sprites ---------- */
+const SP={list:[],cur:null,uid:1};
+function spSave(){try{localStorage.setItem('pxs.sprites',JSON.stringify(SP.list.map(s=>({id:s.id,name:s.name,w:s.w,h:s.h,px:Array.from(s.px,v=>v&TR?-1:v)}))))}catch(e){}}
+function spLoad(){try{const a=JSON.parse(localStorage.getItem('pxs.sprites')||'[]');SP.list=a.map(s=>({id:s.id,name:s.name,w:s.w,h:s.h,px:Uint32Array.from(s.px,v=>v<0?TR:v)}));SP.uid=Math.max(1,...SP.list.map(s=>s.id+1))}catch(e){}}
+function addSprite(name,w,h,px,silent){const ex=SP.list.find(s=>s.name===name);if(ex){ex.w=w;ex.h=h;ex.px=px;SP.cur=ex.id}else{const s={id:SP.uid++,name,w,h,px};SP.list.push(s);SP.cur=s.id}spSave();if(!silent){renderSprites();toast(`Sprite “${name}” salvo.`,'ok')}}
+function mergeSprites(arr){for(const s of arr){if(!s||!s.w||!s.h||!Array.isArray(s.px))continue;addSprite(String(s.name||'sprite').slice(0,28),s.w|0,s.h|0,Uint32Array.from(s.px,v=>v<0?TR:v),true)}spSave();renderSprites()}
+function drawSpriteThumb(cnv,s){cnv.width=s.w;cnv.height=s.h;const x=cnv.getContext('2d'),d=x.createImageData(s.w,s.h);for(let i=0;i<s.w*s.h;i++){const c=s.px[i];d.data[i*4]=c>>16&255;d.data[i*4+1]=c>>8&255;d.data[i*4+2]=c&255;d.data[i*4+3]=c&TR?0:255}x.putImageData(d,0,0)}
+function renderSprites(){
+  $('spCount').textContent=SP.list.length?`(${SP.list.length})`:'';
+  $('spGrid').innerHTML='';$('spEmpty').textContent=SP.list.length?'':'Nenhum sprite ainda. Selecione uma área no Editor e salve como sprite.';
+  for(const s of SP.list){const d=document.createElement('div');d.className='sp'+(s.id===SP.cur?' on':'');const c=document.createElement('canvas');drawSpriteThumb(c,s);d.appendChild(c);
+    const n=document.createElement('div');n.className='nm';n.textContent=`${s.name} (${s.w}×${s.h})`;d.appendChild(n);d.onclick=()=>{SP.cur=s.id;renderSprites()};$('spGrid').appendChild(d)}
+  const s=SP.list.find(z=>z.id===SP.cur),b=$('spSel');
+  if(!s){b.innerHTML='<h3>Sprite escolhido</h3><div class="small mu">Clique em um sprite da lista.</div>';return}
+  b.innerHTML=`<h3>Sprite escolhido: ${esc(s.name)} <span class="mu small">${s.w}×${s.h}</span></h3>
+    <div class="row"><button class="btn sm primary" data-a="use">🧩 Carimbar no editor</button><button class="btn sm" data-a="edit">✏️ Editar</button><button class="btn sm" data-a="ren">Renomear</button><button class="btn sm" data-a="dup">Duplicar</button><button class="btn sm danger" data-a="del">Excluir</button></div>
+    <div class="row" style="margin-top:0"><button class="btn sm" data-a="fh">↔ Espelhar</button><button class="btn sm" data-a="fv">↕ Virar</button><button class="btn sm" data-a="rot">⟳ Girar 90°</button></div>`;
+  b.querySelectorAll('[data-a]').forEach(btn=>btn.onclick=()=>spAction(btn.dataset.a,s));
+  $('mx1').value=Math.max(0,W-s.w);
+}
+async function spAction(a,s){
+  if(a==='use'){setTool('stamp');showTab('ed');toast('Clique no desenho para carimbar o sprite.')}
+  else if(a==='edit'){snap();dropSel();const px=new Uint32Array(W*H);blit(s.px,s.w,s.h,0,0,false,px);const f=newFrame(px);frames.splice(cur+1,0,f);cur=frames.indexOf(f);sel={x:0,y:0,w:Math.min(s.w,W),h:Math.min(s.h,H),buf:null};refreshAll();showTab('ed');setTool('pencil');toast('Sprite aberto em um quadro novo. Edite e use “Salvar seleção como sprite” com o mesmo nome para atualizar.','ok')}
+  else if(a==='ren'){const n=await modal({title:'Renomear sprite',input:true,value:s.name,ok:'Salvar'});const name=cleanName(n||'');if(name){s.name=name;spSave();renderSprites()}}
+  else if(a==='dup'){addSprite(s.name+'-2',s.w,s.h,s.px.slice())}
+  else if(a==='del'){if(await modal({title:'Excluir sprite?',body:`Excluir <b>${esc(s.name)}</b>?`,ok:'Excluir',danger:true})){SP.list=SP.list.filter(z=>z.id!==s.id);SP.cur=null;spSave();renderSprites()}}
+  else{const n=new Uint32Array(s.w*s.h);let nw=s.w,nh=s.h;
+    if(a==='rot'){nw=s.h;nh=s.w;for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++)n[x*nw+(nw-1-y)]=s.px[y*s.w+x]}
+    else for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++)n[(a==='fv'?s.h-1-y:y)*s.w+(a==='fh'?s.w-1-x:x)]=s.px[y*s.w+x];
+    s.w=nw;s.h=nh;s.px=n;spSave();renderSprites()}}
+async function spFromSel(){
+  const bl=$('spBlack').checked;let w,h,buf;
+  if(sel){w=sel.w;h=sel.h;buf=sel.buf?sel.buf.slice():regionCopy(sel.x,sel.y,w,h)}else return toast('Faça uma seleção com a ferramenta de seleção (S) primeiro.');
+  if(bl)for(let i=0;i<buf.length;i++)if(buf[i]===0)buf[i]=TR;
+  const n=await modal({title:'Nome do sprite',input:true,value:'sprite'+SP.uid,ok:'Salvar'});const name=cleanName(n||'');if(!name)return;addSprite(name,w,h,buf)}
+async function spFromFrame(){const buf=F().px.slice();if($('spBlack').checked)for(let i=0;i<buf.length;i++)if(buf[i]===0)buf[i]=TR;
+  const n=await modal({title:'Nome do sprite',input:true,value:'sprite'+SP.uid,ok:'Salvar'});const name=cleanName(n||'');if(!name)return;addSprite(name,W,H,buf)}
+async function spNew(){const n=await modal({title:'Novo sprite em branco',body:'Tamanho em pixels (largura × altura), separado por x. Ex.: 8x8',input:true,value:'8x8',ok:'Criar'});const m=/^(\d+)\s*[x×]\s*(\d+)$/i.exec((n||'').trim());if(!m)return;
+  const w=clamp(+m[1],1,W),h=clamp(+m[2],1,H),px=new Uint32Array(w*h).fill(TR);addSprite('sprite'+SP.uid,w,h,px);spAction('edit',SP.list.find(s=>s.id===SP.cur))}
+async function spToBoard(){try{await upload('pixelstudio-sprites.json',new Blob([JSON.stringify({sprites:SP.list.map(s=>({name:s.name,w:s.w,h:s.h,px:Array.from(s.px,v=>v&TR?-1:v)}))})],{type:'application/json'}));toast('Sprites guardados na placa.','ok')}catch(e){toast('Erro: '+e.message,'er')}}
+async function spFromBoard(){try{const j=await jget('/pixelstudio-sprites.json');mergeSprites(j.sprites||[]);toast('Sprites carregados da placa.','ok')}catch(e){toast('Não há sprites guardados na placa.','er')}}
+const EASE={lin:t=>t,in:t=>t*t,out:t=>1-(1-t)*(1-t),io:t=>t<.5?2*t*t:1-2*(1-t)*(1-t)};
+function genMotion(){
+  const s=SP.list.find(z=>z.id===SP.cur);if(!s)return toast('Escolha um sprite primeiro.','er');
+  const N=clamp(+$('mN').value|0,2,120),ms=clamp(+$('mMs').value|0,20,2000),x0=+$('mx0').value|0,y0=+$('my0').value|0,x1=+$('mx1').value|0,y1=+$('my1').value|0,ease=EASE[$('mEase').value],wrap=$('mWrap').checked;
+  const bg=$('mBg').value==='cur'?F().px.slice():new Uint32Array(W*H);const out=[];
+  const seq=[];for(let k=0;k<N;k++)seq.push(k/(N-1));if($('mBack').checked)for(let k=N-2;k>=1;k--)seq.push(k/(N-1));
+  for(const t of seq){const e=ease(t),x=Math.round(x0+(x1-x0)*e),y=Math.round(y0+(y1-y0)*e),px=bg.slice();
+    if(!wrap)blit(s.px,s.w,s.h,x,y,false,px);
+    else for(let j=0;j<s.h;j++)for(let i=0;i<s.w;i++){const c=s.px[j*s.w+i];if(c&TR)continue;px[(((y+j)%H+H)%H)*W+(((x+i)%W+W)%W)]=c}
+    out.push({px,ms})}
+  snap();dropSel();if($('mWhere').value==='replace'){frames=out;cur=0}else{frames.splice(cur+1,0,...out);cur++}
+  refreshAll();showTab('ed');toast(`${out.length} quadros criados. Toque ▶ para ver.`,'ok')}
+
+/* ---------- ao vivo na matriz (WebSocket) ---------- */
+const LIVE={on:false,ws:null,id:0,sw:16,sh:16,prev:null,saved:null,acks:0,sent:0,lastSend:0,owner:'',busy:false};
+function chipLive(){const c=$('chipLive');c.textContent=LIVE.on?'ao vivo: '+(LIVE.owner==='mirror'?'espelho':'editor'):'ao vivo: desligado';c.className='chip'+(LIVE.on?' good':'')}
+function openWs(){return new Promise((res,rej)=>{let done=false;const ws=new WebSocket(WSURL);ws.onopen=()=>{done=true;LIVE.ws=ws;LIVE.acks=0;LIVE.sent=0;res()};
+  ws.onmessage=()=>{LIVE.acks++};ws.onclose=()=>{if(LIVE.ws===ws)LIVE.ws=null};ws.onerror=()=>{if(!done)rej(new Error('WebSocket não abriu'))};setTimeout(()=>{if(!done){try{ws.close()}catch(e){}rej(new Error('tempo esgotado ao abrir o WebSocket'))}},4000)})}
+async function liveStart(owner){
+  if(LIVE.on){LIVE.owner=owner;chipLive();return true}
+  try{const st=await jget('/json/state');LIVE.saved=st;LIVE.id=0;LIVE.sw=MW;LIVE.sh=MH;
+    // assume a matriz inteira num único segmento (o relógio, por exemplo, usa vários); no fim a placa volta como estava
+    const segs=[{id:0,start:0,stop:MW,startY:0,stopY:MH,grp:1,spc:0,of:0,on:true,rev:false,mi:false,fx:0,frz:false}];
+    for(const s of st.seg||[])if(s.id>0)segs.push({id:s.id,stop:0});
+    await jpost('/json/state',{on:true,pl:-1,seg:segs}); // sai de GIF/efeito: libera a memória do decodificador
+    await sleep(350);await openWs();
+  }catch(e){toast('Não consegui ligar o modo ao vivo: '+e.message,'er');return false}
+  LIVE.on=true;LIVE.owner=owner;LIVE.prev=null;chipLive();return true}
+async function liveStop(){
+  if(!LIVE.on)return;LIVE.on=false;chipLive();$('liveSw').checked=false;
+  try{if(LIVE.ws)LIVE.ws.close()}catch(e){}LIVE.ws=null;const sv=LIVE.saved;
+  try{await jpost('/json/state',{seg:{id:0,frz:false}});
+    if(sv){if(sv.pl>=0)await jpost('/json/state',{pl:sv.pl});else if(sv.ps>0)await jpost('/json/state',{ps:sv.ps});
+      else await jpost('/json/state',{on:sv.on,bri:sv.bri,seg:(sv.seg||[]).map(s=>({id:s.id,start:s.start,stop:s.stop,startY:s.startY,stopY:s.stopY,grp:s.grp,spc:s.spc,of:s.of,on:s.on,bri:s.bri,col:s.col,fx:s.fx,sx:s.sx,ix:s.ix,pal:s.pal,c1:s.c1,c2:s.c2,c3:s.c3,o1:s.o1,o2:s.o2,o3:s.o3,n:s.n,sel:s.sel,rev:s.rev,mi:s.mi,frz:false}))})}}
+  catch(e){toast('Aviso ao restaurar a placa: '+e.message,'er')}}
+function fitTo(px,w,h,tw,th){if(w===tw&&h===th)return px;const o=new Uint32Array(tw*th);for(let y=0;y<Math.min(h,th);y++)for(let x=0;x<Math.min(w,tw);x++)o[y*tw+x]=px[y*w+x];return o}
+// A placa (ESP8266) só aceita mensagens WebSocket de até ~528 bytes: cada quadro vira várias mensagens pequenas.
+function encodeFrame(px,prev){const toks=[];let i=0;const n=px.length;
+  while(i<n){if(prev&&prev[i]===px[i]){i++;continue}const c=px[i];let j=i+1;while(j<n&&px[j]===c&&!(prev&&prev[j]===c))j++;
+    toks.push(j-i===1?i+',"'+hex6(c)+'"':i+','+j+',"'+hex6(c)+'"');i=j}
+  const msgs=[],head='{"seg":{"id":'+LIVE.id+',"i":[',tail=']}}';let cur2=[],len=head.length+tail.length;
+  for(const t of toks){if(len+t.length+1>470&&cur2.length){msgs.push(head+cur2.join(',')+tail);cur2=[];len=head.length+tail.length}cur2.push(t);len+=t.length+1}
+  if(cur2.length)msgs.push(head+cur2.join(',')+tail);return msgs}
+function liveReady(){const ws=LIVE.ws;if(!ws||ws.readyState!==1)return false;return ws.bufferedAmount<600&&(LIVE.sent-LIVE.acks<=3||Date.now()-LIVE.lastSend>600)}
+function liveSend(px){
+  if(!LIVE.on)return false;
+  if(!LIVE.ws||LIVE.ws.readyState>1){if(!LIVE.busy){LIVE.busy=true;openWs().then(()=>{LIVE.prev=null}).catch(()=>{}).finally(()=>{LIVE.busy=false})}return false}
+  if(!liveReady())return false;
+  const msgs=encodeFrame(px,LIVE.prev);if(!msgs.length)return true;
+  try{for(const m of msgs){LIVE.ws.send(m);LIVE.sent++}LIVE.prev=px.slice();LIVE.lastSend=Date.now()}catch(e){LIVE.prev=null;return false}
+  return true}
+let liveRetry=null;
+function liveEditor(){if(!LIVE.on||LIVE.owner!=='editor'||playing)return;clearTimeout(liveRetry);
+  const go=()=>{if(!LIVE.on||LIVE.owner!=='editor')return;if(!liveSend(fitTo(F().px,W,H,LIVE.sw,LIVE.sh)))liveRetry=setTimeout(go,60)};liveRetry=setTimeout(go,25)}
+
+/* ---------- espelho de tela ---------- */
+const MR={stream:null,video:document.createElement('video'),run:false,crop:null,timer:null,rec:0,recMax:0,lastPx:null,sentN:0,t0:0,drag:null,lut:null,size:[16,16]};
+const mrView=$('mrView');
+function mrSecureCheck(){const ok=window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia;
+  $('mrSecure').innerHTML=ok?'':`<div class="warnbox"><b>O navegador bloqueou a captura de tela nesta página.</b> Capturar a tela só é permitido em páginas seguras (https ou arquivo local), e a placa serve a página por http.<br>
+  <b>Solução:</b> baixe este arquivo e abra-o direto do computador (duplo clique). Ele pergunta o IP da placa na primeira vez.
+  <div class="row"><button class="btn primary" id="mrDownload">⬇ Baixar a ferramenta para abrir no PC</button></div></div>`;
+  const b=$('mrDownload');if(b)b.onclick=async()=>{try{const t=await (await fetch(location.href.split('?')[0],{cache:'no-store'})).text();download('pixelstudio.html',new Blob([t],{type:'text/html'}))}catch(e){toast('Erro: '+e.message,'er')}};
+  return !!ok}
+function mrAdj(){return{fps:+$('mrFps').value,br:+$('mrBr').value/100,co:+$('mrCo').value/100,sa:+$('mrSa').value/100,ga:+$('mrGa').value/100,fit:$('mrFit').value,fh:$('mrFlipH').checked,fv:$('mrFlipV').checked}}
+function mrSample(tw,th,a){
+  const v=MR.video;if(!v.videoWidth)return null;const c=MR.crop||{x:0,y:0,w:1,h:1};
+  let sx=c.x*v.videoWidth,sy=c.y*v.videoHeight,sw=Math.max(2,c.w*v.videoWidth),sh=Math.max(2,c.h*v.videoHeight);
+  const SS=clamp(Math.floor(128/Math.max(tw,th)),2,8),st=MR.stage||(MR.stage=document.createElement('canvas'));st.width=tw*SS;st.height=th*SS;
+  const x=st.getContext('2d',{willReadFrequently:true});x.fillStyle='#000';x.fillRect(0,0,st.width,st.height);x.imageSmoothingEnabled=true;x.imageSmoothingQuality='high';
+  let dx=0,dy=0,dw=st.width,dh=st.height;
+  if(a.fit==='contain'){const s=Math.min(st.width/sw,st.height/sh);dw=sw*s;dh=sh*s;dx=(st.width-dw)/2;dy=(st.height-dh)/2}
+  else if(a.fit==='cover'){const s=Math.max(st.width/sw,st.height/sh),nw=st.width/s,nh=st.height/s;sx+=(sw-nw)/2;sy+=(sh-nh)/2;sw=nw;sh=nh}
+  x.drawImage(v,sx,sy,sw,sh,dx,dy,dw,dh);
+  const d=x.getImageData(0,0,st.width,st.height).data,out=new Uint32Array(tw*th),n=SS*SS,lut=mrLut(a.ga);
+  for(let ty=0;ty<th;ty++)for(let tx=0;tx<tw;tx++){let r=0,g2=0,b=0;
+    for(let j=0;j<SS;j++){let o=((ty*SS+j)*st.width+tx*SS)*4;for(let i=0;i<SS;i++){r+=d[o];g2+=d[o+1];b+=d[o+2];o+=4}}
+    r/=n;g2/=n;b/=n;
+    const l=.299*r+.587*g2+.114*b;r=l+(r-l)*a.sa;g2=l+(g2-l)*a.sa;b=l+(b-l)*a.sa;
+    const k=a.br,cf=1+a.co;r=((r-128)*cf+128)*k;g2=((g2-128)*cf+128)*k;b=((b-128)*cf+128)*k;
+    const X=a.fh?tw-1-tx:tx,Y=a.fv?th-1-ty:ty;
+    out[Y*tw+X]=pack(lut[clamp(Math.round(r),0,255)],lut[clamp(Math.round(g2),0,255)],lut[clamp(Math.round(b),0,255)])}
+  return out}
+function mrLut(ga){if(MR.lut&&MR.lut.ga===ga)return MR.lut.t;const t=new Uint8Array(256);for(let i=0;i<256;i++)t[i]=Math.round(255*Math.pow(i/255,ga));MR.lut={ga,t};return t}
+function mrDrawView(){const v=MR.video;if(!v.videoWidth)return;const c=mrView,x=c.getContext('2d');c.height=Math.round(c.width*v.videoHeight/v.videoWidth);x.drawImage(v,0,0,c.width,c.height);
+  const r=MR.crop;if(r){x.fillStyle='#0009';x.fillRect(0,0,c.width,r.y*c.height);x.fillRect(0,(r.y+r.h)*c.height,c.width,c.height);x.fillRect(0,r.y*c.height,r.x*c.width,r.h*c.height);x.fillRect((r.x+r.w)*c.width,r.y*c.height,c.width,r.h*c.height);
+    x.strokeStyle='#ffb020';x.lineWidth=2;x.setLineDash([6,4]);x.strokeRect(r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);x.setLineDash([])}}
+async function mrTick(){
+  if(!MR.run)return;const a=mrAdj();MR.timer=setTimeout(mrTick,1000/a.fps);
+  const[tw,th]=MR.size,px=mrSample(tw,th,a);if(!px)return;mrDrawView();drawLed($('mrLed'),px,tw,th);MR.lastPx=px;
+  if($('mrSend').checked&&LIVE.on&&liveSend(px))MR.sentN++;
+  if(MR.rec>0){const f=newFrame(fitTo(px,tw,th,W,H));f.ms=Math.round(1000/a.fps);frames.push(f);MR.rec--;if(!MR.rec){cur=frames.length-1;refreshAll();toast('Gravação concluída: '+frames.length+' quadros no editor.','ok');$('mrRec').textContent='⏺ Gravar'}}
+  const now=Date.now();if(now-MR.t0>1000){$('mrInfo').textContent=`enviando ~${MR.sentN} quadros/s`;MR.sentN=0;MR.t0=now}}
+async function mrStart(){
+  if(!mrSecureCheck())return toast('Abra a ferramenta pelo arquivo baixado para capturar a tela.','er');
+  try{MR.stream=$('mrSrc').value==='cam'?await navigator.mediaDevices.getUserMedia({video:{width:640}}):await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15,cursor:'always'},audio:false})}
+  catch(e){return toast('Captura cancelada ou bloqueada: '+e.message,'er')}
+  MR.video.muted=true;MR.video.srcObject=MR.stream;try{await MR.video.play()}catch(e){}
+  MR.stream.getVideoTracks()[0].addEventListener('ended',mrStop);
+  if($('liveSw').checked){await liveStop()}
+  if(!(await liveStart('mirror'))){mrStop(true);return}
+  MR.size=[LIVE.sw,LIVE.sh];
+  try{const st=await jget('/json/state');$('mrBd').value=st.bri||64;$('vBd').textContent=st.bri}catch(e){}
+  MR.run=true;MR.t0=Date.now();$('mrStart').classList.add('hide');$('mrStop').classList.remove('hide');mrTick();toast('Espelho ligado.','ok')}
+async function mrStop(keepLive){
+  MR.run=false;clearTimeout(MR.timer);MR.rec=0;try{if(MR.stream)MR.stream.getTracks().forEach(t=>t.stop())}catch(e){}MR.stream=null;MR.video.srcObject=null;
+  $('mrStart').classList.remove('hide');$('mrStop').classList.add('hide');$('mrInfo').textContent='';$('mrRec').textContent='⏺ Gravar';
+  if(keepLive!==true&&LIVE.on&&LIVE.owner==='mirror')await liveStop();chipLive()}
+function mrPos(e){const r=mrView.getBoundingClientRect();return[clamp((e.clientX-r.left)/r.width,0,1),clamp((e.clientY-r.top)/r.height,0,1)]}
+mrView.addEventListener('pointerdown',e=>{if(!MR.run)return;mrView.setPointerCapture(e.pointerId);MR.drag=mrPos(e)});
+mrView.addEventListener('pointermove',e=>{if(!MR.drag)return;const p=mrPos(e),a=MR.drag;MR.crop={x:Math.min(a[0],p[0]),y:Math.min(a[1],p[1]),w:Math.abs(p[0]-a[0]),h:Math.abs(p[1]-a[1])}});
+mrView.addEventListener('pointerup',()=>{if(MR.crop&&(MR.crop.w<.03||MR.crop.h<.03))MR.crop=null;MR.drag=null});
+
+/* ---------- eventos ---------- */
+function showTab(k){document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===k));document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===k));if(k==='ed'){layout();redraw()}if(k==='sp')renderSprites();if(k==='mr')mrSecureCheck()}
+function keyHandler(e){
+  const tg=e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||!$('modal').classList.contains('hide'))return;
+  const edOn=document.querySelector('.pane.on').dataset.pane==='ed';if(!edOn)return;const k=e.key.toLowerCase();
+  if(e.ctrlKey||e.metaKey){
+    if(k==='z'){e.preventDefault();e.shiftKey?redoF():undo()}else if(k==='y'){e.preventDefault();redoF()}
+    else if(k==='c'||k==='x'){if(sel){e.preventDefault();const b=sel.buf?sel.buf.slice():regionCopy(sel.x,sel.y,sel.w,sel.h);clip={w:sel.w,h:sel.h,px:b};if(k==='x'){snap();if(sel.buf)sel.buf=null;else regionClear(sel.x,sel.y,sel.w,sel.h);sel=null;touch()}toast(k==='c'?'Copiado.':'Recortado.')}}
+    else if(k==='v'){if(clip){e.preventDefault();snap();commitSel();sel={x:0,y:0,w:clip.w,h:clip.h,buf:clip.px.slice()};setTool('sel');touch()}}
+    return}
+  const map={p:'pencil',e:'eraser',b:'fill',l:'line',r:'rect',o:'ellipse',i:'pick',s:'sel',t:'stamp'};
+  if(map[k]){setTool(map[k]);return}
+  if(k==='delete'||k==='backspace'){if(sel){e.preventDefault();snap();if(sel.buf)sel.buf=null;else regionClear(sel.x,sel.y,sel.w,sel.h);touch()}}
+  else if(k==='enter'){commitSel();redraw()}else if(k==='escape'){dropSel();redraw()}
+  else if(k===' '){e.preventDefault();playing?stopPlay():startPlay()}
+  else if(k==='['||k==='arrowleft'&&!sel){dropSel();cur=Math.max(0,cur-1);refreshAll()}
+  else if(k===']'||k==='arrowright'&&!sel){dropSel();cur=Math.min(frames.length-1,cur+1);refreshAll()}
+  else if(sel&&k.startsWith('arrow')){e.preventDefault();if(!sel.buf){snap();sel.buf=regionCopy(sel.x,sel.y,sel.w,sel.h);regionClear(sel.x,sel.y,sel.w,sel.h)}
+    sel.x+=k==='arrowleft'?-1:k==='arrowright'?1:0;sel.y+=k==='arrowup'?-1:k==='arrowdown'?1:0;touch()}}
+function initEvents(){
+  $('tabs').onclick=e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab)};
+  $('tools').onclick=e=>{const b=e.target.closest('button');if(b)setTool(b.dataset.t)};
+  $('pal').onclick=$('recent').onclick=e=>{const b=e.target.closest('button');if(b)setColor(+b.dataset.c)};
+  $('colIn').oninput=e=>setColor(fromHexStr(e.target.value),true);$('colIn').onchange=e=>pushRecent(fromHexStr(e.target.value));
+  $('colHex').onchange=e=>{const v=e.target.value.trim().replace('#','');if(/^[0-9a-f]{6}$/i.test(v))setColor(parseInt(v,16));else e.target.value=cssC(color)};
+  ['symX','symY','onion','grid','blackT'].forEach(id=>$(id).onchange=redraw);
+  $('fNew').onclick=()=>addFrame();
+  $('fDup').onclick=()=>{commitSel();addFrame(F().px.slice());frames[cur].ms=frames[cur-1].ms};
+  $('fDel').onclick=()=>{if(frames.length<2){snap();F().px.fill(0);return refreshAll()}snap();dropSel();frames.splice(cur,1);cur=Math.min(cur,frames.length-1);refreshAll()};
+  $('fL').onclick=()=>{if(cur>0){snap();[frames[cur-1],frames[cur]]=[frames[cur],frames[cur-1]];cur--;refreshAll()}};
+  $('fR').onclick=()=>{if(cur<frames.length-1){snap();[frames[cur+1],frames[cur]]=[frames[cur],frames[cur+1]];cur++;refreshAll()}};
+  $('fCopy').onclick=()=>{commitSel();clipFrame={px:F().px.slice(),ms:F().ms};toast('Quadro copiado.')};
+  $('fPaste').onclick=()=>{if(!clipFrame)return toast('Copie um quadro antes.');addFrame(clipFrame.px.slice());F().ms=clipFrame.ms;refreshAll()};
+  $('fMs').onchange=e=>{F().ms=clamp(+e.target.value|0,20,5000);refreshAll()};
+  $('fMsAll').onclick=()=>{snap();const v=clamp(+$('fMs').value|0,20,5000);frames.forEach(f=>f.ms=v);refreshAll()};
+  $('btnPlay').onclick=()=>playing?stopPlay():startPlay();
+  document.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>xform(b.dataset.x));
+  $('cApply').onclick=()=>{const w=clamp(+$('cw').value|0,1,64),h=clamp(+$('ch').value|0,1,64);if(w===W&&h===H)return;resizeProject(w,h)};
+  $('cMat').onclick=()=>{$('cw').value=MW;$('ch').value=MH;$('cApply').click()};
+  $('liveSw').onchange=async e=>{if(e.target.checked){if(MR.run){e.target.checked=false;return toast('O espelho está usando a matriz.')}if(!(await liveStart('editor')))e.target.checked=false;else liveEditor()}else await liveStop()};
+  $('btnSave').onclick=saveGif;
+  $('btnDl').onclick=()=>{const name=cleanName($('gname').value)||'pixelstudio';try{commitSel();const g2=makeGif();download(name+'.gif',new Blob([g2.bytes],{type:'image/gif'}))}catch(e){toast('Erro: '+e.message,'er')}};
+  $('btnPjSave').onclick=()=>{commitSel();download((cleanName($('gname').value)||'projeto')+'.pxs.json',new Blob([JSON.stringify(projectJson())],{type:'application/json'}));toast('Projeto baixado. Abra depois pelo botão “Abrir/importar”.','ok')};
+  $('btnImp').onclick=()=>$('impFile').click();$('impFile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importFile2(f)};
+  addEventListener('paste',e=>{const it=[...(e.clipboardData||{}).items||[]].find(i=>i.type.startsWith('image/'));if(it&&!['INPUT','TEXTAREA'].includes(e.target.tagName)){e.preventDefault();importFile2(it.getAsFile())}});
+  $('spFromSel').onclick=spFromSel;$('spFromFrame').onclick=spFromFrame;$('spNew').onclick=spNew;$('spToBoard').onclick=spToBoard;$('spFromBoard').onclick=spFromBoard;
+  $('spExport').onclick=()=>download('sprites.json',new Blob([JSON.stringify({sprites:SP.list.map(s=>({name:s.name,w:s.w,h:s.h,px:Array.from(s.px,v=>v&TR?-1:v)}))})],{type:'application/json'}));
+  $('mGo').onclick=genMotion;
+  $('mrStart').onclick=mrStart;$('mrStop').onclick=()=>mrStop();$('mrFull').onclick=()=>{MR.crop=null};
+  [['mrFps','vFps',v=>v],['mrBr','vBr',v=>v],['mrCo','vCo',v=>v],['mrSa','vSa',v=>v],['mrGa','vGa',v=>(v/100).toFixed(1)],['mrBd','vBd',v=>v]].forEach(([i,o,f])=>$(i).oninput=e=>{$(o).textContent=f(+e.target.value)});
+  $('mrBd').onchange=e=>{if(LIVE.ws&&LIVE.ws.readyState===1)LIVE.ws.send(JSON.stringify({bri:+e.target.value}))};
+  $('mrRec').onclick=()=>{if(!MR.run)return toast('Inicie o espelho antes.');if(MR.rec>0){MR.rec=0;$('mrRec').textContent='⏺ Gravar';return}
+    const n=clamp(+$('recN').value|0,2,120);if(frames.length===1&&!frames[0].px.some(v=>v)){frames=[]}snap();MR.rec=n;$('mrRec').textContent='■ Gravando…'};
+  $('mrSnap').onclick=()=>{if(!MR.lastPx)return toast('Inicie o espelho antes.');snap();const f=newFrame(fitTo(MR.lastPx,MR.size[0],MR.size[1],W,H));frames.splice(cur+1,0,f);cur++;refreshAll();toast('Quadro capturado.','ok')};
+  addEventListener('keydown',keyHandler);addEventListener('resize',()=>{layout();redraw()});
+  addEventListener('beforeunload',()=>{if(LIVE.on){try{navigator.sendBeacon&&0}catch(e){}}});
+}
+const fromHexStr=h=>parseInt(String(h).replace('#',''),16)&0xFFFFFF;
+async function ensureGif(){if(typeof GifWriter!=='undefined')return;
+  for(const s of [BASE+'/omggif.js','https://cdn.jsdelivr.net/npm/omggif@1.0.10/omggif.js']){try{await loadScript(s);if(typeof GifWriter!=='undefined')return}catch(e){}}
+  throw new Error('não carreguei o omggif')}
+async function boardInfo(){
+  try{INFO=await jget('/json/info');const m=INFO.leds&&INFO.leds.matrix;if(m){MW=m.w;MH=m.h}
+    $('chipConn').textContent='● '+(INFO.name||'placa')+' · '+Math.round(INFO.freeheap/1024*10)/10+' KB livres';$('chipConn').className='chip good';$('chipMat').textContent=`matriz ${MW}×${MH}`}
+  catch(e){$('chipConn').textContent='sem conexão com a placa'+(BASE?' ('+IP+')':'');$('chipConn').className='chip bad'}}
+(async function main(){
+  if(location.protocol==='file:'&&!IP){const v=await modal({title:'IP da placa',body:'Esta página está aberta pelo computador. Digite o IP da placa (aparece no WLED), por exemplo 192.168.0.170.',input:true,value:'192.168.0.',ok:'Conectar'});
+    if(v&&/^[\d.]+$/.test(v.trim())){try{localStorage.setItem('pxs.ip',v.trim())}catch(e){}location.search='?ip='+v.trim();return}}
+  initEvents();renderTools();renderPal();renderRecent();setColor(color,true);spLoad();
+  let restored=false;try{const s=localStorage.getItem('pxs.project');if(s){loadProject(JSON.parse(s));restored=true}}catch(e){}
+  await boardInfo();
+  if(!restored){W=MW<=64?MW:16;H=MH<=64?MH:16;$('cw').value=W;$('ch').value=H;frames=[newFrame()]}
+  showTab('ed');layout();refreshAll();renderSprites();mrSecureCheck();
+  try{await ensureGif()}catch(e){toast('Não consegui carregar o gerador de GIF (omggif.js).','er')}
+  if(restored)toast('Projeto anterior restaurado.','ok');
+})();
+</script>
+</body>
+</html>

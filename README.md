@@ -6,7 +6,7 @@ A set of changes on top of [WLED](https://github.com/wled/WLED) (17.0.0-devV5, c
 **16x16 LED matrix driven by a Wemos D1 R2 (ESP8266, 4 MB flash, ~80 KB RAM)**.
 
 WLED turns the Image/GIF effect off on the ESP8266 because the GIF decoder needs about 24 KB of RAM.
-This project makes it work, trims the firmware to leave room, and adds three web tools and an MQTT
+This project makes it work, trims the firmware to leave room, and adds four web tools and an MQTT
 rules engine, all running on the board itself.
 
 > Everything here was built and tested on a real board. It is a personal project, not an official WLED
@@ -22,13 +22,14 @@ rules engine, all running on the board itself.
 5. [Tool 1: Relógio LED (clock)](#tool-1-relógio-led-clock)
 6. [Tool 2: Estúdio de GIFs](#tool-2-estúdio-de-gifs)
 7. [Tool 3: Regras MQTT (rules)](#tool-3-regras-mqtt-rules)
-8. [MQTT rules usermod](#mqtt-rules-usermod)
-9. [Files and API used on the board](#files-and-api-used-on-the-board)
-10. [Build and install](#build-and-install)
-11. [Limitations](#limitations)
-12. [Security notes](#security-notes)
-13. [Not done](#not-done)
-14. [Repository layout](#repository-layout)
+8. [Tool 4: Pixel Estúdio (pixel art, sprites, GIF, screen mirror)](#tool-4-pixel-estúdio-pixel-art-sprites-gif-and-screen-mirror)
+9. [MQTT rules usermod](#mqtt-rules-usermod)
+10. [Files and API used on the board](#files-and-api-used-on-the-board)
+11. [Build and install](#build-and-install)
+12. [Limitations](#limitations)
+13. [Security notes](#security-notes)
+14. [Not done](#not-done)
+15. [Repository layout](#repository-layout)
 
 ## What you get
 
@@ -38,6 +39,7 @@ rules engine, all running on the board itself.
 | Lean firmware (MQTT kept; Alexa, Hue, IR, Adalight, Loxone removed) | `platformio_override.ini` |
 | Clock, date, weather, sensor, GIFs and effects as screens | tool **Relógio LED** |
 | Several images to one GIF, sprite sheets, categories | tool **Estúdio de GIFs** |
+| Pixel-art editor with frames, sprites, GIF export and **screen mirror** | tool **Pixel Estúdio** |
 | MQTT: message → action on the matrix; state change → message; time/weekday/temperature/humidity rules | usermod `mqtt_rules` + tool **Regras MQTT** |
 
 Firmware size on the D1 R2: flash 86.1 % (899,715 of 1,044,464 bytes), RAM 59.3 % static at build time,
@@ -47,8 +49,8 @@ about 17 KB of free heap when idle (see [memory](#the-esp8266-and-its-memory)).
 
 1. Build and flash the firmware ([Build and install](#build-and-install)).
 2. Open `http://BOARD-IP/` once, set the LED output (pin, 256 LEDs, colour order) and the 2D matrix size in the WLED settings.
-3. Upload the three tool pages (gzip files in `ferramentas/`) and register them in `pftools.json`.
-4. Open `http://BOARD-IP/relogio.htm` to build the clock, `/gifstudio.htm` to make GIFs, `/mqttrules.htm` to create MQTT rules.
+3. Upload the four tool pages (gzip files in `ferramentas/`) and register them in `pftools.json`.
+4. Open `http://BOARD-IP/relogio.htm` to build the clock, `/gifstudio.htm` to make GIFs, `/mqttrules.htm` to create MQTT rules, `/pixelstudio.htm` to draw, make sprites and mirror the screen.
 5. **Keep a single browser tab open on the board while a GIF is playing** (see [memory](#the-esp8266-and-its-memory)).
 
 ## What was changed, and why
@@ -320,6 +322,77 @@ A rule triggered by a value fires when the condition becomes true and only fires
 A test panel: send a **simulated message** (topic and content) to the board without any broker, and read the board's **log** of the last events (rules
 fired, messages received, errors). It also shows the exact command to publish from another client. (No screenshot: it shows the device topic.)
 
+## Tool 4: Pixel Estúdio (pixel art, sprites, GIF and screen mirror)
+
+A pixel-art editor in the spirit of WLED's own *Pixel Paint*, but complete: it has **frames**, a **sprite library**, saves **GIFs** to the board and can
+**mirror your computer screen** onto the matrix. Open `http://BOARD-IP/pixelstudio.htm`. The canvas starts at the matrix size (16x16) and can be changed (1 to 64).
+Everything you draw is saved in the browser automatically, so a closed tab does not lose the work.
+
+![Pixel Estúdio, editor](docs/img/pixelstudio-editor.jpg)
+
+### Tab ✏️ Editor
+
+- **Tools** (left bar, or the key in brackets): pencil `P`, eraser `E`, bucket `B` (Shift replaces every pixel of that colour), line `L`, rectangle `R`,
+  ellipse `O`, eyedropper `I`, selection and move `S`, sprite stamp `T`. Right mouse button erases; Alt+click picks a colour.
+- **Options**: brush 1 to 4 pixels, horizontal and vertical **symmetry**, filled shapes, **onion skin** (the previous frame in the background), grid,
+  and "black = transparent" for paste and stamp.
+- **Selection**: draw a rectangle, drag it to move (Ctrl while dragging copies), arrows nudge it, `Ctrl+C`, `Ctrl+X`, `Ctrl+V`, `Del`; `Enter` places it.
+- **Colour**: colour picker, hex field, 32 ready colours and the 16 most recent ones.
+- **Undo / redo**: `Ctrl+Z` / `Ctrl+Y`, 60 steps.
+- **Frames** (timeline under the canvas): new, duplicate, delete, move (buttons or drag), copy and paste a frame, time of each frame in ms
+  or one value for all, **play** with the preview (`Space`), optional ping-pong.
+- **Current frame**: flip, turn 90° (square canvas only), invert colours, clear, shift with wrap-around; the switch "em todos os quadros" applies it to every frame.
+- **Preview** in LED style, and **Ao vivo na matriz** (live): what you draw appears on the real matrix at once, and playing the animation plays it there too, with no
+  file saved.
+- **Save GIF**: name, "ping-pong", "play on the matrix afterwards" and **Gerar e salvar na placa** (it uploads the `.gif`, asks before replacing). Also **download the GIF**,
+  **save the project** (`.pxs.json`) and **open / import**.
+- **Import**: images (also pasted with `Ctrl+V`), animated GIFs (each frame becomes a frame) and sprite sheets (cut into frames or into sprites), and `.pxs.json` projects.
+- A canvas larger than 318 pixels per frame (for example 20x20) is allowed, but the board cannot play such a GIF; the tool warns about it.
+
+### Tab 🧩 Sprites
+
+![Pixel Estúdio, sprites](docs/img/pixelstudio-sprites.jpg)
+
+A sprite is a small drawing you reuse. Select an area in the editor and press **Salvar seleção como sprite** (or save the whole frame, or start a blank one).
+The library keeps them in the browser; **Guardar sprites na placa** writes `pixelstudio-sprites.json` so another computer can fetch them, and the list can be exported as JSON.
+
+- **Carimbar no editor** switches to the stamp tool: click to place the sprite, as many times as you like.
+- **Editar** opens the sprite in a new frame; save it again with the same name to update it.
+- Rename, duplicate, delete, flip, turn 90°.
+- **Animar sprite (movimento)** builds frames of a sprite moving from one point to another: start and end X/Y, number of frames, time, easing (constant, accelerating,
+  braking, smooth), background (the current frame or black), insert after the current frame or replace all, "wrap around the screen" and "come back" (there and back).
+  The result is normal frames, ready to edit and save as a GIF.
+
+### Tab 🖥 Espelho de tela (screen mirror)
+
+![Pixel Estúdio, screen mirror](docs/img/pixelstudio-mirror.jpg)
+
+Shows what is on your computer screen (a whole screen, a window or a browser tab) or the camera on the matrix, in real time. The screenshot above shows the warning the
+page gives when it is opened from the board, plus a synthetic test image.
+
+- **How it works**: the browser captures the video, crops the part you chose (drag on the image; "Tela inteira" resets), fits it to the matrix size by averaging the
+  pixels, applies the adjustments and sends only the pixels that changed over the WebSocket, in small messages (the ESP8266 accepts about 528 bytes per message).
+  It waits for the board to answer before sending more.
+- **Adjustments**: frames per second (1 to 20, default 8), image brightness, contrast, saturation, gamma, flip horizontal / vertical, fit (stretch, whole image, fill),
+  and the **board brightness**.
+- **Gravar no editor**: records N frames of the mirror as editor frames (so it becomes a GIF), or captures a single frame.
+- **Starting and stopping**: the mirror takes over the whole matrix as one segment. When you stop, the tool puts the board back as it was (the previous segments, preset or
+  playlist). If the clock was drawn by the Relógio LED page, it comes back when that page sends again.
+- **Screen capture needs a secure page.** The board serves its pages over plain `http`, and browsers only allow screen capture on `https` or on a local file. So the page shows a
+  button, **Baixar a ferramenta para abrir no PC**: save `pixelstudio.html`, double-click it, and type the board's IP the first time (or open it as `pixelstudio.html?ip=192.168.0.170`).
+  Everything else (drawing, saving, live) works from either page.
+
+### What was verified
+
+- On the board: drawing tools, undo, selection, sprite creation, the movement generator (8 frames), GIF creation (the generated GIF was read back: 16x16, 8 frames), saving to the
+  board and playing it.
+- Live editing: the matrix showed exactly the pixels drawn in the editor (compared pixel by pixel through the live view).
+- Mirror: tested with a synthetic video (red and blue halves and a moving white circle) in place of the screen. The matrix reproduced it at about 8 frames per second, with about 13.7 KB of
+  free heap during the test, and stopping restored the two-segment clock layout.
+- From another origin (`localhost` with `?ip=`) the page reached the board (info, WebSocket, upload and the GIF library), which is what the downloaded copy does.
+- **Not verified**: capturing a real screen or window (the browser asks the person for permission, which a script cannot give), the camera source, the downloaded copy opened as a
+  `file://` page, and touch screens.
+
 ## MQTT rules usermod
 
 `usermods/mqtt_rules` keeps the rules in `/mqttrules.jsonl` (one JSON object per line, up to 760
@@ -339,13 +412,14 @@ conditions on temperature gated correctly, and value-triggered rules fired once 
 
 | On the board (LittleFS) | What |
 |---|---|
-| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz` | the three tool pages |
+| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz`, `pixelstudio.htm.gz` | the four tool pages |
 | `pftools.json` | the list shown in PixelForge → *Other tools* |
 | `relogio-config.json` | state of the Clock tool |
 | `relogio-cfg-backup.json`, `relogio-presets-backup.json`, `mqtt-cfg-backup.json` | backups made before the tools change the configuration |
 | `gifstudio.json` | GIF categories and which category each GIF belongs to |
 | `mqttrules.jsonl` | the rules the usermod runs |
 | `mqttrules-ui.json` | the rules as shown in the tool (and the sensor topics) |
+| `pixelstudio-sprites.json` | sprites saved from Pixel Estúdio (optional) |
 | `*.gif` | your GIFs |
 
 The tools only use the normal WLED API: `/json/state`, `/json/info`, `/json/effects`, `/json/fxdata`, `/json/palettes`, `/presets.json`,
@@ -421,10 +495,15 @@ Tips learned the hard way:
 
 **Tools**
 - Made for a single-segment 16x16 matrix. Other sizes work in principle but were not tested.
-- PixelForge can rewrite `pftools.json` and drop the three custom entries; add them again if that happens.
+- PixelForge can rewrite `pftools.json` and drop the four custom entries; add them again if that happens.
 - The tools do not set the boot preset unless you tick it in the *Board and time* tab, so the clock does not start by itself after a reboot until you
   set a boot preset.
 - The interface is in Portuguese (Brazil).
+- **Pixel Estúdio**: the live mode and the mirror use one WebSocket and take the whole matrix as one segment, so the free heap drops by about 1 to 3 KB while they run; keep one tab open.
+- The mirror sends pixel by pixel through the JSON API, so it runs at about 8 frames per second (up to 20 is selectable, but the board may not keep up). It is not a video stream: for
+  smooth video use a DDP/E1.31 sender, which a web page cannot do (no UDP).
+- Screen capture only works from a secure page (see [the mirror tab](#tab--espelho-de-tela-screen-mirror)): download the page and open it from the computer.
+- Sprites and the autosaved project live in the browser's storage (per browser and per address); use *Guardar sprites na placa* or *Salvar projeto* to move them.
 
 ## Security notes
 
@@ -440,6 +519,7 @@ Tips learned the hard way:
 - Raw-frame streaming redesign (a way to push pixel data directly).
 - TLS for MQTT, DNS resolution fix.
 - Automatic boot into the clock.
+- Real screen-capture and camera tests of the mirror (only a synthetic video was tried), and a smooth-video mode with DDP/E1.31.
 - A smaller GIF decoder: a few hundred bytes could still be saved in the buffers, but not the 3 KB or more needed to let a GIF coexist with several browser tabs.
 
 ## Repository layout
@@ -448,7 +528,7 @@ Tips learned the hard way:
 patches/                 diff against WLED (commit in WLED_BASE_COMMIT.txt)
 lowram_libs/             AnimatedGIF (reduced tables) and GifDecoder (all architectures)
 usermods/mqtt_rules/     rules engine + readme
-ferramentas/             relogio, gifstudio, mqtt tools (source, build script, gzip)
+ferramentas/             relogio, gifstudio, mqtt, pixelstudio tools (source, build script, gzip)
 platformio_override.ini  build environments for the D1 R2
 docs/img/                screenshots and memory charts
 ```
