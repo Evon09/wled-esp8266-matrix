@@ -115,6 +115,10 @@ Editor do arquivo de regras usado pelo usermod. Abas: Conexão, Mensagem → aç
 - **Depois da ação:** voltar ao que estava rodando (relógio, GIF, efeito); no texto, **esperar terminar de rolar**;
   ou voltar a um preset fixo depois de N segundos.
 - Resposta MQTT opcional, aba *Testar* que simula uma mensagem sem broker e log dos últimos acionamentos.
+- **Regras por hora e clima** (aba *Por hora e clima*): disparam em um horário, a cada N minutos (com janela de horário
+  opcional) ou quando a temperatura/umidade mudar, nos dias da semana que você marcar. Condição opcional (por exemplo, só
+  se a temperatura passar de 28), ação opcional na matriz e mensagem MQTT opcional, que pode incluir `{hm}`, `{dw}`, `{t}`, `{h}`.
+- Fontes de temperatura/umidade: um tópico onde um sensor publica, ou o clima da cidade escolhida na ferramenta de relógio.
 - Atalhos para brokers públicos com aviso e botão que gera um tópico único.
 
 ## Usermod de regras MQTT
@@ -197,6 +201,11 @@ Outros prints (editor do relógio, Estúdio de GIFs, menu do PixelForge) podem s
 - As regras leem o arquivo a cada mensagem, então taxas muito altas de mensagens não são o objetivo.
 - Regras de evento cobrem só mudança de preset, energia e brilho.
 - "Esperar o texto" vale para o efeito Scrolling Text no segmento 0.
+- A placa não tem sensor de temperatura/umidade. Os valores vêm de um tópico MQTT ou do clima da ferramenta de relógio, que
+  só é enviado enquanto a página do relógio estiver aberta (e se perde ao reiniciar). Se as duas fontes forem usadas, vale a última a escrever.
+- As regras de hora só funcionam depois que a placa tem a hora (NTP) e usam o fuso configurado nela. Confira se o fuso está
+  certo: um fuso errado desloca todas as regras.
+- As regras disparadas por valor guardam o estado "armado" só para as 32 primeiras regras; o log mostra os últimos 6 eventos.
 
 **Ferramentas**
 - Feitas para uma matriz 16x16 de um segmento. Outros tamanhos funcionam em princípio, mas não foram testados.

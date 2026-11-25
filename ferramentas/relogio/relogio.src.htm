@@ -630,6 +630,7 @@ async function fetchWx(){
   const c=S.clima;if(c.lat==null||c.lon==null){log('Escolha a cidade primeiro.','er');return false}
   try{const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,relative_humidity_2m&timezone=auto`);
     const j=await r.json();W.t=Math.round(j.current.temperature_2m);W.h=Math.round(j.current.relative_humidity_2m);W.when=new Date();
+    jpost('/json/state',{mqttr:{set:{t:W.t,h:W.h}}}).catch(()=>{}); // as regras por hora do módulo MQTT podem usar esses valores
     updateWx();drawPreview();drawTimeline();updateBanners();return true}
   catch(e){log('Falha ao buscar o clima: '+e.message,'er');return false}
 }

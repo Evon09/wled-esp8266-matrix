@@ -24,7 +24,19 @@
  *  pt,pp publish pp (placeholders {p} {n}) on topic pt after running the rule
  *  ev  event source: ps = preset applied ({n} = preset id), pw = power (payload on/off), br = brightness ({n})
  *
+ *  Timed rule    (runs at a time / interval / when temperature or humidity changes):
+ *    {"k":"t","n":"name","tm":450,"iv":15,"tf":480,"tt":1320,"dw":62,"vr":"t","o":">","v":"28","a":"{...}","pt":"%dev%/hora","pp":"{hm} {t}"}
+ *  Value source  (stores a number published on a topic as temperature "t" or humidity "h"):
+ *    {"k":"v","n":"Temperatura","vr":"t","t":"home/room/temp"}
+ *
+ *  tm  minute of the day to fire at (0..1439); iv = fire every N minutes (only inside tf..tt, minutes of the day, when given)
+ *  dw  weekday mask, bit 0 = Sunday (default 127 = every day)
+ *  vr,o,v  condition on the value "t" or "h" (same operators as above); without tm/iv the rule fires when the condition
+ *      becomes true and re-arms when it turns false
+ *  extra placeholders: {t} {h} temperature / humidity, {hm} HH:MM, {dw} weekday (0 = Sunday)
+ *
  * Control through the JSON state API (/json/state):
+ *    {"mqttr":{"set":{"t":23.5,"h":60}}}             provide temperature / humidity from another source
  *    {"mqttr":{"reload":1}}                          re-read rules file and re-subscribe
  *    {"mqttr":{"test":{"t":"topic","p":"payload"}}}  simulate an incoming message (works without a broker)
  * Status is added to /json/info as "mqttr": {"n":rules,"hits":count,"con":connected,"log":[...]}
@@ -89,11 +101,37 @@ bool condOk(const char* op, const char* v, const char* p) {
   }
 }
 
-// replace %dev% by the device topic (topics) and {p} / {n} by the payload (actions, payloads)
+// values the timed rules can test: 0 = temperature, 1 = humidity (set by a "v" rule or through the JSON state API)
+float gVar[2] = {0, 0};
+bool gHas[2] = {false, false};
+int gMd = -1, gDw = 0; // current minute of the day (-1 = clock not set) and weekday (0 = Sunday)
+
+uint8_t varIdx(const char* s) { return (s && s[0] == 't' && !s[1]) ? 0 : (s && s[0] == 'h' && !s[1]) ? 1 : 255; }
+
+void fmtVar(uint8_t i, char* b, size_t n) {
+  if (i > 1 || !gHas[i]) snprintf(b, n, "--");
+  else if (gVar[i] == (float)(long)gVar[i]) snprintf(b, n, "%ld", (long)gVar[i]);
+  else snprintf(b, n, "%.1f", (double)gVar[i]);
+}
+
+// replace %dev% by the device topic (topics) and {p} / {n} by the payload; {t} {h} {hm} {dw} = temperature, humidity, HH:MM, weekday (0 = Sunday)
 void expand(const char* tpl, char* out, size_t n, const char* payload, bool jsonEscape) {
   size_t o = 0;
   for (const char* c = tpl; *c && o + 1 < n;) {
-    if (c[0] == '{' && c[1] == 'p' && c[2] == '}') {
+    if (c[0] == '{' && (c[1] == 't' || c[1] == 'h') && c[2] == '}') {
+      char b[12]; fmtVar(c[1] == 't' ? 0 : 1, b, sizeof(b));
+      o += snprintf(out + o, n - o, "%s", b);
+      if (o >= n) o = n - 1;
+      c += 3;
+    } else if (strncmp(c, "{hm}", 4) == 0) {
+      if (gMd >= 0) o += snprintf(out + o, n - o, "%02d:%02d", gMd / 60, gMd % 60); else o += snprintf(out + o, n - o, "--:--");
+      if (o >= n) o = n - 1;
+      c += 4;
+    } else if (strncmp(c, "{dw}", 4) == 0) {
+      o += snprintf(out + o, n - o, "%d", gDw);
+      if (o >= n) o = n - 1;
+      c += 4;
+    } else if (c[0] == '{' && c[1] == 'p' && c[2] == '}') {
       for (const char* q = payload; *q && o + 2 < n; q++) {
         if ((uint8_t)*q < 0x20) continue;
         if (jsonEscape && (*q == '"' || *q == '\\')) out[o++] = '\\';
@@ -136,6 +174,8 @@ class MqttRulesUsermod : public Usermod {
     MrMsg _testMsg;
     int _lastPs = -1, _lastBri = -1, _lastOn = -1;
     bool _first = true;
+    bool _varDirty = false, _tickDue = false;
+    uint32_t _armed = 0, _lastMin = 0; // _armed: bit per rule (first 32) of the value-triggered timed rules whose condition is currently true
 
     void addLog(const char* kind, const char* a, const char* b) {
       snprintf(_log[_logHead], MR_LOG_LEN, "%lus %s %s%s%s", millis() / 1000, kind, a, b && *b ? " = " : "", b ? b : "");
@@ -231,20 +271,74 @@ class MqttRulesUsermod : public Usermod {
         doc->clear();
         if (deserializeJson(*doc, line)) continue;
         JsonObject r = doc->as<JsonObject>();
-        if (strcmp(r["k"] | "m", "m") != 0 || !(r["e"] | 1)) continue;
+        const char* kind = r["k"] | "m";
+        bool isVar = strcmp(kind, "v") == 0;
+        if ((!isVar && strcmp(kind, "m") != 0) || !(r["e"] | 1)) continue;
         expand(r["t"] | "", ft, sizeof(ft), "", false);
         bool ok = topicMatch(ft, topic);
         if (!ok && topic[0] == '/') { // WLED strips its own prefix from device/group topics
           snprintf(full, sizeof(full), "%s%s", mqttDeviceTopic, topic); ok = topicMatch(ft, full);
           if (!ok && mqttGroupTopic[0]) { snprintf(full, sizeof(full), "%s%s", mqttGroupTopic, topic); ok = topicMatch(ft, full); }
         }
-        if (!ok || !condOk(r["o"] | "*", r["v"] | "", payload)) continue;
+        if (!ok) continue;
+        if (isVar) { // sensor binding: remember the number so timed rules can test it
+          uint8_t vi = varIdx(r["vr"] | "");
+          if (vi < 2 && (payload[0] == '-' || payload[0] == '.' || (payload[0] >= '0' && payload[0] <= '9'))) { setVar(vi, atof(payload)); any = true; addLog(vi ? "umidade:" : "temperatura:", topic, payload); }
+          continue;
+        }
+        if (!condOk(r["o"] | "*", r["v"] | "", payload)) continue;
         any = true; _hits++;
         char tag[40]; snprintf(tag, sizeof(tag), "regra %u:", idx);
         addLog(tag, topic, payload);
         runRule(r, payload);
       }
       if (!any) addLog("sem regra:", topic, payload);
+      f.close(); free(line); delete doc;
+    }
+
+    void setVar(uint8_t i, float v) { gVar[i] = v; gHas[i] = true; _varDirty = true; }
+
+    // runs the timed rules ("k":"t"). tm = minute of day to fire at, or iv = every N minutes (optionally only inside tf..tt);
+    // dw = weekday mask (bit 0 = Sunday); vr/o/v = condition on temperature ("t") or humidity ("h").
+    // Without tm/iv a rule is triggered by the value changing: it fires when the condition becomes true and re-arms when it turns false.
+    void handleTimed(bool varChange) {
+      File f = WLED_FS.open(MR_FILE, "r"); if (!f) return;
+      char* line = (char*)malloc(MR_LINE_MAX);
+      DynamicJsonDocument* doc = new DynamicJsonDocument(MR_DOC_SIZE);
+      if (!line || !doc) { free(line); delete doc; f.close(); return; }
+      uint16_t idx = 0;
+      while (nextLine(f, line, MR_LINE_MAX)) {
+        idx++;
+        doc->clear();
+        if (deserializeJson(*doc, line)) continue;
+        JsonObject r = doc->as<JsonObject>();
+        if (strcmp(r["k"] | "", "t") != 0 || !(r["e"] | 1)) continue;
+        uint8_t vi = varIdx(r["vr"] | "");
+        int tm = r["tm"] | -1, iv = r["iv"] | 0, dw = r["dw"] | 127, tf = r["tf"] | -1, tt = r["tt"] | -1;
+        bool timed = tm >= 0 || iv > 0;
+        bool dayOk = gMd >= 0 ? ((dw >> gDw) & 1) : dw == 127;
+        bool winOk = (tf < 0 || tt < 0) ? true : gMd < 0 ? false : (tf <= tt ? (gMd >= tf && gMd <= tt) : (gMd >= tf || gMd <= tt));
+        char val[16] = ""; bool condTrue = true;
+        if (vi < 2) { fmtVar(vi, val, sizeof(val)); condTrue = gHas[vi] && condOk(r["o"] | "*", r["v"] | "", val); }
+        if (timed) {
+          if (varChange || gMd < 0) continue;
+          bool hit = (tm >= 0 && gMd == tm) || (iv > 0 && gMd % iv == 0 && winOk);
+          if (!hit || !dayOk || !condTrue) continue;
+        } else {
+          if (!varChange || vi > 1) continue;
+          uint32_t bit = idx <= 32 ? (1UL << (idx - 1)) : 0;
+          bool wasArmed = (_armed & bit) != 0;
+          if (!condTrue) { _armed &= ~bit; continue; }
+          if (wasArmed || !dayOk || !winOk) continue;
+          _armed |= bit;
+        }
+        char pl[16];
+        if (vi < 2) strlcpy(pl, val, sizeof(pl)); else snprintf(pl, sizeof(pl), "%02d:%02d", gMd / 60, gMd % 60);
+        _hits++;
+        char tag[40]; snprintf(tag, sizeof(tag), "hora %u:", idx);
+        addLog(tag, "disparou", pl);
+        runRule(r, pl);
+      }
       f.close(); free(line); delete doc;
     }
 
@@ -285,7 +379,8 @@ class MqttRulesUsermod : public Usermod {
             doc->clear();
             if (deserializeJson(*doc, line)) continue;
             JsonObject r = doc->as<JsonObject>();
-            if (strcmp(r["k"] | "m", "m") != 0 || !(r["e"] | 1)) continue;
+            const char* kind = r["k"] | "m";
+            if ((strcmp(kind, "m") != 0 && strcmp(kind, "v") != 0) || !(r["e"] | 1)) continue;
             expand(r["t"] | "", ft, sizeof(ft), "", false);
             if (!ft[0] || strlen(ft) >= MR_SUB_LEN) continue;
             bool dup = false;
@@ -310,6 +405,12 @@ class MqttRulesUsermod : public Usermod {
     void loop() override {
       if (_reload) { _reload = false; subscribeAll(); }
       if (_revert && revertDue()) doRevert();
+      if (localTime > 1704067200UL) { // clock is set (after 2024-01-01)
+        uint32_t m = localTime / 60;
+        if (m != _lastMin) { bool first = _lastMin == 0; _lastMin = m; gMd = hour(localTime) * 60 + minute(localTime); gDw = weekday(localTime) - 1; if (!first) _tickDue = true; }
+      } else gMd = -1;
+      if (_tickDue) { _tickDue = false; handleTimed(false); return; }
+      if (_varDirty) { _varDirty = false; handleTimed(true); return; }
       if (_test) { _test = false; handleMessage(_testMsg.t, _testMsg.p); return; }
       if (_qh != _qt) { MrMsg m = _q[_qt]; _qt = (_qt + 1) % MR_Q; handleMessage(m.t, m.p); return; }
       if (_evDirty) { // detect which part of the state changed
@@ -337,6 +438,11 @@ class MqttRulesUsermod : public Usermod {
     void readFromJsonState(JsonObject& root) override {
       JsonObject o = root["mqttr"]; if (o.isNull()) return;
       if (o["reload"]) _reload = true;
+      JsonObject sv = o["set"]; // {"t":23.5,"h":60}: temperature / humidity from another source (for example the Clock tool's weather)
+      if (!sv.isNull()) {
+        if (!sv["t"].isNull()) setVar(0, sv["t"].as<float>());
+        if (!sv["h"].isNull()) setVar(1, sv["h"].as<float>());
+      }
       JsonObject t = o["test"];
       if (!t.isNull()) { strlcpy(_testMsg.t, t["t"] | "", MR_TOPIC_MAX); strlcpy(_testMsg.p, t["p"] | "", MR_PAYLOAD_MAX); _test = true; }
     }
@@ -344,6 +450,9 @@ class MqttRulesUsermod : public Usermod {
     void addToJsonInfo(JsonObject& root) override {
       JsonObject o = root.createNestedObject("mqttr");
       o["n"] = _rules; o["hits"] = _hits; o["con"] = WLED_MQTT_CONNECTED; o["subs"] = _nsubs;
+      o["clk"] = gMd >= 0; // false until the board knows the time
+      if (gHas[0]) o["vt"] = gVar[0];
+      if (gHas[1]) o["vh"] = gVar[1];
       JsonArray l = o.createNestedArray("log");
       for (uint8_t i = 0; i < _logN; i++) l.add(_log[(_logHead + MR_LOG_N - 1 - i) % MR_LOG_N]); // newest first
     }

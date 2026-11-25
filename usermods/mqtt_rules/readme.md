@@ -47,6 +47,26 @@ Event rule (runs when the board changes state):
 | `pt`, `pp` | publish `pp` on topic `pt` after the rule ran (`{p}`, `{n}` available) |
 | `ev` | event source: `ps` preset applied, `pw` power on/off, `br` brightness |
 
+Timed rule (hour, weekday, temperature, humidity):
+
+```json
+{"k":"t","n":"Hot afternoon","iv":15,"tf":720,"tt":1080,"dw":62,"vr":"t","o":">","v":"28","pt":"%dev%/alert","pp":"{hm} {t} C"}
+```
+
+| Key | Meaning |
+|---|---|
+| `tm` | fire at this minute of the day (0 to 1439, e.g. 450 = 07:30) |
+| `iv`, `tf`, `tt` | fire every `iv` minutes, optionally only between `tf` and `tt` (minutes of the day; the window may cross midnight) |
+| `dw` | weekday mask, bit 0 = Sunday (default 127 = every day) |
+| `vr`, `o`, `v` | condition on temperature (`t`) or humidity (`h`) with the same operators as message rules |
+| `a`, `d`, `r`, `b`, `w`, `pt`, `pp` | same as message rules; `pp` also accepts `{t}`, `{h}`, `{hm}` (HH:MM) and `{dw}` (0 = Sunday) |
+
+Without `tm` and `iv`, the rule is triggered by the value: it fires when the condition becomes true and fires again only after it turned false.
+Timed rules are evaluated once per minute (and when a value changes), and only after the board knows the time.
+
+Value source rule: `{"k":"v","n":"Temperature","vr":"t","t":"home/room/temp"}` stores every number published on that topic
+as the temperature (`vr":"h"` for humidity). The values can also be set with `{"mqttr":{"set":{"t":23.5,"h":60}}}`.
+
 Limits: 10 subscribed topics, 4 queued messages, 6 log lines.
 
 ## JSON API
@@ -60,7 +80,7 @@ Send to `/json/state`:
 
 `reload` re-reads the rules file and re-subscribes. `test` simulates an incoming message and works
 without a broker. Status appears in `/json/info` as `mqttr`: `n` rules, `hits`, `con` (broker
-connected), `subs`, `log` (newest first).
+connected), `subs`, `clk` (time known), `vt` / `vh` (current temperature / humidity, when set), `log` (newest first).
 
 ## Notes
 

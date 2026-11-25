@@ -92,6 +92,7 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
   <button data-tab="conn">🔌 Conexão</button>
   <button data-tab="rx">📥 Quando chegar mensagem</button>
   <button data-tab="tx">📤 Quando algo mudar</button>
+  <button data-tab="tm">⏰ Por hora e clima</button>
   <button data-tab="test">🧪 Testar</button>
 </nav>
 
@@ -157,6 +158,23 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
   </div>
 </section>
 
+<!-- ================= HORA E CLIMA ================= -->
+<section class="pane" data-pane="tm">
+  <div class="card">
+    <h2>De onde vêm a temperatura e a umidade?</h2>
+    <div class="hint">A placa não tem sensor. Para usar temperatura e umidade nas regras abaixo, escolha uma fonte: um <b>sensor que publica no MQTT</b> (por exemplo outra placa com DHT22), informando o tópico, ou o <b>clima da cidade</b> escolhida no Relógio LED, que é enviado à placa enquanto a página do relógio estiver aberta.</div>
+    <div class="row"><label class="sw"><input type="checkbox" data-b="sens.t.on"><i></i><span>Temperatura vem do tópico</span></label><input type="text" data-b="sens.t.topic" placeholder="ex.: casa/sala/temperatura" style="flex:1;min-width:220px"></div>
+    <div class="row"><label class="sw"><input type="checkbox" data-b="sens.h.on"><i></i><span>Umidade vem do tópico</span></label><input type="text" data-b="sens.h.topic" placeholder="ex.: casa/sala/umidade" style="flex:1;min-width:220px"></div>
+    <div class="small" id="varNow" style="margin-top:8px"></div>
+  </div>
+  <div class="card">
+    <h2>Por hora, dia da semana e clima</h2>
+    <div class="hint">Cada regra dispara em um horário, a cada tantos minutos ou quando a temperatura/umidade mudar, nos dias que você marcar. Pode ter uma condição (por exemplo, só se a temperatura passar de 28), mexer na matriz e publicar uma mensagem MQTT.</div>
+    <div id="tmList"></div>
+    <div class="row"><button class="btn primary" data-add="t">＋ Nova regra por hora</button></div>
+  </div>
+</section>
+
 <!-- ================= TESTAR ================= -->
 <section class="pane" data-pane="test">
   <div class="card">
@@ -195,7 +213,7 @@ const EVS=[['ps','um preset for aplicado'],['pw','a matriz ligar ou desligar'],[
 const TOK='__N__'; // marca de número sem aspas ({n})
 const MAX_LINE=740;
 let MW=16,MH=16,SEGN=1,INFO=null,CFG=null,dirty=false,pollT=null,tab='conn',GIFS=null,PRESETS=null,FXN=null,FXD=null,PALN=null,uid=0;
-const DEF={conn:{en:true,broker:'',port:1883,user:'',cid:'',dev:'',rtn:false},rules:[]};
+const DEF={conn:{en:true,broker:'',port:1883,user:'',cid:'',dev:'',rtn:false},rules:[],sens:{t:{on:false,topic:''},h:{on:false,topic:''}}};
 let S=JSON.parse(JSON.stringify(DEF));
 
 /* ---------- placa ---------- */
@@ -241,7 +259,10 @@ function parseFxd(s){const p=(s||'').split(';'),def={};(p[4]||'').split(',').for
 async function ensureFx(){if(FXN)return;try{FXN=await jget('/json/effects');FXD=(await jget('/json/fxdata')).map(parseFxd);PALN=await jget('/json/palettes')}catch(e){FXN=[];FXD=[];PALN=[]}}
 
 /* ---------- modelo das regras ---------- */
-const newRule=k=>k==='m'
+const DAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const newRule=k=>k==='t'
+  ?{id:++uid,kind:'t',name:'Nova regra de hora',on:true,days:[true,true,true,true,true,true,true],mode:'at',at:'07:00',iv:30,win:false,tf:'08:00',tt:'22:00',vr:'none',cond:'>',val:'28',topic:'%dev%/hora',payload:'{hm} {t}',pub:true,act:{type:'none'},back:{on:true,sec:6,ps:210,mem:true,wait:true}}
+  :k==='m'
   ?{id:++uid,kind:'m',name:'Nova regra',on:true,topic:'%dev%/texto',cond:'*',val:'',act:{type:'text',text:'{p}',col:'#ffffff',font:2,speed:128},back:{on:true,sec:6,ps:210,mem:true,wait:true},reply:{on:false,topic:'%dev%/resposta',payload:'ok'}}
   :{id:++uid,kind:'e',name:'Nova regra de aviso',on:true,ev:'ps',cond:'*',val:'',topic:'%dev%/evento',payload:'{n}'};
 const defAct=t=>({text:{type:'text',text:'{p}',col:'#ffffff',font:2,speed:128},gif:{type:'gif',file:'',fromPayload:false},fx:{type:'fx',fx:9,sx:128,ix:128,c1:128,c2:128,c3:16,pal:0,col:['#ff2a00','#000000','#0040ff']},
@@ -280,12 +301,13 @@ function actString(a){
 function checkAdv(s){try{JSON.parse(s.replace(/\{n\}/g,'0').replace(/\{p\}/g,'x'));return null}catch(e){return e.message}}
 function compile(){
   const lines=[],errors=[];
+  [['t','Temperatura'],['h','Umidade']].forEach(([k,n])=>{const x=S.sens[k];if(x.on){if(!x.topic)errors.push(n+': falta o tópico do sensor.');else lines.push(JSON.stringify({k:'v',n:n,vr:k,t:x.topic}))}});
   S.rules.forEach((r,i)=>{
     const where=`Regra “${r.name||i+1}”`;
     if(!r.topic&&r.kind==='m'){errors.push(where+': falta o tópico.');return}
     const o={k:r.kind,n:(r.name||'').slice(0,24)};
     if(!r.on)o.e=0;
-    if(r.cond!=='*'){o.o=r.cond;o.v=String(r.val||'')}
+    if(r.kind!=='t'&&r.cond!=='*'){o.o=r.cond;o.v=String(r.val||'')}
     if(r.kind==='m'){
       o.t=r.topic;const a=actString(r.act);
       if(r.act.type==='adv'){const e=checkAdv(a);if(e)errors.push(where+': o JSON avançado tem erro ('+e+').')}
@@ -293,12 +315,30 @@ function compile(){
       if(a)o.a=a;
       if(r.back.on&&r.act.type!=='none'){o.d=Math.max(1,+r.back.sec||1);o.r=JSON.stringify({ps:+r.back.ps});if(r.back.mem!==false)o.b=1;if(r.act.type==='text'&&r.back.wait!==false)o.w=1}
       if(r.reply.on){o.pt=r.reply.topic;o.pp=r.reply.payload}
+    }else if(r.kind==='t'){
+      const hm=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');return m?(+m[1])*60+(+m[2]):-1};
+      const mask=r.days.reduce((a,d,i)=>a+(d?1<<i:0),0);
+      if(!mask)errors.push(where+': marque pelo menos um dia da semana.');
+      if(mask!==127)o.dw=mask;
+      if(r.mode==='at'){const m=hm(r.at);if(m<0)errors.push(where+': escolha a hora.');else o.tm=m}
+      else if(r.mode==='every'){o.iv=Math.max(1,Math.min(1440,+r.iv||1))}
+      else if(r.vr==='none')errors.push(where+': “quando o valor mudar” precisa de temperatura ou umidade.');
+      if(r.mode!=='at'&&r.win){const a=hm(r.tf),b=hm(r.tt);if(a<0||b<0)errors.push(where+': escolha o início e o fim da janela.');else{o.tf=a;o.tt=b}}
+      if(r.vr!=='none'){o.vr=r.vr;o.o=r.cond;o.v=String(r.val||'')}
+      const a=actString(r.act);
+      if(r.act.type==='adv'){const e=checkAdv(a);if(e)errors.push(where+': o JSON avançado tem erro ('+e+').')}
+      if(r.act.type==='gif'&&!r.act.fromPayload&&!r.act.file)errors.push(where+': escolha um GIF.');
+      if(a)o.a=a;
+      if(a&&r.back.on){o.d=Math.max(1,+r.back.sec||1);o.r=JSON.stringify({ps:+r.back.ps});if(r.back.mem!==false)o.b=1;if(r.act.type==='text'&&r.back.wait!==false)o.w=1}
+      if(r.pub&&r.topic){o.pt=r.topic;o.pp=r.payload||''}
+      if(!a&&!(r.pub&&r.topic))errors.push(where+': escolha uma ação na matriz ou uma mensagem para publicar.');
     }else{o.ev=r.ev;o.pt=r.topic;o.pp=r.payload;if(!r.topic)errors.push(where+': falta o tópico de destino.')}
     const line=JSON.stringify(o);
     if(line.length>MAX_LINE)errors.push(`${where}: a regra ficou grande demais para a placa (${line.length} caracteres, máximo ${MAX_LINE}). Use textos mais curtos.`);
     lines.push(line);
   });
   const topics=new Set(S.rules.filter(r=>r.kind==='m'&&r.on&&r.topic).map(r=>r.topic));
+  ['t','h'].forEach(k=>{if(S.sens[k].on&&S.sens[k].topic)topics.add(S.sens[k].topic)});
   if(topics.size>10)errors.push(`Há ${topics.size} tópicos diferentes; a placa assina no máximo 10. Junte regras no mesmo tópico.`);
   return{lines,errors};
 }
@@ -332,14 +372,9 @@ function fxHtml(p,a){
   if(d.pal)h+=`<label class="col"><span class="lbl">Paleta</span><select data-b="${p}.act.pal" data-t="n">${(PALN||[]).map((n,i)=>`<option value="${i}">${esc(n)}</option>`).join('')}</select></label>`;
   return h;
 }
-function ruleHtml(r,i){
-  const p=`rules.${i}`,m=r.kind==='m';
-  let h=`<div class="rule ${r.on?'':'off'}" data-i="${i}"><div class="rhead"><label class="sw"><input type="checkbox" data-b="${p}.on"><i></i></label><input type="text" data-b="${p}.name" maxlength="24" placeholder="Nome da regra">
-    <button class="ib" data-up="${i}" title="Subir">▲</button><button class="ib" data-down="${i}" title="Descer">▼</button><button class="ib" data-dup="${i}" title="Duplicar">⧉</button><button class="ib" data-del="${i}" title="Apagar">✕</button></div>`;
-  if(m){
-    h+=`<div class="sect"><b>1 · Quando chegar uma mensagem em</b><div class="row"><label class="col" style="flex:1;min-width:230px"><span class="lbl">Tópico (<span class="tag">%dev%</span> = tópico da placa · <span class="tag">+</span> e <span class="tag">#</span> valem como curinga)</span><input type="text" data-b="${p}.topic"></label>${condHtml(p,r)}</div></div>
-    <div class="sect"><b>2 · A matriz faz</b><div class="row">${actHtml(p,r.act)}</div></div>`;
-    if(r.act.type!=='none'){
+function backHtml(p,r){
+  let h='';
+  if(r.act.type!=='none'){
       const txt=r.act.type==='text',bk=r.back,waiting=txt&&bk.wait!==false,mem=bk.mem!==false;
       h+=`<div class="sect"><b>3 · Depois</b><div class="row"><label class="sw"><input type="checkbox" data-b="${p}.back.on"><i></i><span>Voltar ao que estava antes</span></label></div>`;
       if(bk.on){
@@ -350,8 +385,35 @@ function ruleHtml(r,i){
       }
       h+='</div>';
     }
+  return h;
+}
+function timedHtml(p,r){
+  const VR=[['none','Sem condição'],['t','a temperatura'],['h','a umidade']],OPS=[['>','for maior que'],['<','for menor que'],['=','for igual a'],['r','estiver entre (a,b)']];
+  const h=`<div class="sect"><b>1 · Quando</b><div class="row"><label class="col"><span class="lbl">Disparar</span><select data-b="${p}.mode"><option value="at">Em um horário</option><option value="every">A cada tantos minutos</option><option value="change">Quando temperatura ou umidade mudar</option></select></label>
+    ${r.mode==='at'?`<label class="col"><span class="lbl">Hora</span><input type="time" data-b="${p}.at" style="min-width:120px"></label>`:''}
+    ${r.mode==='every'?`<label class="col"><span class="lbl">A cada (minutos)</span><input type="number" min="1" max="1440" data-b="${p}.iv" data-t="n"></label>`:''}</div>
+    <div class="row"><span class="lbl" style="margin-right:4px">Nos dias:</span>${DAYS.map((d,i)=>`<label class="sw" style="gap:5px"><input type="checkbox" data-b="${p}.days.${i}"><i style="width:34px"></i><span>${d}</span></label>`).join('')}</div>
+    ${r.mode!=='at'?`<div class="row"><label class="sw"><input type="checkbox" data-b="${p}.win"><i></i><span>Só dentro de uma janela de horário</span></label>${r.win?`<span class="mu">das</span><input type="time" data-b="${p}.tf" style="min-width:110px"><span class="mu">até</span><input type="time" data-b="${p}.tt" style="min-width:110px">`:''}</div>`:''}</div>
+  <div class="sect"><b>2 · Só se… (opcional)</b><div class="row"><label class="col"><span class="lbl">Condição</span><select data-b="${p}.vr">${VR.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select></label>
+    ${r.vr!=='none'?`<label class="col"><span class="lbl">Se for…</span><select data-b="${p}.cond">${OPS.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select></label><label class="col"><span class="lbl">${r.cond==='r'?'a,b':'valor'}</span><input type="text" data-b="${p}.val" style="min-width:100px;width:110px"></label>`:'<span class="small mu">Sem condição, vale sempre.</span>'}</div></div>
+  <div class="sect"><b>3 · A matriz faz (opcional)</b><div class="row">${actHtml(p,r.act)}</div></div>
+  ${backHtml(p,r)}
+  <div class="sect"><b>${r.act.type==='none'?'3':'4'} · Publicar uma mensagem</b><div class="row"><label class="sw"><input type="checkbox" data-b="${p}.pub"><i></i><span>Publicar no MQTT</span></label>
+    ${r.pub?`<label class="col" style="flex:1;min-width:200px"><span class="lbl">Tópico</span><input type="text" data-b="${p}.topic"></label><label class="col" style="flex:1;min-width:200px"><span class="lbl">Conteúdo (<span class="tag">{hm}</span> hora · <span class="tag">{dw}</span> dia 0=dom · <span class="tag">{t}</span> temp. · <span class="tag">{h}</span> umid.)</span><input type="text" data-b="${p}.payload"></label>`:''}</div></div>`;
+  return h;
+}
+function ruleHtml(r,i){
+  const p=`rules.${i}`,m=r.kind==='m';
+  let h=`<div class="rule ${r.on?'':'off'}" data-i="${i}"><div class="rhead"><label class="sw"><input type="checkbox" data-b="${p}.on"><i></i></label><input type="text" data-b="${p}.name" maxlength="24" placeholder="Nome da regra">
+    <button class="ib" data-up="${i}" title="Subir">▲</button><button class="ib" data-down="${i}" title="Descer">▼</button><button class="ib" data-dup="${i}" title="Duplicar">⧉</button><button class="ib" data-del="${i}" title="Apagar">✕</button></div>`;
+  if(m){
+    h+=`<div class="sect"><b>1 · Quando chegar uma mensagem em</b><div class="row"><label class="col" style="flex:1;min-width:230px"><span class="lbl">Tópico (<span class="tag">%dev%</span> = tópico da placa · <span class="tag">+</span> e <span class="tag">#</span> valem como curinga)</span><input type="text" data-b="${p}.topic"></label>${condHtml(p,r)}</div></div>
+    <div class="sect"><b>2 · A matriz faz</b><div class="row">${actHtml(p,r.act)}</div></div>`;
+    h+=backHtml(p,r);
     h+=`<div class="sect"><b>${r.act.type==='none'?'3':'4'} · Responder</b><div class="row"><label class="sw"><input type="checkbox" data-b="${p}.reply.on"><i></i><span>Publicar uma resposta</span></label>
       ${r.reply.on?`<label class="col" style="flex:1;min-width:200px"><span class="lbl">Tópico</span><input type="text" data-b="${p}.reply.topic"></label><label class="col" style="flex:1;min-width:160px"><span class="lbl">Conteúdo (<span class="tag">{p}</span> = o recebido)</span><input type="text" data-b="${p}.reply.payload"></label>`:''}</div></div>`;
+  }else if(r.kind==='t'){
+    h+=timedHtml(p,r);
   }else{
     h+=`<div class="sect"><b>1 · Quando</b><div class="row"><label class="col"><span class="lbl">Evento</span><select data-b="${p}.ev">${EVS.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select></label>${condHtml(p,r)}</div></div>
     <div class="sect"><b>2 · Publicar em</b><div class="row"><label class="col" style="flex:1;min-width:230px"><span class="lbl">Tópico</span><input type="text" data-b="${p}.topic"></label>
@@ -360,7 +422,8 @@ function ruleHtml(r,i){
   return h+'</div>';
 }
 function renderRules(){
-  const rx=[],tx=[];S.rules.forEach((r,i)=>(r.kind==='m'?rx:tx).push(ruleHtml(r,i)));
+  const rx=[],tx=[],tm=[];S.rules.forEach((r,i)=>(r.kind==='m'?rx:r.kind==='t'?tm:tx).push(ruleHtml(r,i)));
+  $('tmList').innerHTML=tm.join('')||'<div class="small mu" style="margin:8px 0">Nenhuma regra por hora ainda.</div>';
   $('rxList').innerHTML=rx.join('')||'<div class="small mu" style="margin:8px 0">Nenhuma regra ainda. Crie uma ou veja os “Exemplos prontos”.</div>';
   $('txList').innerHTML=tx.join('')||'<div class="small mu" style="margin:8px 0">Nenhuma regra de aviso ainda.</div>';
   fillForm();loadThumbs();
@@ -377,7 +440,7 @@ function onInput(e){
   if(!isConn)markDirty();
   const mt=/^rules\.(\d+)\.act\.type$/.exec(path);
   if(mt){const r=S.rules[+mt[1]];r.act=defAct(v);if(v==='gif'||v==='preset'||v==='fx')prepare(v).then(renderRules);else renderRules()}
-  else if(/\.(cond|on|fromPayload|mode|ev|cat)$/.test(path)||/\.(back|reply)\.(on|wait|mem)$/.test(path)||/act\.fx$/.test(path)||/rules\.\d+\.act\.state$/.test(path)){if(/act\.fx$/.test(path)){const a=S.rules[+path.split('.')[1]].act;applyFxDefaults(a)}renderRules()}
+  else if(/\.(cond|on|fromPayload|mode|ev|cat|win|vr|pub)$/.test(path)||/\.(back|reply)\.(on|wait|mem)$/.test(path)||/act\.fx$/.test(path)||/rules\.\d+\.act\.state$/.test(path)){if(/act\.fx$/.test(path)){const a=S.rules[+path.split('.')[1]].act;applyFxDefaults(a)}renderRules()}
   save();updateSaveBar();
 }
 async function prepare(t){if(t==='gif')await ensureGifs();if(t==='preset')await ensurePresets();if(t==='fx')await ensureFx()}
@@ -393,6 +456,7 @@ function updateChips(){
   c.textContent='● placa conectada';c.className='chip good';
   const m=INFO.mqttr;if(!m){$('chipMqtt').textContent='módulo MQTT ausente no firmware';$('chipMqtt').className='chip bad';return}
   $('chipMqtt').textContent=m.con?'MQTT: conectado ao broker':'MQTT: desconectado';$('chipMqtt').className='chip '+(m.con?'good':'warn');
+  const vn=$('varNow');if(vn){const f=x=>x===undefined?'sem valor ainda':x;vn.innerHTML=`Agora na placa: temperatura <b>${f(m.vt)}</b> · umidade <b>${f(m.vh)}</b> · hora ${m.clk?'<b>conhecida</b>':'<b style="color:var(--er)">ainda não sincronizada (as regras de hora só funcionam depois que a placa acerta o relógio)</b>'}`}
   $('chipRules').textContent=`${m.n} regra(s) na placa · ${m.hits} acionada(s)`;
 }
 
@@ -404,7 +468,7 @@ async function saveRules(){
   try{
     if(lines.length)await upload('mqttrules.jsonl',lines.join('\n')+'\n');
     else{try{await fetch(BASE+'/edit?func=delete&path='+encodeURIComponent('/mqttrules.jsonl'))}catch(e){}} // sem regras: apaga o arquivo
-    await upload('mqttrules-ui.json',JSON.stringify({rules:S.rules}));
+    await upload('mqttrules-ui.json',JSON.stringify({rules:S.rules,sens:S.sens}));
     await jpost('/json/state',{mqttr:{reload:1}});await sleep(1500);
     INFO=await jget('/json/info');updateChips();dirty=false;updateSaveBar();
     const m=INFO.mqttr;toast(`Salvo! ${m?m.n:lines.length} regra(s) na placa${m&&m.con?'':' (MQTT ainda desconectado: ligue-o na aba Conexão)'}.`,'ok');
@@ -440,7 +504,7 @@ async function poll(){
 function showTab(k){tab=k;document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===k));document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===k));
   clearInterval(pollT);pollT=null;
   if(k==='test'){const first=S.rules.find(r=>r.kind==='m');if(!$('tTopic').value)$('tTopic').value=first?first.topic:'%dev%/texto';cmdHint();poll();pollT=setInterval(poll,2500)}
-  if(k==='rx'||k==='tx'){Promise.all([ensurePresets(),ensureGifs(),ensureFx()]).then(renderRules)}
+  if(k==='rx'||k==='tx'||k==='tm'){Promise.all([ensurePresets(),ensureGifs(),ensureFx()]).then(renderRules)}
   $('saveBar').classList.toggle('hide',k==='conn')}
 function openExamples(btn){
   closeMenu();const r=btn.getBoundingClientRect(),m=document.createElement('div');m.className='menu';m.id='menu';
@@ -478,8 +542,8 @@ function initEvents(){
 }
 (async function main(){
   initEvents();
-  try{const l=localStorage.getItem('mqttrules');if(l){const o=JSON.parse(l);if(o&&Array.isArray(o.rules))S.rules=o.rules}}catch(e){}
-  if(await exists('/mqttrules-ui.json')){try{const b=await jget('/mqttrules-ui.json');if(b&&Array.isArray(b.rules))S.rules=b.rules}catch(e){}}
+  try{const l=localStorage.getItem('mqttrules');if(l){const o=JSON.parse(l);if(o&&Array.isArray(o.rules)){S.rules=o.rules;if(o.sens)S.sens=o.sens}}}catch(e){}
+  if(await exists('/mqttrules-ui.json')){try{const b=await jget('/mqttrules-ui.json');if(b&&Array.isArray(b.rules))S.rules=b.rules;if(b&&b.sens)S.sens=b.sens}catch(e){}}
   S.rules.forEach(r=>{r.id=++uid;if(r.back){if(r.back.mem===undefined)r.back.mem=true;if(r.back.wait===undefined)r.back.wait=true}});
   showTab('conn');await load();renderRules();dirty=false;updateSaveBar();
 })();

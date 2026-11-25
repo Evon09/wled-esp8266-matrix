@@ -115,6 +115,10 @@ Editor for the rules file used by the usermod. Tabs: Connection, Message → act
 - **After the action:** go back to what was running before (the clock, a GIF, an effect); for text, **wait
   until it finishes scrolling**; or return to a fixed preset after N seconds.
 - Optional MQTT reply, a *Test* tab that simulates a message without a broker, and a log of the last hits.
+- **Time and weather rules** (tab *Por hora e clima*): fire at a time, every N minutes (optionally inside a time window)
+  or when temperature/humidity changes, on the weekdays you tick. Optional condition (for example only if the
+  temperature is above 28), an optional matrix action and an optional MQTT message that can include `{hm}`, `{dw}`, `{t}`, `{h}`.
+- Temperature/humidity sources: a topic where a sensor publishes, or the weather of the city chosen in the Clock tool.
 - Presets for public brokers with a warning, and a button that generates a unique topic.
 
 ## MQTT rules usermod
@@ -197,6 +201,11 @@ More screenshots (clock editor, GIF studio, PixelForge menu) can be added in `do
 - Rules read the file on every message, so very high message rates are not a goal.
 - Event rules cover preset changes, power and brightness only.
 - "Wait for text" applies to the Scrolling Text effect on segment 0.
+- The board has no temperature/humidity sensor. Values come from an MQTT topic or from the Clock tool's weather, which is
+  only sent while the Clock tool page is open (and is lost on reboot). If both sources are used, the last one to write wins.
+- Time rules work only after the board has the time (NTP) and use the time zone set on the board. Check that the time
+  zone is the right one: a wrong zone shifts every rule.
+- Value-triggered rules keep their "armed" state for the first 32 rules only; the log shows the last 6 events.
 
 **Tools**
 - Made for a single-segment 16x16 matrix. Other sizes work in principle but were not tested.
