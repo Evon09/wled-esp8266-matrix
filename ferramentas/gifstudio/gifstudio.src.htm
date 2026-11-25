@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estúdio de GIFs</title>
+<style>
+:root{--bg:#0d0f13;--card:#151921;--card2:#1b212b;--bd:#262d39;--tx:#e9edf3;--mu:#8e98aa;--ac:#ffb020;--ac2:#38d6ff;--ok:#3ddc84;--er:#ff5d5d;--r:14px}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 500px at 70% -10%,#1a2030 0,var(--bg) 60%) no-repeat,var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;padding:0 14px 40px}
+button,input,select{font:inherit;color:var(--tx)}
+.hide{display:none!important}.mu{color:var(--mu)}.small{font-size:12.5px}.ok{color:var(--ok)}.er{color:var(--er)}
+.top{max-width:1180px;margin:0 auto;padding:18px 0 10px;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#38d6ff,#7a5cff);display:grid;place-items:center;font-size:22px}
+h1{font-size:21px;margin:0;line-height:1.15}.sub{color:var(--mu);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:4px 12px;font-size:12.5px;color:var(--mu);white-space:nowrap}
+.chip.good{color:var(--ok);border-color:#215a3a}.chip.bad{color:var(--er);border-color:#6a2b2b}.chip.warn{color:var(--ac);border-color:#6a5220}
+.wrap{max-width:1180px;margin:0 auto}
+.tabs{display:flex;gap:6px;padding:4px;background:var(--card);border:1px solid var(--bd);border-radius:14px;margin-bottom:14px;max-width:420px}
+.tabs button{flex:1;background:transparent;border:0;border-radius:10px;padding:9px 14px;color:var(--mu);cursor:pointer;font-weight:600;white-space:nowrap}
+.tabs button.on{background:var(--card2);color:var(--tx);box-shadow:inset 0 -2px 0 var(--ac)}
+.pane{display:none}.pane.on{display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 4px;display:flex;gap:10px;align-items:center}.card h3{font-size:14px;margin:0}
+.num{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--ac);color:#1a1205;font-size:13px;font-weight:700;flex:none}
+.hint{color:var(--mu);font-size:13px;margin:2px 0 12px}
+.row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:8px 0}
+.col{display:flex;flex-direction:column;gap:4px}.lbl{font-size:12.5px;color:var(--mu)}
+input[type=text],input[type=number],select{background:#10141b;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;min-height:38px;outline:none}
+input:focus,select:focus{border-color:var(--ac)}input[type=number]{width:84px}input[type=text]{min-width:170px}
+input[type=color]{width:42px;height:38px;border-radius:10px;border:1px solid var(--bd);padding:2px;background:#10141b;cursor:pointer}
+.btn{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer}
+.btn:hover{border-color:var(--ac)}.btn:disabled{opacity:.5;cursor:default}
+.btn.primary{background:var(--ac);border-color:var(--ac);color:#1a1205}.btn.danger{color:#ff9b9b}.btn.big{padding:12px 16px;font-size:16px;width:100%}
+.sw{display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;position:relative}
+.sw>input{position:absolute;opacity:0;pointer-events:none}
+.sw i{width:42px;height:24px;background:#2a303c;border-radius:999px;position:relative;transition:.2s;flex:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#aab2c0;transition:.2s}
+.sw>input:checked+i{background:var(--ac)}.sw>input:checked+i::after{left:21px;background:#1a1205}
+
+/* criar */
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:18px;align-items:start}
+.side{position:sticky;top:12px}
+@media(max-width:980px){.cols{grid-template-columns:minmax(0,1fr)}.side{position:static;order:-1}}
+.drop{border:2px dashed #38465c;border-radius:14px;padding:26px 14px;text-align:center;color:var(--mu);cursor:pointer;transition:.15s}
+.drop:hover,.drop.over{border-color:var(--ac);color:var(--tx);background:#1d1a10}
+.drop b{color:var(--tx)}
+.frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(136px,1fr));gap:10px;margin-top:12px}
+.fr{background:var(--card2);border:2px solid var(--bd);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;align-items:center;position:relative}
+.fr.drag{opacity:.4}.fr.over{border-color:var(--ac)}
+.fr canvas{width:72px;height:72px;image-rendering:pixelated;background:#000;border-radius:6px}
+.fr .no{position:absolute;top:4px;left:6px;font-size:11px;color:var(--mu)}
+.fr .nm{font-size:11px;color:var(--mu);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fr .ms{width:70px;min-height:30px;padding:3px 6px;font-size:12px}
+.fr .acts{display:flex;gap:4px;flex-wrap:wrap;justify-content:center}
+.ib{background:var(--card);border:1px solid var(--bd);border-radius:7px;width:26px;height:26px;padding:0;color:var(--mu);cursor:pointer;font-size:12px}
+.ib:hover{border-color:var(--ac);color:var(--tx)}
+.ledwrap{display:grid;place-items:center;background:#07080a;border:1px solid var(--bd);border-radius:12px;padding:10px;margin:10px 0}
+#pv{width:100%;max-width:340px;height:auto;display:block}
+.infobox{background:#11222c;border:1px solid #245062;color:#a9dcf0;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:13px}
+.warnbox{background:#2a2110;border:1px solid #6a5220;color:#ffd58a;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:13px}
+
+/* biblioteca */
+.lib{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:820px){.lib{grid-template-columns:minmax(0,1fr)}}
+.cat{display:flex;align-items:center;gap:8px;width:100%;background:transparent;border:1px solid transparent;border-radius:10px;padding:8px 10px;text-align:left;cursor:pointer;color:var(--tx)}
+.cat:hover{background:var(--card2)}.cat.on{background:#251f12;border-color:var(--ac)}.cat.over{border-color:var(--ac2);background:#112a33}
+.cat .dot{width:10px;height:10px;border-radius:50%;flex:none}.cat .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat .cnt{color:var(--mu);font-size:12px}.cat .ib{width:24px;height:24px;opacity:.7}
+.gifs{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.gc{background:var(--card);border:2px solid var(--bd);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px;position:relative}
+.gc.sel{border-color:var(--ac2)}.gc.drag{opacity:.4}
+.gc .th{width:100%;aspect-ratio:1;background:#000;border-radius:8px;display:grid;place-items:center;overflow:hidden}
+.gc img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+.gc .gn{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gc .gm{font-size:11.5px;color:var(--mu);line-height:1.35}
+.gc .gb{display:flex;gap:4px;flex-wrap:wrap}
+.gc .chk{position:absolute;top:14px;left:14px;width:20px;height:20px;accent-color:var(--ac2)}
+.badge{display:inline-block;border-radius:999px;padding:0 8px;font-size:11px;border:1px solid var(--bd)}
+.bulk{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#112a33;border:1px solid #245062;border-radius:12px;padding:8px 12px;margin-bottom:12px}
+.menu{position:fixed;background:#202733;border:1px solid var(--bd);border-radius:10px;padding:6px;z-index:60;min-width:190px;box-shadow:0 8px 28px #000a}
+.menu button{display:flex;gap:8px;align-items:center;width:100%;background:transparent;border:0;color:var(--tx);padding:7px 10px;border-radius:7px;text-align:left;cursor:pointer}
+.menu button:hover{background:var(--card2)}
+#modal{position:fixed;inset:0;background:#000a;display:grid;place-items:center;z-index:70}
+.mbox{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;min-width:min(92vw,380px);max-width:92vw}
+.mbox input{width:100%;margin:8px 0}
+#toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:80;max-width:min(92vw,380px)}
+.toast{background:#202733;border:1px solid var(--bd);border-left:4px solid var(--ac2);border-radius:10px;padding:10px 14px;box-shadow:0 6px 24px #0008;font-size:14px;transition:.4s}
+.toast.ok{border-left-color:var(--ok)}.toast.er{border-left-color:var(--er)}.toast.out{opacity:0;transform:translateY(8px)}
+</style>
+</head>
+<body>
+<div id="toasts"></div><div id="modal" class="hide"></div>
+<header class="top">
+  <div class="brand"><div class="logo">🎞</div><div><h1>Estúdio de GIFs</h1><div class="sub">Monte GIFs a partir de várias imagens e organize em categorias</div></div></div>
+  <div class="chips"><span class="chip" id="chipConn">conectando…</span><span class="chip" id="chipMat"></span><span class="chip" id="chipFs"></span></div>
+</header>
+
+<main class="wrap">
+<nav class="tabs" id="tabs"><button data-tab="criar">🎬 Criar GIF</button><button data-tab="lib">🗂 Biblioteca <span class="mu" id="libCount"></span></button></nav>
+
+<!-- ================= CRIAR ================= -->
+<section class="pane on" data-pane="criar">
+<div class="cols">
+ <div>
+  <div class="card">
+    <h2><span class="num">1</span> Suas imagens</h2>
+    <div class="hint">Envie várias imagens de uma vez (PNG, JPG, GIF…). Cada uma vira um quadro, na ordem da lista. Nomes como sprite1, sprite2… entram em ordem sozinhos.</div>
+    <div class="drop" id="drop"><div style="font-size:26px">🖼</div><b>Arraste as imagens aqui</b> ou clique para escolher<div class="small">Você também pode colar uma imagem (Ctrl+V). Uma folha de sprites pode ser cortada em quadros com o botão ✂.</div></div>
+    <input type="file" id="file" multiple accept="image/*" class="hide">
+    <div class="row">
+      <button class="btn" id="btnSort">Ordenar por nome</button>
+      <button class="btn" id="btnRev">Inverter ordem</button>
+      <button class="btn" id="btnClear">Limpar tudo</button>
+      <span class="small mu" id="frCount"></span>
+    </div>
+    <div class="frames" id="frames"></div>
+    <div id="cutBox" class="infobox hide">
+      <b>✂ Cortar folha de sprites</b> <span id="cutName" class="mu"></span>
+      <div class="row">
+        <label class="col"><span class="lbl">Colunas</span><input type="number" id="cutCols" min="1" max="64" value="4"></label>
+        <label class="col"><span class="lbl">Linhas</span><input type="number" id="cutRows" min="1" max="64" value="1"></label>
+        <label class="sw"><input type="checkbox" id="cutSkip" checked><i></i><span>Pular quadros vazios</span></label>
+        <button class="btn primary" id="btnCut">Cortar</button><button class="btn" id="btnCutNo">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h2><span class="num">2</span> Velocidade e tamanho</h2>
+    <div class="row">
+      <label class="col"><span class="lbl">Tempo de cada quadro (ms)</span><input type="number" id="ms" min="20" max="5000" step="10" value="100"></label>
+      <div class="col"><span class="lbl">Atalhos</span><div class="row" style="margin:0"><button class="btn" data-ms="50">Rápido</button><button class="btn" data-ms="100">Normal</button><button class="btn" data-ms="250">Lento</button><button class="btn" data-ms="500">Bem lento</button></div></div>
+      <label class="sw"><input type="checkbox" id="pingpong"><i></i><span>Ir e voltar (ping-pong)</span></label>
+    </div>
+    <div class="row">
+      <label class="col"><span class="lbl">Largura</span><input type="number" id="ow" min="1" max="320" value="16"></label>
+      <label class="col"><span class="lbl">Altura</span><input type="number" id="oh" min="1" max="320" value="16"></label>
+      <button class="btn" id="btnMat">Usar o tamanho da matriz</button>
+      <label class="col"><span class="lbl">Como encaixar</span><select id="fit"><option value="contain">Caber inteira (com barras)</option><option value="cover">Preencher (corta as bordas)</option><option value="stretch">Esticar</option></select></label>
+      <label class="col"><span class="lbl">Redução</span><select id="smooth"><option value="auto">Automática</option><option value="pixel">Nítida (pixel art)</option><option value="smooth">Suave (fotos)</option></select></label>
+      <label class="col"><span class="lbl">Fundo</span><input type="color" id="bg" value="#000000"></label>
+    </div>
+    <div class="hint" style="margin:6px 0 0">Cada quadro pode ter um tempo próprio: escreva na caixinha “ms” do quadro.</div>
+  </div>
+ </div>
+ <aside class="side">
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin:0"><h3>Pré-visualização</h3><div class="row" style="margin:0"><button class="btn" id="btnPlay" style="padding:4px 12px">⏸ Pausar</button></div></div>
+    <div class="ledwrap"><canvas id="pv" width="320" height="320"></canvas></div>
+    <div class="small mu" id="pvInfo">Adicione imagens para ver a animação.</div>
+    <div id="pvWarn"></div>
+  </div>
+  <div class="card">
+    <h2><span class="num">3</span> Salvar</h2>
+    <div class="row">
+      <label class="col" style="flex:1"><span class="lbl">Nome do GIF</span><input type="text" id="gname" placeholder="ex.: andando" maxlength="28"></label>
+    </div>
+    <div class="row"><label class="col" style="flex:1"><span class="lbl">Categoria (projeto)</span><select id="gcat"></select></label></div>
+    <label class="sw"><input type="checkbox" id="playAfter"><i></i><span>Tocar na matriz depois de salvar</span></label>
+    <div class="row" style="margin-top:14px"><button class="btn primary big" id="btnSave">Gerar e salvar na placa</button></div>
+    <div class="row" style="margin:0"><button class="btn" id="btnDl" style="width:100%">⬇ Baixar no computador</button></div>
+  </div>
+ </aside>
+</div>
+</section>
+
+<!-- ================= BIBLIOTECA ================= -->
+<section class="pane" data-pane="lib">
+<div class="lib">
+  <aside class="card" style="margin:0">
+    <h3>Categorias</h3><div class="hint" style="margin-bottom:8px">Agrupe os GIFs por projeto. Arraste um GIF para uma categoria para movê-lo.</div>
+    <div id="catList"></div>
+    <button class="btn" id="btnNewCat" style="width:100%;margin-top:10px">＋ Nova categoria</button>
+  </aside>
+  <div>
+    <div class="card" style="padding:12px">
+      <div class="row" style="margin:0">
+        <input type="text" id="search" placeholder="Buscar pelo nome…" style="flex:1">
+        <select id="sort"><option value="name">Nome</option><option value="size">Tamanho</option></select>
+        <button class="btn" id="btnRef">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="bulk hide" id="bulk"><b id="bulkN"></b>
+      <select id="bulkCat"></select><button class="btn" id="btnBulkMove">Mover</button><button class="btn danger" id="btnBulkDel">Apagar</button><button class="btn" id="btnBulkNo">Limpar seleção</button></div>
+    <div class="gifs" id="gifGrid"></div>
+    <div class="small mu" id="libEmpty" style="margin-top:12px"></div>
+  </div>
+</div>
+</section>
+</main>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const qs=new URLSearchParams(location.search),BASE=qs.get('ip')?'http://'+qs.get('ip'):'';
+const GIF_PX_LIMIT=318; // limite do decodificador de GIF da placa (pixels por quadro)
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const COLORS=['#ffb020','#38d6ff','#7cfc00','#ff5030','#b57cff','#ff7ac8','#4dd9a8','#ffd84d'];
+let MW=16,MH=16,INFO=null,FILES=[],IDX={v:1,cats:[],map:{}},DIM={},VER={},SRC=[],uid=0,curCat='all',sel=new Set(),prevTimer=null,playing=true,prevData=null,cutId=null,dragFr=null,dragG=null;
+
+/* ---------- placa ---------- */
+async function jget(p){const r=await fetch(BASE+p+(p.includes('?')?'&':'?')+'cb='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error(p+' → HTTP '+r.status);return r.json()}
+async function jpost(p,o){const r=await fetch(BASE+p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});if(!r.ok)throw new Error(p+' → HTTP '+r.status);return r.json().catch(()=>({}))}
+async function upload(name,blob){const fd=new FormData();fd.append('data',blob,name);const r=await fetch(BASE+'/upload',{method:'POST',body:fd});if(!r.ok)throw new Error('upload '+name+' → HTTP '+r.status)}
+async function delFile(name){const r=await fetch(BASE+'/edit?func=delete&path='+encodeURIComponent('/'+name));if(!r.ok)throw new Error('apagar '+name+' → HTTP '+r.status)}
+function toast(msg,k){const t=document.createElement('div');t.className='toast '+(k||'');t.textContent=msg;$('toasts').appendChild(t);setTimeout(()=>t.classList.add('out'),3800);setTimeout(()=>t.remove(),4400)}
+function modal({title,body,input,value,ok='OK',cancel='Cancelar',danger}){
+  return new Promise(res=>{const m=$('modal');
+    m.innerHTML=`<div class="mbox"><h3>${esc(title)}</h3>${body?`<div class="small mu" style="margin:6px 0">${body}</div>`:''}${input?`<input type="text" id="mIn" value="${esc(value||'')}">`:''}<div class="row" style="justify-content:flex-end;margin-bottom:0"><button class="btn" id="mNo">${cancel}</button><button class="btn ${danger?'danger':'primary'}" id="mOk">${ok}</button></div></div>`;
+    m.classList.remove('hide');const inp=$('mIn');if(inp){inp.focus();inp.select()}
+    const close=v=>{m.classList.add('hide');m.innerHTML='';res(v)};
+    $('mOk').onclick=()=>close(input?$('mIn').value:true);$('mNo').onclick=()=>close(input?null:false);
+    if(inp)inp.onkeydown=e=>{if(e.key==='Enter')$('mOk').click();if(e.key==='Escape')$('mNo').click()}});
+}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('não carregou '+src));document.head.appendChild(s)})}
+
+/* ---------- criar: imagens de origem ---------- */
+async function addBitmap(f){
+  const bmp=await createImageBitmap(f),cv=document.createElement('canvas');cv.width=bmp.width;cv.height=bmp.height;cv.getContext('2d').drawImage(bmp,0,0);
+  SRC.push({id:++uid,name:f.name,cv,w:cv.width,h:cv.height,ms:null});
+}
+async function addGifFile(f){ // GIF animado: cada quadro vira uma imagem
+  try{const rd=new GifReader(new Uint8Array(await f.arrayBuffer())),n=rd.numFrames(),w=rd.width,h=rd.height;
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;const img=cv.getContext('2d').createImageData(w,h);
+    for(let i=0;i<n;i++){rd.decodeAndBlitFrameRGBA(i,img.data);const fc=document.createElement('canvas');fc.width=w;fc.height=h;fc.getContext('2d').putImageData(img,0,0);
+      const fi=rd.frameInfo(i);SRC.push({id:++uid,name:n>1?`${f.name} #${i+1}`:f.name,cv:fc,w,h,ms:n>1?Math.max(20,(fi.delay||10)*10):null});
+      if(fi.disposal===2||fi.disposal===3)img.data.fill(0)}
+    return n}catch(e){return 0}
+}
+async function addFiles(list){
+  const files=[...list].filter(f=>/^image\//.test(f.type)||/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));
+  if(!files.length){toast('Nenhuma imagem reconhecida nesses arquivos.','er');return}
+  for(const f of files){try{
+    if(/gif$/i.test(f.type)||/\.gif$/i.test(f.name)){if(!(await addGifFile(f)))await addBitmap(f)}else await addBitmap(f)}
+    catch(e){toast('Não consegui ler '+f.name,'er')}}
+  if(!$('gname').value&&files.length)$('gname').value=cleanName(files[0].name.replace(/\.[^.]+$/,'').replace(/[\s_-]*\d+$/,''))||'';
+  renderFrames();schedule();
+}
+function renderFrames(){
+  $('frCount').textContent=SRC.length?`${SRC.length} imagem(ns)`:'';
+  $('frames').innerHTML=SRC.map((f,i)=>`<div class="fr" data-id="${f.id}" draggable="true"><span class="no">${i+1}</span><canvas width="72" height="72"></canvas>
+    <div class="nm" title="${esc(f.name)}">${esc(f.name)}</div><input class="ms" type="number" min="20" step="10" placeholder="${+$('ms').value||100}" value="${f.ms||''}" data-ms-id="${f.id}" title="Tempo deste quadro em ms (vazio = padrão)">
+    <div class="acts"><button class="ib" data-fl="${f.id}" title="Para a esquerda">◀</button><button class="ib" data-fr="${f.id}" title="Para a direita">▶</button><button class="ib" data-fd="${f.id}" title="Duplicar">⧉</button><button class="ib" data-fc="${f.id}" title="Cortar folha de sprites">✂</button><button class="ib" data-fx="${f.id}" title="Remover">✕</button></div></div>`).join('');
+  [...$('frames').children].forEach((el,i)=>{const cv=el.querySelector('canvas'),c=cv.getContext('2d'),f=SRC[i];c.fillStyle='#000';c.fillRect(0,0,72,72);c.imageSmoothingEnabled=false;
+    const s=Math.min(72/f.w,72/f.h),dw=f.w*s,dh=f.h*s;c.drawImage(f.cv,(72-dw)/2,(72-dh)/2,dw,dh)});
+}
+function moveFrame(id,d){const i=SRC.findIndex(f=>f.id===id),j=i+d;if(i<0||j<0||j>=SRC.length)return;[SRC[i],SRC[j]]=[SRC[j],SRC[i]];renderFrames();schedule()}
+function cutSheet(){
+  const f=SRC.find(x=>x.id===cutId);if(!f)return;
+  const cols=Math.max(1,+$('cutCols').value|0),rows=Math.max(1,+$('cutRows').value|0),cw=Math.floor(f.w/cols),ch=Math.floor(f.h/rows);
+  if(cw<1||ch<1){toast('Colunas ou linhas demais para essa imagem.','er');return}
+  const out=[];
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const cv=document.createElement('canvas');cv.width=cw;cv.height=ch;const x=cv.getContext('2d');x.drawImage(f.cv,c*cw,r*ch,cw,ch,0,0,cw,ch);
+    if($('cutSkip').checked){const d=x.getImageData(0,0,cw,ch).data;let any=false;for(let i=0;i<d.length;i+=4)if(d[i+3]>10&&d[i]+d[i+1]+d[i+2]>8){any=true;break}if(!any)continue}
+    out.push({id:++uid,name:`${f.name} [${r+1},${c+1}]`,cv,w:cw,h:ch,ms:f.ms})}
+  const i=SRC.findIndex(x=>x.id===cutId);SRC.splice(i,1,...out);cutId=null;$('cutBox').classList.add('hide');
+  toast(`Folha cortada em ${out.length} quadro(s).`,'ok');renderFrames();schedule();
+}
+
+/* ---------- criar: montar o GIF ---------- */
+function cleanName(s){return String(s).replace(/\.gif$/i,'').replace(/[\\/:*?"<>|#%&]/g,'_').replace(/\s+/g,' ').trim().slice(0,28)}
+function outFrames(){
+  const W=Math.max(1,+$('ow').value|0),H=Math.max(1,+$('oh').value|0),fit=$('fit').value,sm=$('smooth').value,bg=$('bg').value,dflt=Math.max(20,+$('ms').value||100);
+  let list=SRC.slice();
+  if($('pingpong').checked&&list.length>2)list=list.concat(list.slice(1,-1).reverse());
+  return list.map(f=>{
+    const cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');x.fillStyle=bg;x.fillRect(0,0,W,H);
+    const smooth=sm==='smooth'||(sm==='auto'&&(f.w>W*1.5||f.h>H*1.5));x.imageSmoothingEnabled=smooth;x.imageSmoothingQuality='high';
+    let dw=W,dh=H,dx=0,dy=0;
+    if(fit!=='stretch'){const s=fit==='cover'?Math.max(W/f.w,H/f.h):Math.min(W/f.w,H/f.h);dw=f.w*s;dh=f.h*s;dx=(W-dw)/2;dy=(H-dh)/2}
+    x.drawImage(f.cv,dx,dy,dw,dh);
+    return{data:x.getImageData(0,0,W,H).data,ms:f.ms||dflt,W,H};
+  });
+}
+function medianCut(pix){ // paleta de até 256 cores (mesmo método do Image Tool do PixelForge)
+  const map=new Map();for(let i=0;i<pix.length;i+=4){const c=(pix[i]<<16)|(pix[i+1]<<8)|pix[i+2];map.set(c,(map.get(c)||0)+1)}
+  let buckets=[Array.from(map,([rgb,count])=>({r:rgb>>16&255,g:rgb>>8&255,b:rgb&255,count}))];
+  while(buckets.length<256&&buckets.some(b=>b.length>1)){
+    buckets.sort((a,b)=>b.length-a.length);const b=buckets.shift();
+    const ch=['r','g','b'].map(k=>({k,range:Math.max(...b.map(c=>c[k]))-Math.min(...b.map(c=>c[k]))})).reduce((a,c)=>a.range>c.range?a:c).k;
+    b.sort((a,c)=>a[ch]-c[ch]);const m=b.length>>1;buckets.push(b.slice(0,m),b.slice(m))}
+  return buckets.map(b=>{const t=b.reduce((s,c)=>s+c.count,0);return((Math.round(b.reduce((s,c)=>s+c.r*c.count,0)/t))<<16)|((Math.round(b.reduce((s,c)=>s+c.g*c.count,0)/t))<<8)|Math.round(b.reduce((s,c)=>s+c.b*c.count,0)/t)});
+}
+function makeGif(){
+  const fr=outFrames();if(!fr.length)return null;
+  const W=fr[0].W,H=fr[0].H,all=new Uint8Array(fr.length*W*H*4);fr.forEach((f,i)=>all.set(f.data,i*W*H*4));
+  const uniq=new Map();for(let i=0;i<all.length;i+=4){const c=(all[i]<<16)|(all[i+1]<<8)|all[i+2];if(!uniq.has(c)){uniq.set(c,uniq.size);if(uniq.size>256)break}}
+  let pal,idxOf;
+  if(uniq.size<=256){pal=[...uniq.keys()];idxOf=c=>uniq.get(c)}   // cores exatas, sem perder nada
+  else{pal=medianCut(all);const cache=new Map();idxOf=c=>{let v=cache.get(c);if(v!==undefined)return v;let best=0,min=1e9;const r=c>>16&255,g=c>>8&255,b=c&255;
+    for(let k=0;k<pal.length;k++){const p=pal[k],d=(r-(p>>16&255))**2+(g-(p>>8&255))**2+(b-(p&255))**2;if(d<min){min=d;best=k}}cache.set(c,best);return best}}
+  let p2=2;while(p2<pal.length)p2<<=1;const palette=pal.slice();while(palette.length<p2)palette.push(palette[palette.length-1]||0);
+  const buf=[],wr=new GifWriter(buf,W,H,{palette,loop:0});
+  fr.forEach((f,i)=>{const idx=new Uint8Array(W*H);for(let j=0;j<W*H;j++){const o=j*4;idx[j]=idxOf((f.data[o]<<16)|(f.data[o+1]<<8)|f.data[o+2])}
+    wr.addFrame(0,0,W,H,idx,{delay:Math.max(2,Math.round(f.ms/10)),disposal:2})});
+  const len=wr.end();
+  return{bytes:new Uint8Array(buf.slice(0,len)),frames:fr,W,H,colors:Math.min(uniq.size,256)};
+}
+let schedT=null;function schedule(){clearTimeout(schedT);schedT=setTimeout(rebuild,160)}
+function rebuild(){
+  const w=$('pvWarn');w.innerHTML='';
+  if(!SRC.length){stopPrev();prevData=null;$('pvInfo').textContent='Adicione imagens para ver a animação.';drawLed(null);return}
+  try{prevData=makeGif()}catch(e){prevData=null;w.innerHTML=`<div class="warnbox">Não consegui montar o GIF: ${esc(e.message)}</div>`;return}
+  const g=prevData,px=g.W*g.H;
+  $('pvInfo').textContent=`${g.frames.length} quadro(s) · ${g.W}x${g.H} · ${g.colors} cor(es) · ${(g.bytes.length/1024).toFixed(1)} KB`;
+  if(px>GIF_PX_LIMIT)w.innerHTML+=`<div class="warnbox">⚠ Cada quadro tem ${px} pixels e a placa só toca GIFs de até ${GIF_PX_LIMIT} pixels por quadro (16x16 ou 32x8). Pode ficar preto na matriz.</div>`;
+  if(INFO&&INFO.fs&&g.bytes.length/1024>INFO.fs.t-INFO.fs.u-20)w.innerHTML+=`<div class="warnbox">⚠ Este GIF pode não caber na memória livre da placa.</div>`;
+  startPrev();
+}
+function drawLed(frame){
+  const cv=$('pv'),W=frame?frame.W:MW,H=frame?frame.H:MH,sc=Math.max(6,Math.floor(320/Math.max(W,H)));cv.width=W*sc;cv.height=H*sc;const c=cv.getContext('2d');c.fillStyle='#07080a';c.fillRect(0,0,cv.width,cv.height);
+  const r=sc*.4;for(let y=0;y<H;y++)for(let x=0;x<W;x++){let col=null;if(frame){const o=(y*W+x)*4,R=frame.data[o],G=frame.data[o+1],B=frame.data[o+2];if(R+G+B>14)col=`rgb(${R},${G},${B})`}
+    if(col){c.shadowColor=col;c.shadowBlur=sc*.6;c.fillStyle=col}else{c.shadowBlur=0;c.fillStyle='#14171d'}
+    c.beginPath();c.arc(x*sc+sc/2,y*sc+sc/2,r,0,6.2832);c.fill()}
+  c.shadowBlur=0;
+}
+function stopPrev(){clearTimeout(prevTimer);prevTimer=null}
+function startPrev(){stopPrev();if(!prevData)return;let i=0;const step=()=>{const f=prevData.frames[i%prevData.frames.length];drawLed(f);i++;if(playing&&prevData.frames.length>1)prevTimer=setTimeout(step,f.ms);};step()}
+
+/* ---------- salvar ---------- */
+async function saveGif(){
+  if(!SRC.length){toast('Adicione ao menos uma imagem.','er');return}
+  const name=cleanName($('gname').value);if(!name){toast('Dê um nome ao GIF.','er');return}
+  const file=name+'.gif';
+  if(FILES.some(f=>f.name===file)&&!(await modal({title:'Substituir arquivo?',body:`Já existe <b>${esc(file)}</b> na placa. Quer substituir?`,ok:'Substituir'})))return;
+  let cat=$('gcat').value;
+  if(cat==='__new'){const n=await newCategory();if(!n)return;cat=n}
+  $('btnSave').disabled=true;
+  try{const g=prevData||makeGif();await upload(file,new Blob([g.bytes],{type:'image/gif'}));
+    if(cat)IDX.map[file]=cat;else delete IDX.map[file];await saveIndex();VER[file]=Date.now();delete DIM[file];
+    await refreshFiles();toast(`${file} salvo na placa (${(g.bytes.length/1024).toFixed(1)} KB).`,'ok');
+    if($('playAfter').checked)await playOnMatrix(file)}
+  catch(e){toast('Erro ao salvar: '+e.message,'er')}
+  $('btnSave').disabled=false;
+}
+function downloadGif(){
+  if(!SRC.length){toast('Adicione ao menos uma imagem.','er');return}
+  const g=prevData||makeGif(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([g.bytes],{type:'image/gif'}));a.download=(cleanName($('gname').value)||'animacao')+'.gif';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+
+/* ---------- categorias ---------- */
+async function saveIndex(){await upload('gifstudio.json',new Blob([JSON.stringify(IDX)],{type:'application/json'}))} // guarda categorias e a que categoria cada GIF pertence
+async function newCategory(){
+  const n=await modal({title:'Nova categoria',body:'Dê um nome ao projeto ou grupo de GIFs.',input:true,value:'',ok:'Criar'});
+  const name=(n||'').trim().slice(0,30);if(!name)return null;
+  if(IDX.cats.some(c=>c.name.toLowerCase()===name.toLowerCase())){toast('Já existe uma categoria com esse nome.','er');return null}
+  const id='c'+Date.now().toString(36);IDX.cats.push({id,name,color:COLORS[IDX.cats.length%COLORS.length]});
+  await saveIndex();fillCatSelects();renderCats();return id;
+}
+async function renameCategory(id){const c=IDX.cats.find(x=>x.id===id);if(!c)return;const n=await modal({title:'Renomear categoria',input:true,value:c.name,ok:'Salvar'});const name=(n||'').trim().slice(0,30);if(!name)return;c.name=name;await saveIndex();fillCatSelects();renderCats();renderLib()}
+async function deleteCategory(id){const c=IDX.cats.find(x=>x.id===id);if(!c)return;
+  const n=Object.values(IDX.map).filter(v=>v===id).length;
+  if(!(await modal({title:'Apagar categoria?',body:`A categoria <b>${esc(c.name)}</b> será apagada.${n?` Os ${n} GIF(s) dela <b>não</b> são apagados: ficam em “Sem categoria”.`:''}`,ok:'Apagar categoria',danger:true})))return;
+  IDX.cats=IDX.cats.filter(x=>x.id!==id);for(const k in IDX.map)if(IDX.map[k]===id)delete IDX.map[k];if(curCat===id)curCat='all';
+  await saveIndex();fillCatSelects();renderCats();renderLib();
+}
+function catName(id){const c=IDX.cats.find(x=>x.id===id);return c?c.name:'Sem categoria'}
+function fillCatSelects(){
+  const opts='<option value="">Sem categoria</option>'+IDX.cats.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  const keep=$('gcat').value;$('gcat').innerHTML=opts+'<option value="__new">＋ Nova categoria…</option>';if([...$('gcat').options].some(o=>o.value===keep))$('gcat').value=keep;
+  $('bulkCat').innerHTML=opts;
+}
+function renderCats(){
+  const cnt=id=>id==='all'?FILES.length:id==='none'?FILES.filter(f=>!IDX.map[f.name]||!IDX.cats.some(c=>c.id===IDX.map[f.name])).length:FILES.filter(f=>IDX.map[f.name]===id).length;
+  const item=(id,name,color,extra)=>`<button class="cat ${curCat===id?'on':''}" data-cat="${id}"><span class="dot" style="background:${color}"></span><span class="nm">${esc(name)}</span><span class="cnt">${cnt(id)}</span>${extra||''}</button>`;
+  $('catList').innerHTML=item('all','Todos','#8e98aa')+item('none','Sem categoria','#5a6372')+IDX.cats.map(c=>item(c.id,c.name,c.color,`<span class="ib" data-cren="${c.id}" title="Renomear">✎</span><span class="ib" data-cdel="${c.id}" title="Apagar categoria">🗑</span>`)).join('');
+}
+
+/* ---------- biblioteca ---------- */
+async function refreshFiles(){
+  try{const l=await jget('/edit?list=/');FILES=l.filter(f=>/\.gif$/i.test(f.name)).map(f=>({name:f.name.replace(/^\//,''),size:f.size}))}catch(e){toast('Não consegui listar os arquivos da placa: '+e.message,'er')}
+  try{const j=await jget('/gifstudio.json');if(j&&Array.isArray(j.cats)){IDX={v:1,cats:j.cats,map:j.map||{}}}}catch(e){}
+  for(const k of Object.keys(IDX.map))if(!FILES.some(f=>f.name===k))delete IDX.map[k]; // arquivo que não existe mais
+  try{INFO=await jget('/json/info');updateChips()}catch(e){}
+  $('libCount').textContent=FILES.length?`(${FILES.length})`:'';fillCatSelects();renderCats();renderLib();
+}
+function visibleFiles(){
+  const q=$('search').value.trim().toLowerCase();
+  let l=FILES.filter(f=>(curCat==='all')||(curCat==='none'?(!IDX.map[f.name]||!IDX.cats.some(c=>c.id===IDX.map[f.name])):IDX.map[f.name]===curCat)).filter(f=>!q||f.name.toLowerCase().includes(q));
+  l.sort($('sort').value==='size'?(a,b)=>b.size-a.size:(a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true,sensitivity:'base'}));return l;
+}
+function metaHtml(f){const d=DIM[f.name],c=IDX.cats.find(x=>x.id===IDX.map[f.name]);
+  return `${(f.size/1024).toFixed(1)} KB${d?` · ${d[0]}x${d[1]}`:''}${d&&d[0]*d[1]>GIF_PX_LIMIT?` <span class="er" title="A placa não toca GIFs com mais de ${GIF_PX_LIMIT} pixels por quadro">⚠ grande</span>`:''}<br>`+
+    (c?`<span class="badge" style="border-color:${c.color};color:${c.color}">${esc(c.name)}</span>`:'<span class="badge">sem categoria</span>')}
+function renderLib(){
+  const l=visibleFiles();sel=new Set([...sel].filter(n=>FILES.some(f=>f.name===n)));
+  $('libEmpty').textContent=l.length?'':(FILES.length?'Nenhum GIF nesta categoria.':'Ainda não há GIFs na placa. Crie o primeiro na aba “Criar GIF”.');
+  $('gifGrid').innerHTML=l.map(f=>{const cid=IDX.map[f.name],c=IDX.cats.find(x=>x.id===cid),d=DIM[f.name];
+    return `<div class="gc ${sel.has(f.name)?'sel':''}" data-n="${esc(f.name)}" draggable="true"><input type="checkbox" class="chk" data-sel="${esc(f.name)}" ${sel.has(f.name)?'checked':''}>
+      <div class="th"><img alt="" data-th="${esc(f.name)}"></div><div class="gn" title="${esc(f.name)}">${esc(f.name.replace(/\.gif$/i,''))}</div>
+      <div class="gm" data-gm="${esc(f.name)}">${metaHtml(f)}</div>
+      <div class="gb"><button class="ib" data-play="${esc(f.name)}" title="Tocar na matriz">▶</button><button class="ib" data-more="${esc(f.name)}" title="Mais ações">⋯</button></div></div>`}).join('');
+  $('gifGrid').querySelectorAll('img[data-th]').forEach(im=>queueThumb(im,im.dataset.th));
+  $('bulk').classList.toggle('hide',!sel.size);$('bulkN').textContent=sel.size+' selecionado(s)';
+}
+const tq=[];let tbusy=false;
+function queueThumb(img,name){tq.push([img,name]);pumpThumbs()}
+async function pumpThumbs(){ // uma imagem por vez: a placa é pequena e não gosta de muitos pedidos juntos
+  if(tbusy)return;tbusy=true;
+  while(tq.length){const[img,name]=tq.shift();if(!document.body.contains(img))continue;
+    await new Promise(res=>{let d=false;const done=()=>{if(d)return;d=true;img.onload=img.onerror=null;res()};
+      img.onload=()=>{DIM[name]=[img.naturalWidth,img.naturalHeight];const f=FILES.find(x=>x.name===name),gm=img.closest('.gc')&&img.closest('.gc').querySelector('.gm');if(f&&gm)gm.innerHTML=metaHtml(f);done()};
+      img.onerror=done;setTimeout(done,12000);img.src=BASE+'/'+encodeURIComponent(name)+'?v='+(VER[name]||0)});
+    await new Promise(r=>setTimeout(r,120))}
+  tbusy=false;
+}
+async function moveFiles(names,cat){names.forEach(n=>{if(cat)IDX.map[n]=cat;else delete IDX.map[n]});await saveIndex();renderCats();renderLib();toast(`${names.length} GIF(s) movido(s) para “${catName(cat)}”.`,'ok')}
+async function renameFile(name){
+  const n=await modal({title:'Renomear GIF',body:'O nome fica no arquivo da placa (até 28 letras).',input:true,value:name.replace(/\.gif$/i,''),ok:'Renomear'});if(n===null)return;
+  const nn=cleanName(n);if(!nn||nn+'.gif'===name)return;const file=nn+'.gif';
+  if(FILES.some(f=>f.name===file)){toast('Já existe um GIF com esse nome.','er');return}
+  try{const r=await fetch(BASE+'/'+encodeURIComponent(name)+'?cb='+Date.now());if(!r.ok)throw new Error('não consegui ler o arquivo');const b=await r.blob();
+    await upload(file,new Blob([b],{type:'image/gif'}));await delFile(name);
+    if(IDX.map[name]){IDX.map[file]=IDX.map[name];delete IDX.map[name]}if(DIM[name]){DIM[file]=DIM[name];delete DIM[name]}await saveIndex();await refreshFiles();toast(`Renomeado para ${file}.`,'ok')}
+  catch(e){toast('Erro ao renomear: '+e.message,'er');await refreshFiles()}
+}
+async function deleteFiles(names){
+  if(!(await modal({title:names.length>1?`Apagar ${names.length} GIFs?`:'Apagar GIF?',body:names.length>1?'Os arquivos serão apagados da placa. Isso não pode ser desfeito.':`<b>${esc(names[0])}</b> será apagado da placa. Isso não pode ser desfeito.`,ok:'Apagar',danger:true})))return;
+  let ok=0;for(const n of names){try{await delFile(n);delete IDX.map[n];delete DIM[n];sel.delete(n);ok++}catch(e){toast(e.message,'er')}}
+  await saveIndex();await refreshFiles();toast(`${ok} GIF(s) apagado(s).`,'ok');
+}
+async function playOnMatrix(name){
+  try{const seg={id:0,start:0,stop:MW,startY:0,stopY:MH,grp:1,spc:0,of:0,on:true,frz:false,bri:255,cct:127,set:0,n:name,col:[[255,255,255],[0,0,0],[0,0,0]],fx:53,sx:128,ix:0,pal:0,c1:0,c2:0,c3:16,sel:true,rev:false,mi:false};
+    const segs=[seg];for(let k=1;k<4;k++)segs.push({id:k,stop:0});
+    await jpost('/json/state',{on:true,pl:-1,seg:segs});toast(`Tocando ${name} na matriz.`,'ok')}
+  catch(e){toast('Erro ao tocar: '+e.message,'er')}
+}
+async function addToClock(name){
+  try{let cfg={};try{cfg=await jget('/relogio-config.json')}catch(e){}
+    cfg.extras=Array.isArray(cfg.extras)?cfg.extras:[];
+    if(!cfg.extras.some(e=>e.t==='gif'&&e.file===name))cfg.extras.push({t:'gif',on:true,dur:10,file:name});
+    await upload('relogio-config.json',new Blob([JSON.stringify(cfg)],{type:'application/json'}));
+    toast('Adicionado ao Relógio LED. Abra o relógio, aba Telas, e clique em “Enviar relógio para a placa”.','ok')}
+  catch(e){toast('Erro: '+e.message,'er')}
+}
+function downloadFile(name){const a=document.createElement('a');a.href=BASE+'/'+encodeURIComponent(name);a.download=name;a.click()}
+function openMenu(btn,name){
+  closeMenu();const r=btn.getBoundingClientRect(),m=document.createElement('div');m.className='menu';m.id='ctxMenu';
+  const cats=[['','Sem categoria']].concat(IDX.cats.map(c=>[c.id,c.name]));
+  m.innerHTML=`<button data-mact="ren">✎ Renomear</button><button data-mact="dl">⬇ Baixar</button><button data-mact="clk">⏱ Usar no relógio</button><div class="small mu" style="padding:6px 10px 2px">Mover para:</div>`+
+    cats.map(([id,n])=>`<button data-mact="mv" data-cid="${id}" ${IDX.map[name]===id||(!id&&!IDX.map[name])?'disabled':''}>🏷 ${esc(n)}</button>`).join('')+`<button data-mact="mvnew">＋ Nova categoria…</button><button data-mact="del" style="color:#ff9b9b">🗑 Apagar</button>`;
+  document.body.appendChild(m);m.style.left=Math.min(r.left,innerWidth-210)+'px';m.style.top=Math.min(r.bottom+4,innerHeight-m.offsetHeight-8)+'px';m.dataset.name=name;
+}
+function closeMenu(){const m=$('ctxMenu');if(m)m.remove()}
+
+/* ---------- eventos ---------- */
+function showTab(k){document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===k));document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===k));if(k==='lib')refreshFiles()}
+function updateChips(){
+  const c=$('chipConn');if(!INFO){c.textContent='● sem conexão';c.className='chip bad';return}
+  c.textContent='● conectada';c.className='chip good';const m=INFO.leds&&INFO.leds.matrix;if(m){MW=m.w;MH=m.h}
+  $('chipMat').textContent=`matriz ${MW}x${MH}`;if(INFO.fs){$('chipFs').textContent=`arquivos ${INFO.fs.u} / ${INFO.fs.t} KB`;$('chipFs').className='chip '+(INFO.fs.u/INFO.fs.t>.9?'warn':'')}
+}
+function initEvents(){
+  const drop=$('drop');drop.onclick=()=>$('file').click();$('file').onchange=e=>{addFiles(e.target.files);e.target.value=''};
+  ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over')}));
+  ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over')}));
+  drop.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files.length)addFiles(e.dataTransfer.files)});
+  window.addEventListener('paste',e=>{const fs=[...(e.clipboardData?e.clipboardData.files:[])];if(fs.length)addFiles(fs)});
+  $('btnSort').onclick=()=>{SRC.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));renderFrames();schedule()};
+  $('btnRev').onclick=()=>{SRC.reverse();renderFrames();schedule()};
+  $('btnClear').onclick=()=>{SRC=[];cutId=null;$('cutBox').classList.add('hide');renderFrames();schedule()};
+  $('btnMat').onclick=()=>{$('ow').value=MW;$('oh').value=MH;schedule()};
+  ['ms','ow','oh','fit','smooth','bg','pingpong'].forEach(id=>$(id).addEventListener('input',()=>{if(id==='ms')renderFrames();schedule()}));
+  document.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>{$('ms').value=b.dataset.ms;renderFrames();schedule()});
+  $('btnPlay').onclick=()=>{playing=!playing;$('btnPlay').textContent=playing?'⏸ Pausar':'▶ Tocar';if(playing)startPrev();else stopPrev()};
+  $('btnSave').onclick=saveGif;$('btnDl').onclick=downloadGif;
+  $('gcat').onchange=async e=>{if(e.target.value==='__new'){const id=await newCategory();$('gcat').value=id||''}};
+  $('frames').addEventListener('input',e=>{const id=e.target.dataset.msId;if(id){const f=SRC.find(x=>x.id==id);if(f){f.ms=e.target.value?Math.max(20,+e.target.value):null;schedule()}}});
+  $('frames').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const d=b.dataset;
+    if(d.fl)moveFrame(+d.fl,-1);else if(d.fr)moveFrame(+d.fr,1);
+    else if(d.fx){SRC=SRC.filter(f=>f.id!==+d.fx);renderFrames();schedule()}
+    else if(d.fd){const i=SRC.findIndex(f=>f.id===+d.fd);if(i>=0){SRC.splice(i+1,0,Object.assign({},SRC[i],{id:++uid}));renderFrames();schedule()}}
+    else if(d.fc){cutId=+d.fc;const f=SRC.find(x=>x.id===cutId);$('cutName').textContent=f?'— '+f.name+` (${f.w}x${f.h})`:'';$('cutBox').classList.remove('hide');$('cutBox').scrollIntoView({block:'nearest'})}});
+  $('btnCut').onclick=cutSheet;$('btnCutNo').onclick=()=>{cutId=null;$('cutBox').classList.add('hide')};
+  // reordenar arrastando os quadros
+  $('frames').addEventListener('dragstart',e=>{const el=e.target.closest('.fr');if(!el)return;dragFr=+el.dataset.id;el.classList.add('drag');e.dataTransfer.effectAllowed='move';try{e.dataTransfer.setData('text/plain','fr')}catch(x){}});
+  $('frames').addEventListener('dragover',e=>{if(dragFr==null)return;e.preventDefault();const el=e.target.closest('.fr');document.querySelectorAll('.fr.over').forEach(x=>x.classList.remove('over'));if(el)el.classList.add('over')});
+  $('frames').addEventListener('drop',e=>{if(dragFr==null)return;e.preventDefault();const el=e.target.closest('.fr');if(el){const to=+el.dataset.id,i=SRC.findIndex(f=>f.id===dragFr),j=SRC.findIndex(f=>f.id===to);if(i>=0&&j>=0&&i!==j){const[it]=SRC.splice(i,1);SRC.splice(j,0,it);renderFrames();schedule()}}dragFr=null});
+  $('frames').addEventListener('dragend',()=>{dragFr=null;document.querySelectorAll('.fr.drag,.fr.over').forEach(x=>x.classList.remove('drag','over'))});
+  // biblioteca
+  $('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab)});
+  $('search').addEventListener('input',renderLib);$('sort').addEventListener('change',renderLib);$('btnRef').onclick=()=>{VER={};DIM={};refreshFiles()};
+  $('btnNewCat').onclick=newCategory;
+  $('catList').addEventListener('click',e=>{const ren=e.target.closest('[data-cren]'),del=e.target.closest('[data-cdel]'),b=e.target.closest('.cat');
+    if(ren){renameCategory(ren.dataset.cren);return}if(del){deleteCategory(del.dataset.cdel);return}if(b){curCat=b.dataset.cat;renderCats();renderLib()}});
+  $('gifGrid').addEventListener('click',e=>{const t=e.target,play=t.closest('[data-play]'),more=t.closest('[data-more]'),chk=t.closest('[data-sel]');
+    if(play){playOnMatrix(play.dataset.play)}else if(more){e.stopPropagation();openMenu(more,more.dataset.more)}
+    else if(chk){const n=chk.dataset.sel;chk.checked?sel.add(n):sel.delete(n);renderLib()}});
+  document.addEventListener('click',e=>{const b=e.target.closest('#ctxMenu button');
+    if(!b){if(!e.target.closest('[data-more]'))closeMenu();return}
+    const m=$('ctxMenu'),n=m.dataset.name,a=b.dataset.mact;closeMenu();
+    if(a==='ren')renameFile(n);else if(a==='dl')downloadFile(n);else if(a==='clk')addToClock(n);else if(a==='del')deleteFiles([n]);
+    else if(a==='mv')moveFiles([n],b.dataset.cid);else if(a==='mvnew')newCategory().then(id=>{if(id)moveFiles([n],id)})});
+  $('btnBulkMove').onclick=()=>moveFiles([...sel],$('bulkCat').value);$('btnBulkDel').onclick=()=>deleteFiles([...sel]);$('btnBulkNo').onclick=()=>{sel.clear();renderLib()};
+  // arrastar GIF da biblioteca para uma categoria
+  $('gifGrid').addEventListener('dragstart',e=>{const c=e.target.closest('.gc');if(!c)return;dragG=c.dataset.n;c.classList.add('drag');try{e.dataTransfer.setData('text/plain',dragG)}catch(x){}});
+  $('gifGrid').addEventListener('dragend',()=>{dragG=null;document.querySelectorAll('.gc.drag,.cat.over').forEach(x=>x.classList.remove('drag','over'))});
+  $('catList').addEventListener('dragover',e=>{if(!dragG)return;const c=e.target.closest('.cat');if(c&&c.dataset.cat!=='all'){e.preventDefault();document.querySelectorAll('.cat.over').forEach(x=>x.classList.remove('over'));c.classList.add('over')}});
+  $('catList').addEventListener('drop',e=>{const c=e.target.closest('.cat');if(!c||!dragG||c.dataset.cat==='all')return;e.preventDefault();
+    const names=sel.has(dragG)?[...sel]:[dragG];dragG=null;moveFiles(names,c.dataset.cat==='none'?'':c.dataset.cat)});
+}
+(async function main(){
+  initEvents();showTab('criar');renderFrames();drawLed(null);
+  try{await loadScript(BASE+'/omggif.js')}catch(e){toast('Não consegui carregar o gerador de GIF da placa (omggif.js).','er')}
+  await refreshFiles();
+  if(INFO){$('ow').value=MW;$('oh').value=MH}
+  rebuild();
+})();
+</script>
+</body>
+</html>

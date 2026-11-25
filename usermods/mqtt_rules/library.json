@@ -1,0 +1,5 @@
+{
+  "name": "mqtt_rules",
+  "build": { "libArchive": false },
+  "dependencies": {}
+}
