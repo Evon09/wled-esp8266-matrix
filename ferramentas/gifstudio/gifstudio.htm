@@ -89,6 +89,23 @@ input[type=color]{width:42px;height:38px;border-radius:10px;border:1px solid var
 #toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:80;max-width:min(92vw,380px)}
 .toast{background:#202733;border:1px solid var(--bd);border-left:4px solid var(--ac2);border-radius:10px;padding:10px 14px;box-shadow:0 6px 24px #0008;font-size:14px;transition:.4s}
 .toast.ok{border-left-color:var(--ok)}.toast.er{border-left-color:var(--er)}.toast.out{opacity:0;transform:translateY(8px)}
+
+/* ---------- celular ---------- */
+@media(max-width:700px){
+  body{padding:0 10px 30px}
+  .top{padding:10px 0 6px;gap:6px}.logo{width:34px;height:34px;font-size:17px}h1{font-size:18px}.sub,#chipMat{display:none}.chip{font-size:11.5px;padding:2px 9px}
+  .tabs{max-width:none;margin-bottom:10px}
+  /* a ordem dos passos: imagens, velocidade, pré-visualização, salvar */
+  .cols{display:flex;flex-direction:column;gap:0;align-items:stretch}.cols>*{min-width:0}.side{order:2}
+  .card{padding:12px;margin-bottom:10px}#pv{max-width:230px}.drop{padding:18px 10px}
+  .btn{min-height:42px}.row [data-ms]{flex:1}
+  .frames{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  .ib{width:34px;height:34px;font-size:14px}.fr .ms{width:80px;min-height:36px}
+  .cat{padding:10px}.cat .ib{width:38px;height:38px;opacity:1}
+  .gifs{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.gc .gb .ib{flex:1;width:auto;height:40px;font-size:16px}.gc .chk{width:26px;height:26px}
+  .menu button{padding:12px 10px}
+  #toasts{left:10px;right:10px;max-width:none}
+}
 </style>
 </head>
 <body>
@@ -520,12 +537,13 @@ function initEvents(){
   var here=location.pathname.replace(/\.gz$/,'').split('/').pop();
   var bar=document.createElement('nav');bar.id='pfnav';
   var css=document.createElement('style');
-  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch}'+
+  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}#pfnav::-webkit-scrollbar{display:none}#pfnav a{flex:none}'+
     '#pfnav a{color:#aab2c0;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid transparent}'+
     '#pfnav a:hover{color:#fff;border-color:#38465c}#pfnav a.on{color:#1a1205;background:#ffb020;border-color:#ffb020}';
   items.forEach(function(it){var a=document.createElement('a');var file=it[0].split('/').pop();
     a.textContent=it[1];a.href=base+it[0];if(file&&file===here)a.className='on';if(!file&&(here===''||here==='index.htm'))a.className='on';bar.appendChild(a)});
   document.head.appendChild(css);document.body.insertBefore(bar,document.body.firstChild);
+  var cur=bar.querySelector('a.on');if(cur)bar.scrollLeft=cur.offsetLeft-(bar.clientWidth-cur.offsetWidth)/2;
 })();
 </script>
 <!--/PFNAV-->

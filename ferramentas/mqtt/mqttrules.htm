@@ -29,7 +29,7 @@ h1{font-size:21px;margin:0;line-height:1.15}.sub{color:var(--mu);font-size:13px}
 .hint{color:var(--mu);font-size:13px;margin:2px 0 12px}
 .row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:8px 0}
 .col{display:flex;flex-direction:column;gap:4px}.lbl{font-size:12.5px;color:var(--mu)}
-input[type=text],input[type=number],select,textarea{background:#10141b;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;min-height:38px;outline:none}
+input[type=text],input[type=number],input[type=time],select,textarea{color-scheme:dark;max-width:100%;background:#10141b;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;min-height:38px;outline:none}
 textarea{width:100%;min-height:90px;font:12.5px/1.4 Consolas,monospace}
 input:focus,select:focus,textarea:focus{border-color:var(--ac)}input[type=number]{width:90px}input[type=text]{min-width:170px}
 input[type=color]{width:42px;height:38px;border-radius:10px;border:1px solid var(--bd);padding:2px;background:#10141b;cursor:pointer}
@@ -78,6 +78,28 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
 .gbig img{width:140px;height:140px;margin:0 auto 6px}
 .gbig .empty{width:140px;height:140px;margin:0 auto 6px;border:1px dashed var(--bd);border-radius:6px;display:grid;place-items:center;color:var(--mu);font-size:12px;padding:8px}
 .gbig b{display:block;word-break:break-all;font-size:13px}.gbig small{color:var(--mu);display:block}
+.day{cursor:pointer;user-select:none;position:relative}.day input{position:absolute;opacity:0;pointer-events:none}
+.day span{display:inline-block;min-width:44px;text-align:center;padding:7px 8px;border-radius:10px;border:1px solid var(--bd);background:#10141b;color:var(--mu);font-size:13px;font-weight:600}
+.day input:checked+span{background:var(--ac);border-color:var(--ac);color:#1a1205}.day input:focus-visible+span{outline:2px solid var(--ac)}
+.tabs .short{display:none}
+
+/* ---------- celular ---------- */
+@media(max-width:700px){
+  body{padding-left:10px;padding-right:10px}
+  .top{padding:10px 0 6px;gap:6px}.logo{width:34px;height:34px;font-size:17px}h1{font-size:18px}.sub{display:none}.chip{font-size:11.5px;padding:2px 9px}
+  .tabs{top:0;gap:2px;padding:3px;overflow:visible;z-index:20}
+  .tabs button{flex:1 1 0;min-width:0;padding:6px 1px;font-size:11px;line-height:1.35;white-space:normal}
+  .tabs .full{display:none}.tabs .short,.tabs button>span:not(.full){display:block}
+  .card{padding:12px;margin-bottom:10px}.rule{padding:10px}
+  /* nome na primeira linha; subir, descer, copiar e apagar numa linha própria */
+  .rhead{gap:8px}.rhead input[type=text]{flex:1 1 calc(100% - 60px);min-width:0}.rhead .ib{width:auto;flex:1;height:40px;font-size:15px}
+  .row .col{min-width:0;max-width:100%}.row .col>select,.row .col>input[type=text],.row .col>textarea{width:100%}
+  .day{flex:1 0 auto}.day span{display:block}
+  .btn{min-height:42px}
+  .savebar{bottom:6px;padding:8px 10px;gap:6px}.savebar .btn{width:100%}
+  .menu{max-width:calc(100vw - 16px)}
+  [data-pane=test] .row>*{flex:1 1 100%!important;min-width:0}[data-pane=test] input[type=text]{width:100%}
+}
 </style>
 </head>
 <body>
@@ -89,11 +111,11 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
 
 <main class="wrap">
 <nav class="tabs" id="tabs">
-  <button data-tab="conn">🔌 Conexão</button>
-  <button data-tab="rx">📥 Quando chegar mensagem</button>
-  <button data-tab="tx">📤 Quando algo mudar</button>
-  <button data-tab="tm">⏰ Por hora e clima</button>
-  <button data-tab="test">🧪 Testar</button>
+  <button data-tab="conn">🔌 <span>Conexão</span></button>
+  <button data-tab="rx">📥 <span class="full">Quando chegar mensagem</span><span class="short">Mensagem</span></button>
+  <button data-tab="tx">📤 <span class="full">Quando algo mudar</span><span class="short">Mudança</span></button>
+  <button data-tab="tm">⏰ <span class="full">Por hora e clima</span><span class="short">Hora</span></button>
+  <button data-tab="test">🧪 <span>Testar</span></button>
 </nav>
 
 <!-- ================= CONEXÃO ================= -->
@@ -392,7 +414,7 @@ function timedHtml(p,r){
   const h=`<div class="sect"><b>1 · Quando</b><div class="row"><label class="col"><span class="lbl">Disparar</span><select data-b="${p}.mode"><option value="at">Em um horário</option><option value="every">A cada tantos minutos</option><option value="change">Quando temperatura ou umidade mudar</option></select></label>
     ${r.mode==='at'?`<label class="col"><span class="lbl">Hora</span><input type="time" data-b="${p}.at" style="min-width:120px"></label>`:''}
     ${r.mode==='every'?`<label class="col"><span class="lbl">A cada (minutos)</span><input type="number" min="1" max="1440" data-b="${p}.iv" data-t="n"></label>`:''}</div>
-    <div class="row"><span class="lbl" style="margin-right:4px">Nos dias:</span>${DAYS.map((d,i)=>`<label class="sw" style="gap:5px"><input type="checkbox" data-b="${p}.days.${i}"><i style="width:34px"></i><span>${d}</span></label>`).join('')}</div>
+    <div class="row"><span class="lbl" style="margin-right:4px">Nos dias:</span>${DAYS.map((d,i)=>`<label class="day"><input type="checkbox" data-b="${p}.days.${i}"><span>${d}</span></label>`).join('')}</div>
     ${r.mode!=='at'?`<div class="row"><label class="sw"><input type="checkbox" data-b="${p}.win"><i></i><span>Só dentro de uma janela de horário</span></label>${r.win?`<span class="mu">das</span><input type="time" data-b="${p}.tf" style="min-width:110px"><span class="mu">até</span><input type="time" data-b="${p}.tt" style="min-width:110px">`:''}</div>`:''}</div>
   <div class="sect"><b>2 · Só se… (opcional)</b><div class="row"><label class="col"><span class="lbl">Condição</span><select data-b="${p}.vr">${VR.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select></label>
     ${r.vr!=='none'?`<label class="col"><span class="lbl">Se for…</span><select data-b="${p}.cond">${OPS.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select></label><label class="col"><span class="lbl">${r.cond==='r'?'a,b':'valor'}</span><input type="text" data-b="${p}.val" style="min-width:100px;width:110px"></label>`:'<span class="small mu">Sem condição, vale sempre.</span>'}</div></div>
@@ -558,12 +580,13 @@ function initEvents(){
   var here=location.pathname.replace(/\.gz$/,'').split('/').pop();
   var bar=document.createElement('nav');bar.id='pfnav';
   var css=document.createElement('style');
-  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch}'+
+  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}#pfnav::-webkit-scrollbar{display:none}#pfnav a{flex:none}'+
     '#pfnav a{color:#aab2c0;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid transparent}'+
     '#pfnav a:hover{color:#fff;border-color:#38465c}#pfnav a.on{color:#1a1205;background:#ffb020;border-color:#ffb020}';
   items.forEach(function(it){var a=document.createElement('a');var file=it[0].split('/').pop();
     a.textContent=it[1];a.href=base+it[0];if(file&&file===here)a.className='on';if(!file&&(here===''||here==='index.htm'))a.className='on';bar.appendChild(a)});
   document.head.appendChild(css);document.body.insertBefore(bar,document.body.firstChild);
+  var cur=bar.querySelector('a.on');if(cur)bar.scrollLeft=cur.offsetLeft-(bar.clientWidth-cur.offsetWidth)/2;
 })();
 </script>
 <!--/PFNAV-->

@@ -24,13 +24,14 @@ rules engine, all running on the board itself.
 7. [Tool 3: Regras MQTT (rules)](#tool-3-regras-mqtt-rules)
 8. [Tool 4: Pixel Estúdio (pixel art, sprites, GIF, screen mirror)](#tool-4-pixel-estúdio-pixel-art-sprites-gif-and-screen-mirror)
 9. [Tool 5: Jogos na Matriz (games)](#tool-5-jogos-na-matriz-games)
-10. [MQTT rules usermod](#mqtt-rules-usermod)
-11. [Files and API used on the board](#files-and-api-used-on-the-board)
-12. [Build and install](#build-and-install)
-13. [Limitations](#limitations)
-14. [Security notes](#security-notes)
-15. [Not done](#not-done)
-16. [Repository layout](#repository-layout)
+10. [On a phone](#on-a-phone) (screenshots)
+11. [MQTT rules usermod](#mqtt-rules-usermod)
+12. [Files and API used on the board](#files-and-api-used-on-the-board)
+13. [Build and install](#build-and-install)
+14. [Limitations](#limitations)
+15. [Security notes](#security-notes)
+16. [Not done](#not-done)
+17. [Repository layout](#repository-layout)
 
 ## What you get
 
@@ -499,6 +500,65 @@ pages. Without it everything else works, and two players share one device.
   and the matrix received about 10 pictures per second out of 13 changes. Joining, controlling, refusing a taken place, losing the connection and leaving were tested with a simulated second page.
 - The board restarted once during an earlier, unpaced network test; the cause was not identified and it did not happen again.
 - **Not verified**: two real phones, real fingers, a physical gamepad, sound, full screen on iOS.
+
+## On a phone
+
+Every tool was reviewed at phone width (375 x 812) and the layouts that did not work were rebuilt. The screenshots below were taken in a browser emulating a phone, against a
+**simulated board with invented data**; they have not been checked on a physical phone.
+
+### Pixel Estúdio
+
+The tools sit in a bar at the bottom, the drawing fills the width, and what used to need a keyboard has buttons: **undo, redo, copy, cut, paste, delete** and place the selection.
+A quick colour strip is under the drawing and the drawing options open with *Opções do desenho*.
+
+<table>
+<tr><th>Editor</th><th>Frames and colour</th><th>Sprites</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-pixel-editor.jpg" width="230" alt="Editor"></td><td valign="top"><img src="docs/img/mobile-pixel-frames.jpg" width="230" alt="Frames and colour"></td><td valign="top"><img src="docs/img/mobile-pixel-sprites.jpg" width="230" alt="Sprites"></td></tr>
+</table>
+<table>
+<tr><th>Mirror (synthetic camera)</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-pixel-mirror.jpg" width="230" alt="Mirror (synthetic camera)"></td></tr>
+</table>
+
+### Relógio LED
+
+The five tabs stay at the top and fit the width, and **send to the board** stays at the bottom.
+
+<table>
+<tr><th>Clock</th><th>Screens</th><th>Weather</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-clock-main.jpg" width="230" alt="Clock"></td><td valign="top"><img src="docs/img/mobile-clock-screens.jpg" width="230" alt="Screens"></td><td valign="top"><img src="docs/img/mobile-clock-weather.jpg" width="230" alt="Weather"></td></tr>
+</table>
+
+### Estúdio de GIFs
+
+The steps now come in order (images, speed, preview, save) and the buttons are larger.
+
+<table>
+<tr><th>Images</th><th>Preview and save</th><th>Library</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-gifs-create.jpg" width="230" alt="Images"></td><td valign="top"><img src="docs/img/mobile-gifs-save.jpg" width="230" alt="Preview and save"></td><td valign="top"><img src="docs/img/mobile-gifs-library.jpg" width="230" alt="Library"></td></tr>
+</table>
+
+### Regras MQTT
+
+The five tabs fit the width with short names, the days of the week are buttons and the time field is readable.
+
+<table>
+<tr><th>Message rule</th><th>Timed rule</th><th>Test</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-mqtt-rule.jpg" width="230" alt="Message rule"></td><td valign="top"><img src="docs/img/mobile-mqtt-timed.jpg" width="230" alt="Timed rule"></td><td valign="top"><img src="docs/img/mobile-mqtt-test.jpg" width="230" alt="Test"></td></tr>
+</table>
+
+### Jogos na Matriz
+
+A two-column menu and a one-line bar in the game.
+
+<table>
+<tr><th>Menu</th><th>Playing</th><th>Two players</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-games-menu.jpg" width="230" alt="Menu"></td><td valign="top"><img src="docs/img/mobile-games-play.jpg" width="230" alt="Playing"></td><td valign="top"><img src="docs/img/mobile-games-setup.jpg" width="230" alt="Two players"></td></tr>
+</table>
+<table>
+<tr><th>Joining</th><th>Second player</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-games-join.jpg" width="230" alt="Joining"></td><td valign="top"><img src="docs/img/mobile-games-controller.jpg" width="230" alt="Second player"></td></tr>
+</table>
 
 ## MQTT rules usermod
 

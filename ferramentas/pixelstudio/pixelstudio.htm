@@ -84,6 +84,45 @@ input[type=range]{accent-color:var(--ac);min-width:120px}
 .toast{background:#202733;border:1px solid var(--bd);border-left:4px solid var(--ac2);border-radius:10px;padding:10px 14px;box-shadow:0 6px 24px #0008;font-size:14px;transition:.4s}
 .toast.ok{border-left-color:var(--ok)}.toast.er{border-left-color:var(--er)}.toast.out{opacity:0;transform:translateY(8px)}
 kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5px;font-size:11.5px}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.qsel{display:contents}.qsel.hide{display:none!important}
+.monly{display:none!important}
+.qpal{gap:6px;overflow-x:auto;padding:8px 2px;-webkit-overflow-scrolling:touch;scrollbar-width:none}.qpal::-webkit-scrollbar{display:none}
+.qpal button,.qpal input{flex:none;width:36px;height:36px;border-radius:9px;border:2px solid #0006;padding:0;cursor:pointer}
+.qpal button.on{border-color:#fff;box-shadow:0 0 0 2px var(--ac)}
+
+/* ---------- celular ---------- */
+@media(max-width:700px){
+  body{padding:0 10px 84px}
+  .top{padding:10px 0 6px;gap:6px}.logo{width:34px;height:34px;font-size:17px}h1{font-size:18px}.sub,#chipMat{display:none}
+  .chip{font-size:11.5px;padding:2px 9px}
+  .lb{display:none}.keys,#coord{display:none}
+  .monly{display:inline-block!important}.qpal.monly{display:flex!important}
+  .tabs{max-width:none;margin-bottom:10px}.tabs button{padding:9px 4px;font-size:13.5px;min-width:0}
+  .ed{grid-template-columns:minmax(0,1fr);gap:10px}.ed>div,.ed>aside{min-width:0}
+  /* ferramentas presas embaixo, ao alcance do polegar */
+  .tools{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:40;flex-direction:row!important;flex-wrap:nowrap!important;gap:4px;background:#0a0c10;border-top:1px solid var(--bd);padding:8px 6px calc(8px + env(safe-area-inset-bottom));}
+  .tl-btn{flex:1 1 0;min-width:0;width:auto;height:52px;min-height:0;aspect-ratio:auto;font-size:21px}.tl-btn small{display:none}
+  #btnOpts{margin-bottom:8px}#opts{display:none;gap:10px 14px;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px}#opts.open{display:flex}
+  .stage{padding:4px;border-radius:10px}
+  .quick .btn{flex:1;padding:9px 6px;font-size:14px;min-height:40px}.quick .lb{display:inline}
+  .card{padding:12px;margin-bottom:10px}
+  .bar{gap:6px;margin-bottom:6px}.bar .btn.sm{min-width:40px;min-height:38px;font-size:14px}
+  #fMs{width:68px}
+  .pal{grid-template-columns:repeat(8,1fr);gap:6px}
+  .ledwrap canvas{max-width:200px}
+  .row .btn{min-height:40px}
+  .sp-grid{grid-template-columns:repeat(auto-fill,minmax(92px,1fr))}
+  #mrView{max-width:100%}#mrLed{max-width:220px}
+  #toasts{right:8px;left:8px;bottom:90px;max-width:none}
+  .btn{white-space:normal}
+  [data-pane=sp] .row .btn,[data-pane=mr] .row .btn.primary,[data-pane=mr] .row .btn.danger{flex:1 1 40%}
+  #recN{width:90px}
+  /* no espelho: a imagem, logo abaixo como fica na matriz, depois os ajustes e a gravação */
+  [data-pane=mr] .cols2{display:flex;flex-direction:column;gap:0;align-items:stretch}[data-pane=mr] .cols2>div{display:contents}
+  [data-pane=mr] .cols2>div>*{order:3}[data-pane=mr] .cols2>div:first-child>*:first-child{order:1}[data-pane=mr] .cols2>div:last-child>*:first-child{order:2}
+  [data-pane=mr] .cols2>div:first-child>*:last-child{order:4}[data-pane=mr] .warnbox{order:5}
+  [data-pane=mr] .row .col{flex:1 1 100%}[data-pane=mr] input[type=range]{width:100%}
+}
 </style>
 </head>
 <body>
@@ -93,14 +132,15 @@ kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5p
   <div class="chips"><span class="chip" id="chipConn">conectando…</span><span class="chip" id="chipMat"></span><span class="chip" id="chipLive">ao vivo: desligado</span></div>
 </header>
 <main class="wrap">
-<nav class="tabs" id="tabs"><button data-tab="ed">✏️ Editor</button><button data-tab="sp">🧩 Sprites <span class="mu" id="spCount"></span></button><button data-tab="mr">🖥 Espelho / webcam</button></nav>
+<nav class="tabs" id="tabs"><button data-tab="ed">✏️ Editor</button><button data-tab="sp">🧩 Sprites <span class="mu" id="spCount"></span></button><button data-tab="mr">🖥 Espelho<span class="lb"> / webcam</span></button></nav>
 
 <!-- ================= EDITOR ================= -->
 <section class="pane on" data-pane="ed">
 <div class="ed">
   <div class="tools" id="tools"></div>
   <div>
-    <div class="bar">
+    <button class="btn sm monly" id="btnOpts">⚙ Opções do desenho</button>
+    <div class="bar" id="opts">
       <label class="sw"><input type="checkbox" id="symX"><i></i><span class="small">Simetria ↔</span></label>
       <label class="sw"><input type="checkbox" id="symY"><i></i><span class="small">Simetria ↕</span></label>
       <label class="col" style="flex-direction:row;align-items:center;gap:6px"><span class="lbl">Pincel</span><select id="size"><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
@@ -110,15 +150,21 @@ kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5p
       <label class="sw"><input type="checkbox" id="blackT" checked><i></i><span class="small">Preto = transparente (colar/carimbar)</span></label>
     </div>
     <div class="stage" id="stage"><canvas id="cv"></canvas></div>
+    <div class="quick">
+      <button class="btn sm" id="qUndo" title="Desfazer (Ctrl+Z)">↶<span class="lb"> Desfazer</span></button><button class="btn sm" id="qRedo" title="Refazer (Ctrl+Y)">↷<span class="lb"> Refazer</span></button>
+      <span class="qsel hide" id="qSel"><button class="btn sm" id="qCopy">Copiar</button><button class="btn sm" id="qCut">Cortar</button><button class="btn sm danger" id="qDel">Apagar</button><button class="btn sm" id="qOk">✓ Fixar</button></span>
+      <button class="btn sm hide" id="qPaste">Colar</button>
+    </div>
+    <div class="qpal monly" id="qpal"></div>
     <div class="small mu" id="coord" style="margin:4px 2px 0">&nbsp;</div>
     <div class="card" style="margin-top:10px;padding:10px">
       <div class="bar" style="margin:0">
         <b>Quadros</b>
-        <button class="btn sm" id="fNew">＋ Novo</button><button class="btn sm" id="fDup">⧉ Duplicar</button><button class="btn sm" id="fDel">🗑 Excluir</button>
+        <button class="btn sm" id="fNew" title="Novo quadro">＋<span class="lb"> Novo</span></button><button class="btn sm" id="fDup" title="Duplicar quadro">⧉<span class="lb"> Duplicar</span></button><button class="btn sm" id="fDel" title="Excluir quadro">🗑<span class="lb"> Excluir</span></button>
         <button class="btn sm" id="fL">◀</button><button class="btn sm" id="fR">▶</button>
         <button class="btn sm" id="fCopy">Copiar</button><button class="btn sm" id="fPaste">Colar</button>
-        <span class="small mu">Tempo do quadro (ms)</span><input type="number" id="fMs" min="20" max="5000" step="10" value="100">
-        <button class="btn sm" id="fMsAll">Aplicar a todos</button>
+        <span class="small mu"><span class="lb">Tempo do quadro (</span>ms<span class="lb">)</span></span><input type="number" id="fMs" min="20" max="5000" step="10" value="100">
+        <button class="btn sm" id="fMsAll"><span class="lb">Aplicar a </span>todos</button>
         <button class="btn sm primary" id="btnPlay">▶ Tocar</button>
       </div>
       <div class="tline" id="tline"></div>
@@ -131,7 +177,7 @@ kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5p
         <span class="small mu">Deslocar:</span><button class="btn sm" data-x="sl">←</button><button class="btn sm" data-x="su">↑</button><button class="btn sm" data-x="sd">↓</button><button class="btn sm" data-x="sr">→</button>
         <label class="sw"><input type="checkbox" id="xAll"><i></i><span class="small">em todos os quadros</span></label>
       </div>
-      <div class="small mu" style="margin-top:6px">Atalhos: <kbd>P</kbd> lápis <kbd>E</kbd> borracha <kbd>B</kbd> balde <kbd>L</kbd> linha <kbd>R</kbd> retângulo <kbd>O</kbd> elipse <kbd>I</kbd> conta-gotas <kbd>S</kbd> seleção <kbd>T</kbd> carimbo · <kbd>Ctrl+Z/Y</kbd> desfazer · <kbd>Ctrl+C/X/V</kbd> · <kbd>Del</kbd> · <kbd>Espaço</kbd> tocar · botão direito apaga</div>
+      <div class="small mu keys" style="margin-top:6px">Atalhos: <kbd>P</kbd> lápis <kbd>E</kbd> borracha <kbd>B</kbd> balde <kbd>L</kbd> linha <kbd>R</kbd> retângulo <kbd>O</kbd> elipse <kbd>I</kbd> conta-gotas <kbd>S</kbd> seleção <kbd>T</kbd> carimbo · <kbd>Ctrl+Z/Y</kbd> desfazer · <kbd>Ctrl+C/X/V</kbd> · <kbd>Del</kbd> · <kbd>Espaço</kbd> tocar · botão direito apaga</div>
     </div>
   </div>
   <aside class="rside">
@@ -322,11 +368,12 @@ let saveT=null;function autosave(){clearTimeout(saveT);saveT=setTimeout(()=>{try
 /* ---------- desenho ---------- */
 const cv=$('cv'),g=cv.getContext('2d');let CS=24,ov=null,hover=null,drag=null;
 function layout(){
-  const st=$('stage'),aw=Math.max(160,st.clientWidth-24);
+  const st=$('stage'),aw=Math.max(160,st.clientWidth-(innerWidth<=700?10:24));
   CS=Math.max(6,Math.min(Math.floor(aw/W),Math.floor(Math.max(300,innerHeight-380)/H),40));
   cv.width=W*CS;cv.height=H*CS;cv.style.width=W*CS+'px';cv.style.height=H*CS+'px';
 }
 function redraw(){
+  quickState();
   g.fillStyle='#000';g.fillRect(0,0,cv.width,cv.height);
   const px=F().px,pv=($('onion').checked&&cur>0)?frames[cur-1].px:null;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
@@ -359,7 +406,7 @@ function flood(x,y,c,all){const px=F().px,t=px[y*W+x];if(t===c)return;
   if(all){for(let i=0;i<px.length;i++)if(px[i]===t)px[i]=c;return}
   const st=[[x,y]];while(st.length){const[a,b]=st.pop();if(a<0||b<0||a>=W||b>=H||px[b*W+a]!==t)continue;px[b*W+a]=c;st.push([a+1,b],[a-1,b],[a,b+1],[a,b-1])}}
 function pushRecent(c){recent=recent.filter(v=>v!==c);recent.unshift(c);recent=recent.slice(0,16);renderRecent()}
-function setColor(c,noRecent){color=c&0xFFFFFF;$('curCol').style.background=cssC(color);$('colIn').value=cssC(color).toLowerCase();$('colHex').value=cssC(color);if(!noRecent)pushRecent(color)}
+function setColor(c,noRecent){color=c&0xFFFFFF;$('curCol').style.background=cssC(color);$('colIn').value=cssC(color).toLowerCase();$('colHex').value=cssC(color);qpalMark();if(!noRecent)pushRecent(color)}
 
 /* seleção */
 const inSel=(x,y)=>sel&&x>=sel.x&&y>=sel.y&&x<sel.x+sel.w&&y<sel.y+sel.h;
@@ -437,11 +484,19 @@ function xform(k){commitSel();snap();const list=$('xAll').checked?frames:[F()];
   refreshAll()}
 
 /* ---------- ferramentas / paleta ---------- */
-const TOOLS=[['pencil','✏️','Lápis (P)','P'],['eraser','🧽','Borracha (E)','E'],['fill','🪣','Balde (B) — Shift troca todas iguais','B'],['line','📏','Linha (L)','L'],['rect','▭','Retângulo (R)','R'],['ellipse','◯','Elipse (O)','O'],['pick','💧','Conta-gotas (I)','I'],['sel','⬚','Seleção / mover (S)','S'],['stamp','🧩','Carimbo de sprite (T)','T']];
+const TOOLS=[['pencil','✏️','Lápis (P)','P'],['eraser','🧽','Borracha (E)','E'],['fill','<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M10 3 3 10l8 8 7-7z"/><path d="M10 3 7 1" stroke-linecap="round"/><path d="M4 10h13" /><path d="M20 14s2 2.6 2 4a2 2 0 0 1-4 0c0-1.4 2-4 2-4z" fill="#38d6ff" stroke="#38d6ff"/></svg>','Balde (B) — Shift troca todas iguais','B'],['line','📏','Linha (L)','L'],['rect','▭','Retângulo (R)','R'],['ellipse','◯','Elipse (O)','O'],['pick','💧','Conta-gotas (I)','I'],['sel','⬚','Seleção / mover (S)','S'],['stamp','🧩','Carimbo de sprite (T)','T']];
 function renderTools(){$('tools').innerHTML=TOOLS.map(t=>`<button class="tl-btn${tool===t[0]?' on':''}" data-t="${t[0]}" title="${t[2]}">${t[1]}<small>${t[3]}</small></button>`).join('')}
 function setTool(t){if(t!==tool&&tool==='sel')commitSel();tool=t;renderTools();redraw()}
 const PAL='000000 ffffff ff0000 ff5030 ff8c00 ffb020 ffee00 b6ff00 00ff00 00c060 00ffd0 38d6ff 0080ff 0000ff 7a5cff c000ff ff00ff ff5d9e 800000 804000 808000 004000 004040 000080 400060 600040 404040 808080 c0c0c0 e8d0a0 a0602a 602010'.split(' ').map(h=>parseInt(h,16));
-function renderPal(){$('pal').innerHTML=PAL.map(c=>`<button style="background:${cssC(c)}" data-c="${c}" title="${cssC(c)}"></button>`).join('')}
+function renderPal(){const h=PAL.map(c=>`<button style="background:${cssC(c)}" data-c="${c}" title="${cssC(c)}"></button>`).join('');$('pal').innerHTML=h;
+  $('qpal').innerHTML='<input type="color" id="qColor" title="Outra cor">'+h;$('qColor').oninput=e=>setColor(fromHexStr(e.target.value),true);$('qColor').onchange=e=>pushRecent(fromHexStr(e.target.value));qpalMark()}
+function qpalMark(){const q=$('qColor');if(q)q.value=cssC(color).toLowerCase();document.querySelectorAll('#qpal button').forEach(b=>b.classList.toggle('on',+b.dataset.c===color))}
+/* ações da seleção: usadas pelo teclado e pelos botões (no toque) */
+function quickState(){const q=$('qSel');if(!q)return;q.classList.toggle('hide',!(tool==='sel'&&sel));$('qPaste').classList.toggle('hide',!clip)}
+function selCopy(cut){if(!sel)return;const b=sel.buf?sel.buf.slice():regionCopy(sel.x,sel.y,sel.w,sel.h);clip={w:sel.w,h:sel.h,px:b};
+  if(cut){snap();if(sel.buf)sel.buf=null;else regionClear(sel.x,sel.y,sel.w,sel.h);sel=null;touch()}else redraw();toast(cut?'Recortado.':'Copiado.')}
+function selPaste(){if(!clip)return;snap();commitSel();sel={x:0,y:0,w:clip.w,h:clip.h,buf:clip.px.slice()};setTool('sel');touch()}
+function selDelete(){if(!sel)return;snap();if(sel.buf)sel.buf=null;else regionClear(sel.x,sel.y,sel.w,sel.h);touch()}
 function renderRecent(){$('recent').innerHTML=recent.map(c=>`<button style="background:${cssC(c)}" data-c="${c}"></button>`).join('')||'<span class="small mu" style="grid-column:1/-1">—</span>'}
 
 /* ---------- prévia e reprodução ---------- */
@@ -735,12 +790,12 @@ function keyHandler(e){
   const edOn=document.querySelector('.pane.on').dataset.pane==='ed';if(!edOn)return;const k=e.key.toLowerCase();
   if(e.ctrlKey||e.metaKey){
     if(k==='z'){e.preventDefault();e.shiftKey?redoF():undo()}else if(k==='y'){e.preventDefault();redoF()}
-    else if(k==='c'||k==='x'){if(sel){e.preventDefault();const b=sel.buf?sel.buf.slice():regionCopy(sel.x,sel.y,sel.w,sel.h);clip={w:sel.w,h:sel.h,px:b};if(k==='x'){snap();if(sel.buf)sel.buf=null;else regionClear(sel.x,sel.y,sel.w,sel.h);sel=null;touch()}toast(k==='c'?'Copiado.':'Recortado.')}}
-    else if(k==='v'){if(clip){e.preventDefault();snap();commitSel();sel={x:0,y:0,w:clip.w,h:clip.h,buf:clip.px.slice()};setTool('sel');touch()}}
+    else if(k==='c'||k==='x'){if(sel){e.preventDefault();selCopy(k==='x')}}
+    else if(k==='v'){if(clip){e.preventDefault();selPaste()}}
     return}
   const map={p:'pencil',e:'eraser',b:'fill',l:'line',r:'rect',o:'ellipse',i:'pick',s:'sel',t:'stamp'};
   if(map[k]){setTool(map[k]);return}
-  if(k==='delete'||k==='backspace'){if(sel){e.preventDefault();snap();if(sel.buf)sel.buf=null;else regionClear(sel.x,sel.y,sel.w,sel.h);touch()}}
+  if(k==='delete'||k==='backspace'){if(sel){e.preventDefault();selDelete()}}
   else if(k==='enter'){commitSel();redraw()}else if(k==='escape'){dropSel();redraw()}
   else if(k===' '){e.preventDefault();playing?stopPlay():startPlay()}
   else if(k==='['||k==='arrowleft'&&!sel){dropSel();cur=Math.max(0,cur-1);refreshAll()}
@@ -750,7 +805,9 @@ function keyHandler(e){
 function initEvents(){
   $('tabs').onclick=e=>{const b=e.target.closest('button');if(b)showTab(b.dataset.tab)};
   $('tools').onclick=e=>{const b=e.target.closest('button');if(b)setTool(b.dataset.t)};
-  $('pal').onclick=$('recent').onclick=e=>{const b=e.target.closest('button');if(b)setColor(+b.dataset.c)};
+  $('pal').onclick=$('recent').onclick=$('qpal').onclick=e=>{const b=e.target.closest('button');if(b)setColor(+b.dataset.c)};
+  $('qUndo').onclick=undo;$('qRedo').onclick=redoF;$('qCopy').onclick=()=>selCopy(false);$('qCut').onclick=()=>selCopy(true);$('qDel').onclick=selDelete;$('qOk').onclick=()=>{dropSel();redraw()};$('qPaste').onclick=selPaste;
+  $('btnOpts').onclick=()=>{$('opts').classList.toggle('open');layout();redraw()};
   $('colIn').oninput=e=>setColor(fromHexStr(e.target.value),true);$('colIn').onchange=e=>pushRecent(fromHexStr(e.target.value));
   $('colHex').onchange=e=>{const v=e.target.value.trim().replace('#','');if(/^[0-9a-f]{6}$/i.test(v))setColor(parseInt(v,16));else e.target.value=cssC(color)};
   ['symX','symY','onion','grid','blackT'].forEach(id=>$(id).onchange=redraw);
@@ -782,7 +839,7 @@ function initEvents(){
   $('mrRec').onclick=()=>{if(!MR.run)return toast('Inicie o espelho ou a webcam antes.');if(MR.rec>0){MR.rec=0;$('mrRec').textContent='⏺ Gravar';return}
     const n=clamp(+$('recN').value|0,2,120);if(frames.length===1&&!frames[0].px.some(v=>v)){frames=[]}snap();MR.rec=n;$('mrRec').textContent='■ Gravando…'};
   $('mrSnap').onclick=()=>{if(!MR.lastPx)return toast('Inicie o espelho ou a webcam antes.');snap();const f=newFrame(fitTo(MR.lastPx,MR.size[0],MR.size[1],W,H));frames.splice(cur+1,0,f);cur++;refreshAll();toast('Quadro capturado.','ok')};
-  addEventListener('keydown',keyHandler);addEventListener('resize',()=>{layout();redraw()});
+  addEventListener('keydown',keyHandler);let lastW=innerWidth,lastH=innerHeight;addEventListener('resize',()=>{if(innerWidth===lastW&&Math.abs(innerHeight-lastH)<120)return;lastW=innerWidth;lastH=innerHeight;layout();redraw()});
   // saiu da página com o modo ao vivo ligado: devolve a placa como estava
   addEventListener('pagehide',()=>{if(!LIVE.on)return;LIVE.on=false;const ws=LIVE.ws,sv=LIVE.saved;LIVE.ws=null;if(!sv)return;
     const body=sv.pl>=0?{pl:sv.pl}:sv.ps>0?{ps:sv.ps}:{on:sv.on,bri:sv.bri,seg:(sv.seg||[]).map(s=>({id:s.id,start:s.start,stop:s.stop,startY:s.startY,stopY:s.stopY,grp:s.grp,spc:s.spc,of:s.of,on:s.on,bri:s.bri,col:s.col,fx:s.fx,sx:s.sx,ix:s.ix,pal:s.pal,c1:s.c1,c2:s.c2,c3:s.c3,o1:s.o1,o2:s.o2,o3:s.o3,n:s.n,sel:s.sel,rev:s.rev,mi:s.mi,frz:false}))};
@@ -821,12 +878,13 @@ async function boardInfo(){
   var here=location.pathname.replace(/\.gz$/,'').split('/').pop();
   var bar=document.createElement('nav');bar.id='pfnav';
   var css=document.createElement('style');
-  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch}'+
+  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}#pfnav::-webkit-scrollbar{display:none}#pfnav a{flex:none}'+
     '#pfnav a{color:#aab2c0;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid transparent}'+
     '#pfnav a:hover{color:#fff;border-color:#38465c}#pfnav a.on{color:#1a1205;background:#ffb020;border-color:#ffb020}';
   items.forEach(function(it){var a=document.createElement('a');var file=it[0].split('/').pop();
     a.textContent=it[1];a.href=base+it[0];if(file&&file===here)a.className='on';if(!file&&(here===''||here==='index.htm'))a.className='on';bar.appendChild(a)});
   document.head.appendChild(css);document.body.insertBefore(bar,document.body.firstChild);
+  var cur=bar.querySelector('a.on');if(cur)bar.scrollLeft=cur.offsetLeft-(bar.clientWidth-cur.offsetWidth)/2;
 })();
 </script>
 <!--/PFNAV-->

@@ -143,6 +143,31 @@ details>summary{cursor:pointer;color:var(--mu);padding:6px 0;list-style:none}det
 #toasts{position:fixed;right:14px;bottom:14px;display:flex;flex-direction:column;gap:8px;z-index:50;max-width:min(92vw,380px)}
 .toast{background:#202733;border:1px solid var(--bd);border-left:4px solid var(--ac2);border-radius:10px;padding:10px 14px;box-shadow:0 6px 24px #0008;font-size:14px;transition:.4s}
 .toast.ok{border-left-color:var(--ok)}.toast.er{border-left-color:var(--er)}.toast.out{opacity:0;transform:translateY(8px)}
+
+/* ---------- celular ---------- */
+@media(max-width:700px){
+  body{padding:0 10px 92px}
+  .top{padding:10px 0 4px;gap:6px}.logo{width:34px;height:34px;padding:7px;gap:2px}h1{font-size:18px}.sub,#chipMat,#chipRam{display:none}.chip{font-size:11.5px;padding:2px 9px}
+  .app{display:flex;flex-direction:column;gap:0;align-items:stretch}.app>.ctl{display:contents}.app>*,.ctl>*{min-width:0}
+  /* abas sempre à vista, as cinco cabem na largura */
+  #mainTabs{order:1;position:sticky;top:0;z-index:30;gap:2px;padding:3px;margin-bottom:10px;overflow:visible}
+  #mainTabs button{flex:1 1 0;min-width:0;padding:7px 1px;font-size:11.5px;line-height:1.25;white-space:normal}
+  .side{display:contents}.side>.card{order:2;margin-bottom:10px}.pane{order:3}.side>details{order:4}
+  /* nas abas de sensor e placa a prévia não muda: some, para o conteúdo aparecer logo (o botão de enviar continua) */
+  body[data-tab=sensor] .side>.card,body[data-tab=placa] .side>.card{border:0;padding:0;margin:0}
+  body[data-tab=sensor] .side>.card>:not(.actions),body[data-tab=placa] .side>.card>:not(.actions){display:none}
+  .side .card{padding:12px}#pv{max-width:208px}#pvHint{display:none}
+  .pvtabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.pvtabs::-webkit-scrollbar{display:none}.pvtabs button{flex:none}
+  /* enviar fica preso embaixo, ao alcance do polegar */
+  .side .actions{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:1fr auto;gap:8px;margin:0;background:#0a0c10;border-top:1px solid var(--bd);padding:10px 10px calc(10px + env(safe-area-inset-bottom))}
+  .side .actions .btn{margin:0;width:auto;font-size:15px;padding:12px}#applyState{display:none}#btnStop{font-size:0!important;min-width:52px}#btnStop::before{content:"■";font-size:18px}
+  #toasts{left:10px;right:10px;bottom:86px;max-width:none}
+  .card{padding:12px;margin-bottom:10px}
+  .scrhead{flex-wrap:wrap;gap:8px}.scrhead .ttl{min-width:0;flex:1 1 150px}.dur{flex:1}.exbtns .exbtn{min-width:38px;min-height:38px}
+  .opts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  input[type=text]{min-width:0}
+  .btn{min-height:42px}
+}
 </style>
 </head>
 <body>
@@ -866,7 +891,7 @@ function onClick(e){
   save();fillForm();drawPreview();
 }
 function showTab(k){
-  tab=k;document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===k));
+  tab=k;document.body.dataset.tab=k;document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.dataset.pane===k));
   document.querySelectorAll('#mainTabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===k));
   try{sessionStorage.setItem('relogioTab',k)}catch(e){}
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1064,12 +1089,13 @@ function initStatic(){
   var here=location.pathname.replace(/\.gz$/,'').split('/').pop();
   var bar=document.createElement('nav');bar.id='pfnav';
   var css=document.createElement('style');
-  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch}'+
+  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}#pfnav::-webkit-scrollbar{display:none}#pfnav a{flex:none}'+
     '#pfnav a{color:#aab2c0;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid transparent}'+
     '#pfnav a:hover{color:#fff;border-color:#38465c}#pfnav a.on{color:#1a1205;background:#ffb020;border-color:#ffb020}';
   items.forEach(function(it){var a=document.createElement('a');var file=it[0].split('/').pop();
     a.textContent=it[1];a.href=base+it[0];if(file&&file===here)a.className='on';if(!file&&(here===''||here==='index.htm'))a.className='on';bar.appendChild(a)});
   document.head.appendChild(css);document.body.insertBefore(bar,document.body.firstChild);
+  var cur=bar.querySelector('a.on');if(cur)bar.scrollLeft=cur.offsetLeft-(bar.clientWidth-cur.offsetWidth)/2;
 })();
 </script>
 <!--/PFNAV-->

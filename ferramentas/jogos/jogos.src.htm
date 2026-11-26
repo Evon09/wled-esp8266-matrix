@@ -59,6 +59,16 @@ body.playing #pfnav{display:none}
 .arena.onlyL .padR,.arena.onlyR .padL{display:none}
 @media(orientation:portrait){.arena.onlyL:not(.duo) .padL,.arena.onlyR:not(.duo) .padR{grid-column:1/-1}}
 @media(pointer:coarse) and (min-height:600px){#play.noprev .arena:not(.duo) .dpad{zoom:1.15}#play.noprev .arena:not(.duo) .ab{width:92px;height:92px;font-size:16px}#play.noprev .arena:not(.duo) .abs{flex-direction:column}}
+/* ---------- celular em pé ---------- */
+@media(max-width:700px){
+  .top{padding:10px 0 6px;gap:8px}.logo{width:34px;height:34px;font-size:17px}h1{font-size:18px}.sub{display:none}.chip{font-size:11.5px;padding:3px 9px}.top .btn{padding:5px 10px;font-size:13px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.gc{padding:10px}.gc .ic{font-size:26px}.gc span{font-size:12px;line-height:1.35}
+  .note{font-size:12px}
+  .hud{gap:5px;padding:6px 8px}.hud .lb{display:none}.hud .btn{padding:0;width:36px;height:36px;font-size:15px}
+  .hud .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}.hud .sc{order:10;flex-basis:100%;margin:0;text-align:center}
+  #play.remote .hud .sc{display:none}
+  .box .row{gap:6px}.box .btn{padding:8px 10px}
+}
 @media(max-height:430px){.dpad{transform:scale(.85)}.ab{width:58px;height:58px}}
 @media(hover:hover) and (pointer:fine){#play:not(.showpads) .pad.auto{display:none}}
 #info{display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:8px;pointer-events:none}
@@ -72,6 +82,8 @@ body.playing #pfnav{display:none}
 #join{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:60}#join h2{margin:0 0 6px;font-size:20px}
 .btn:disabled{opacity:.45;cursor:default}
 .over{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.screen:has(.box) #info{visibility:hidden}
+@media(pointer:coarse){.kbhelp{display:none}}
 .box{pointer-events:auto;background:#12161fee;border:1px solid var(--bd);border-radius:14px;padding:14px 16px;max-width:min(94%,360px);max-height:100%;overflow:auto;text-align:center}
 .box h2{margin:0 0 4px;font-size:19px}.box .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;align-items:center}
 .box label{font-size:13px;color:var(--mu);display:flex;gap:6px;align-items:center}
@@ -96,7 +108,7 @@ kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5p
 
 <section id="play" class="hide">
   <div class="hud">
-    <button class="btn" id="btnBack">← Jogos</button><span class="t" id="gTitle"></span><span class="sc" id="gScore"></span>
+    <button class="btn" id="btnBack" title="Voltar aos jogos">←<span class="lb"> Jogos</span></button><span class="t" id="gTitle"></span><span class="sc" id="gScore"></span>
     <button class="btn" id="btnPause" title="Pausar (P)">⏸</button><button class="btn" id="btnRestart" title="Reiniciar (R)">↻</button>
     <button class="btn" id="btnSound" title="Som">🔊</button><button class="btn" id="btnMat" title="Mostrar na matriz">📺</button><button class="btn" id="btnPrev" title="Mostrar ou esconder a prévia nesta tela">👁</button><button class="btn" id="btnPads" title="Mostrar controles na tela">🕹</button><button class="btn" id="btnFull" title="Tela cheia">⛶</button>
   </div>
@@ -672,7 +684,7 @@ function showReady(keep){
   const g=def,two=opt.players===2;
   const who=two&&NET.relay?`<div class="row"><span class="mu small">Quem é você?</span>${[['0','Jogador 1'],['1','Jogador 2'],['both','Os dois neste aparelho']].map(([v,n])=>`<button class="btn${opt.me===v?' on':''}" data-me="${v}" ${v!=='both'&&remotes[+v]?'disabled':''}>${n}</button>`).join('')}</div>`:'';
   box(`<h2>${g.icon} ${g.name}</h2><div class="small mu">${g.help}</div>
-    <div class="small mu" style="margin-top:6px">${localSlots().length===2?'Teclado: J1 <kbd>W A S D</kbd> + <kbd>espaço</kbd> · J2 <kbd>setas</kbd> + <kbd>Enter</kbd>':'Teclado: <kbd>setas</kbd>/<kbd>WASD</kbd> · A = <kbd>espaço</kbd> · B = <kbd>X</kbd> · <kbd>P</kbd> pausa'}</div>
+    <div class="small mu kbhelp" style="margin-top:6px">${localSlots().length===2?'Teclado: J1 <kbd>W A S D</kbd> + <kbd>espaço</kbd> · J2 <kbd>setas</kbd> + <kbd>Enter</kbd>':'Teclado: <kbd>setas</kbd>/<kbd>WASD</kbd> · A = <kbd>espaço</kbd> · B = <kbd>X</kbd> · <kbd>P</kbd> pausa'}</div>
     <div class="row">${g.players?`<label>Jogadores <select id="oP"><option value="1">1 (contra a placa)</option><option value="2">2</option></select></label>`:''}
     ${g.level&&!two?`<label>Dificuldade <select id="oL"><option value="0">Fácil</option><option value="1">Média</option><option value="2">Difícil</option></select></label>`:''}
     ${g.layout?`<label>Raquetes <select id="oY"><option value="lr">Nas laterais</option><option value="tb">Em cima e embaixo</option></select></label>`:''}
@@ -740,12 +752,13 @@ init();
   var here=location.pathname.replace(/\.gz$/,'').split('/').pop();
   var bar=document.createElement('nav');bar.id='pfnav';
   var css=document.createElement('style');
-  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch}'+
+  css.textContent='#pfnav{display:flex;gap:6px;align-items:center;overflow-x:auto;padding:8px 14px;margin:0 -14px 4px;background:#0a0c10;border-bottom:1px solid #262d39;font:600 13px system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none}#pfnav::-webkit-scrollbar{display:none}#pfnav a{flex:none}'+
     '#pfnav a{color:#aab2c0;text-decoration:none;padding:6px 12px;border-radius:999px;border:1px solid transparent}'+
     '#pfnav a:hover{color:#fff;border-color:#38465c}#pfnav a.on{color:#1a1205;background:#ffb020;border-color:#ffb020}';
   items.forEach(function(it){var a=document.createElement('a');var file=it[0].split('/').pop();
     a.textContent=it[1];a.href=base+it[0];if(file&&file===here)a.className='on';if(!file&&(here===''||here==='index.htm'))a.className='on';bar.appendChild(a)});
   document.head.appendChild(css);document.body.insertBefore(bar,document.body.firstChild);
+  var cur=bar.querySelector('a.on');if(cur)bar.scrollLeft=cur.offsetLeft-(bar.clientWidth-cur.offsetWidth)/2;
 })();
 </script>
 <!--/PFNAV-->

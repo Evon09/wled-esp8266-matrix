@@ -23,13 +23,14 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 7. [Ferramenta 3: Regras MQTT](#ferramenta-3-regras-mqtt)
 8. [Ferramenta 4: Pixel Estúdio (pixel art, sprites, GIF, espelho de tela)](#ferramenta-4-pixel-estúdio-pixel-art-sprites-gif-e-espelho-de-tela)
 9. [Ferramenta 5: Jogos na Matriz](#ferramenta-5-jogos-na-matriz)
-10. [Usermod de regras MQTT](#usermod-de-regras-mqtt)
-11. [Arquivos e API usados na placa](#arquivos-e-api-usados-na-placa)
-12. [Compilar e instalar](#compilar-e-instalar)
-13. [Limitações](#limitações)
-14. [Segurança](#segurança)
-15. [O que não foi feito](#o-que-não-foi-feito)
-16. [Estrutura do repositório](#estrutura-do-repositório)
+10. [No celular](#no-celular) (prints)
+11. [Usermod de regras MQTT](#usermod-de-regras-mqtt)
+12. [Arquivos e API usados na placa](#arquivos-e-api-usados-na-placa)
+13. [Compilar e instalar](#compilar-e-instalar)
+14. [Limitações](#limitações)
+15. [Segurança](#segurança)
+16. [O que não foi feito](#o-que-não-foi-feito)
+17. [Estrutura do repositório](#estrutura-do-repositório)
 
 ## O que você ganha
 
@@ -497,6 +498,65 @@ abertas. Sem ele o resto funciona, e os dois jogadores dividem um aparelho.
   e a matriz recebeu uns 10 quadros por segundo de 13 mudanças. Entrar, controlar, recusar vaga ocupada, perder a conexão e sair foram testados com uma segunda página simulada.
 - A placa reiniciou uma vez durante um teste de rede anterior, sem intervalo entre os envios; a causa não foi identificada e não se repetiu.
 - **Não verificado**: dois celulares de verdade, dedos de verdade, um controle físico, o som e a tela cheia no iOS.
+
+## No celular
+
+Todas as ferramentas foram revisadas na largura de um celular (375 x 812) e as telas que não funcionavam foram refeitas. Os prints abaixo foram tirados em um navegador imitando um celular, contra uma
+**placa simulada com dados inventados**; não foram conferidos em um celular de verdade.
+
+### Pixel Estúdio
+
+As ferramentas ficam numa barra embaixo, o desenho ocupa a largura toda, e o que antes exigia teclado ganhou botões: **desfazer, refazer, copiar, cortar, colar, apagar** e fixar a seleção.
+Há uma faixa rápida de cores sob o desenho, e as opções do desenho abrem em *Opções do desenho*.
+
+<table>
+<tr><th>Editor</th><th>Quadros e cor</th><th>Sprites</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-pixel-editor.jpg" width="230" alt="Editor"></td><td valign="top"><img src="docs/img/mobile-pixel-frames.jpg" width="230" alt="Quadros e cor"></td><td valign="top"><img src="docs/img/mobile-pixel-sprites.jpg" width="230" alt="Sprites"></td></tr>
+</table>
+<table>
+<tr><th>Espelho (câmera sintética)</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-pixel-mirror.jpg" width="230" alt="Espelho (câmera sintética)"></td></tr>
+</table>
+
+### Relógio LED
+
+As cinco abas ficam no topo e cabem na largura, e o **enviar para a placa** fica preso embaixo.
+
+<table>
+<tr><th>Relógio</th><th>Telas</th><th>Clima</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-clock-main.jpg" width="230" alt="Relógio"></td><td valign="top"><img src="docs/img/mobile-clock-screens.jpg" width="230" alt="Telas"></td><td valign="top"><img src="docs/img/mobile-clock-weather.jpg" width="230" alt="Clima"></td></tr>
+</table>
+
+### Estúdio de GIFs
+
+Os passos agora vêm em ordem (imagens, velocidade, prévia, salvar) e os botões são maiores.
+
+<table>
+<tr><th>Imagens</th><th>Prévia e salvar</th><th>Biblioteca</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-gifs-create.jpg" width="230" alt="Imagens"></td><td valign="top"><img src="docs/img/mobile-gifs-save.jpg" width="230" alt="Prévia e salvar"></td><td valign="top"><img src="docs/img/mobile-gifs-library.jpg" width="230" alt="Biblioteca"></td></tr>
+</table>
+
+### Regras MQTT
+
+As cinco abas cabem na largura com nomes curtos, os dias da semana são botões e o campo de hora ficou legível.
+
+<table>
+<tr><th>Regra de mensagem</th><th>Regra por hora</th><th>Testar</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-mqtt-rule.jpg" width="230" alt="Regra de mensagem"></td><td valign="top"><img src="docs/img/mobile-mqtt-timed.jpg" width="230" alt="Regra por hora"></td><td valign="top"><img src="docs/img/mobile-mqtt-test.jpg" width="230" alt="Testar"></td></tr>
+</table>
+
+### Jogos na Matriz
+
+Menu em duas colunas e uma barra de uma linha dentro do jogo.
+
+<table>
+<tr><th>Menu</th><th>Jogando</th><th>Dois jogadores</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-games-menu.jpg" width="230" alt="Menu"></td><td valign="top"><img src="docs/img/mobile-games-play.jpg" width="230" alt="Jogando"></td><td valign="top"><img src="docs/img/mobile-games-setup.jpg" width="230" alt="Dois jogadores"></td></tr>
+</table>
+<table>
+<tr><th>Entrando</th><th>Segundo jogador</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-games-join.jpg" width="230" alt="Entrando"></td><td valign="top"><img src="docs/img/mobile-games-controller.jpg" width="230" alt="Segundo jogador"></td></tr>
+</table>
 
 ## Usermod de regras MQTT
 
