@@ -50,11 +50,31 @@ about 17 KB of free heap when idle (see [memory](#the-esp8266-and-its-memory)).
 
 ## Quick start
 
-1. Build and flash the firmware ([Build and install](#build-and-install)).
-2. Open `http://BOARD-IP/` once, set the LED output (pin, 256 LEDs, colour order) and the 2D matrix size in the WLED settings.
-3. Upload the five tool pages (gzip files in `ferramentas/`) and register them in `pftools.json`.
-4. Open `http://BOARD-IP/relogio.htm` to build the clock, `/gifstudio.htm` to make GIFs, `/mqttrules.htm` to create MQTT rules, `/pixelstudio.htm` to draw, make sprites and mirror the screen.
+For **Windows** and an ESP8266 board with 4 MB (Wemos D1 R2, D1 mini, NodeMCU). No compiling needed.
+
+1. Download the project: green **Code** button → **Download ZIP**, and extract it (or `git clone` it).
+2. Plug the board in with a USB **data** cable and double-click **`INSTALAR.bat`**. The menu is in Portuguese:
+
+| Option | What it does |
+|---|---|
+| **1** full install | flashes the firmware over USB, waits while you set up Wi-Fi and the matrix, then sends the tools |
+| **2** firmware only | flashes [`firmware/WLED_D1R2_GIF.bin`](firmware/) over USB (offers to back up the settings first, and to erase a new board) |
+| **3** tools only | sends the five tools to a board on your network by its IP, checks each file and adds them to PixelForge |
+| **4** advanced | downloads WLED, applies the changes and compiles the firmware from source (needs Git, Node.js and PlatformIO) |
+
+3. After flashing a new board, set it up (the installer shows these steps): join the Wi-Fi **WLED-AP** (default password `wled1234`), open `http://4.3.2.1`, enter your Wi-Fi;
+   then set the LED output (data pin, 256 LEDs, colour order, current limit of your power supply) and the 16x16 matrix in **2D Configuration**.
+4. Open `http://BOARD-IP/`: the buttons **Clock, GIFs, Pixel Art, MQTT** and **Games** are on the main page.
 5. **Keep a single browser tab open on the board while a GIF is playing** (see [memory](#the-esp8266-and-its-memory)).
+
+Notes:
+
+- For flashing, the installer uses Espressif's `esptool`. If it is not on the PC, it asks before downloading the official release (about 34 MB) from GitHub.
+- If no serial port appears, install the driver of the board's USB chip (CH340 or CP210x).
+- Windows may warn about running a downloaded `.bat`. You can read what it does in [`instalador/instalar.ps1`](instalador/instalar.ps1) first. The script policy bypass applies only to that window.
+- To try it without touching a board: `INSTALAR.bat -Acao firmware -Simular -Porta COM3`.
+- **Tested:** option 3 on the real board (twice), option 4 from a clean copy of a local WLED clone with its dependencies already downloaded (same firmware size as the published one),
+  and option 2 only as a simulation. **Not tested:** really flashing a board with this script, the `esptool` download, and a PC that has none of the tools.
 
 ## What was changed, and why
 
@@ -634,13 +654,11 @@ open `http://BOARD-IP/update` (OTA).
 Install the tools (gzip files) and register them:
 
 ```powershell
-curl.exe -F "data=@ferramentas/relogio/relogio.htm.gz;filename=relogio.htm.gz"   http://BOARD-IP/upload
-curl.exe -F "data=@ferramentas/gifstudio/gifstudio.htm.gz;filename=gifstudio.htm.gz" http://BOARD-IP/upload
-curl.exe -F "data=@ferramentas/mqtt/mqttrules.htm.gz;filename=mqttrules.htm.gz"   http://BOARD-IP/upload
+foreach ($f in Get-ChildItem ferramentas\*\*.htm.gz) { curl.exe -H "Expect:" -F "data=@$($f.FullName);filename=$($f.Name)" http://BOARD-IP/upload }
 ```
 
 Then add an entry per tool (`id`, `name`, `file`, `desc`) to `pftools.json` on the board so it shows in
-PixelForge. The pages also open directly at `http://BOARD-IP/relogio.htm`, `/gifstudio.htm`, `/mqttrules.htm`.
+PixelForge (the installer's option 3 does both steps). The pages also open directly at `http://BOARD-IP/relogio.htm`, `/gifstudio.htm`, `/mqttrules.htm`, `/pixelstudio.htm`, `/jogos.htm`.
 To change a tool, edit its `*.src.htm` and run its `build.py`.
 
 Tips learned the hard way:
@@ -716,6 +734,9 @@ Tips learned the hard way:
 ## Repository layout
 
 ```
+INSTALAR.bat             double-click installer for Windows
+instalador/              the installer script
+firmware/                ready-to-flash build, its checksum and license
 patches/                 diff against WLED (commit in WLED_BASE_COMMIT.txt)
 lowram_libs/             AnimatedGIF (reduced tables) and GifDecoder (all architectures)
 usermods/mqtt_rules/     rules engine + readme
@@ -725,4 +746,5 @@ platformio_override.ini  build environments for the D1 R2
 docs/img/                screenshots and memory charts
 ```
 
-WLED is MIT-licensed; AnimatedGIF is Apache-2.0. Check each upstream project's license before reusing code.
+WLED is licensed under the [EUPL v1.2 or later](firmware/LICENSE-WLED.txt); AnimatedGIF is Apache-2.0. The published firmware is built from the WLED commit in
+`patches/WLED_BASE_COMMIT.txt` plus the patch, `usermods/`, `lowram_libs/` and `platformio_override.ini` of this repository. Check each upstream project's license before reusing code.

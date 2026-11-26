@@ -49,11 +49,31 @@ cerca de 17 KB de heap livre parada (veja a [memória](#o-esp8266-e-a-memória-d
 
 ## Começo rápido
 
-1. Compile e grave o firmware ([Compilar e instalar](#compilar-e-instalar)).
-2. Abra `http://IP-DA-PLACA/` uma vez e configure a saída dos LEDs (pino, 256 LEDs, ordem de cores) e o tamanho da matriz 2D nas configurações do WLED.
-3. Envie as cinco páginas das ferramentas (arquivos gzip em `ferramentas/`) e registre-as no `pftools.json`.
-4. Abra `http://IP-DA-PLACA/relogio.htm` para montar o relógio, `/gifstudio.htm` para criar GIFs e `/mqttrules.htm` para criar regras MQTT e `/pixelstudio.htm` para desenhar, criar sprites e espelhar a tela.
+Para **Windows** e uma placa ESP8266 com 4 MB (Wemos D1 R2, D1 mini, NodeMCU). Não precisa compilar.
+
+1. Baixe o projeto: botão verde **Code** → **Download ZIP**, e extraia (ou use `git clone`).
+2. Ligue a placa com um cabo USB **de dados** e dê dois cliques em **`INSTALAR.bat`**. Aparece este menu:
+
+| Opção | O que faz |
+|---|---|
+| **1** instalação completa | grava o firmware pela USB, espera você configurar o Wi-Fi e a matriz, e envia as ferramentas |
+| **2** só o firmware | grava o [`firmware/WLED_D1R2_GIF.bin`](firmware/) pela USB (oferece guardar os ajustes antes, e apagar uma placa nova) |
+| **3** só as ferramentas | envia as cinco ferramentas para uma placa da sua rede pelo IP, confere cada arquivo e as coloca no PixelForge |
+| **4** avançado | baixa o WLED, aplica as modificações e compila o firmware a partir do código (precisa de Git, Node.js e PlatformIO) |
+
+3. Depois de gravar uma placa nova, configure-a (o instalador mostra os passos): entre no Wi-Fi **WLED-AP** (senha padrão `wled1234`), abra `http://4.3.2.1`, informe o seu Wi-Fi;
+   depois ajuste a saída dos LEDs (pino de dados, 256 LEDs, ordem das cores, limite de corrente da sua fonte) e a matriz 16x16 em **2D Configuration**.
+4. Abra `http://IP-DA-PLACA/`: os botões **Clock, GIFs, Pixel Art, MQTT** e **Games** estão na tela principal.
 5. **Mantenha uma única aba do navegador aberta na placa enquanto um GIF toca** (veja a [memória](#o-esp8266-e-a-memória-dele)).
+
+Observações:
+
+- Para gravar, o instalador usa o `esptool` da Espressif. Se ele não estiver no PC, o instalador pergunta antes de baixar a versão oficial (cerca de 34 MB) do GitHub.
+- Se nenhuma porta serial aparecer, instale o driver do chip USB da placa (CH340 ou CP210x).
+- O Windows pode avisar sobre rodar um `.bat` baixado da internet. Você pode ler antes o que ele faz em [`instalador/instalar.ps1`](instalador/instalar.ps1). A liberação de script vale só para aquela janela.
+- Para experimentar sem mexer em placa: `INSTALAR.bat -Acao firmware -Simular -Porta COM3`.
+- **Testado:** a opção 3 na placa de verdade (duas vezes), a opção 4 a partir de uma cópia limpa de um clone local do WLED com as dependências já baixadas (firmware do mesmo tamanho do publicado),
+  e a opção 2 só em simulação. **Não testado:** gravar de verdade uma placa com este instalador, o download do `esptool` e um PC sem nenhuma das ferramentas.
 
 ## O que foi alterado e por quê
 
@@ -632,14 +652,12 @@ O `.bin` sai em `build_output/release/`. Grave com `pio run -e d1_r2_gif -t uplo
 Instale as ferramentas (arquivos gzip) e registre-as:
 
 ```powershell
-curl.exe -F "data=@ferramentas/relogio/relogio.htm.gz;filename=relogio.htm.gz"   http://IP-DA-PLACA/upload
-curl.exe -F "data=@ferramentas/gifstudio/gifstudio.htm.gz;filename=gifstudio.htm.gz" http://IP-DA-PLACA/upload
-curl.exe -F "data=@ferramentas/mqtt/mqttrules.htm.gz;filename=mqttrules.htm.gz"   http://IP-DA-PLACA/upload
+foreach ($f in Get-ChildItem ferramentas\*\*.htm.gz) { curl.exe -H "Expect:" -F "data=@$($f.FullName);filename=$($f.Name)" http://IP-DA-PLACA/upload }
 ```
 
 Depois acrescente uma entrada por ferramenta (`id`, `name`, `file`, `desc`) no `pftools.json` da placa para
-que apareça no PixelForge. As páginas também abrem direto em `http://IP-DA-PLACA/relogio.htm`, `/gifstudio.htm`
-e `/mqttrules.htm`. Para mudar uma ferramenta, edite o `*.src.htm` e rode o `build.py` dela.
+que apareça no PixelForge (a opção 3 do instalador faz os dois passos). As páginas também abrem direto em `http://IP-DA-PLACA/relogio.htm`, `/gifstudio.htm`,
+`/mqttrules.htm`, `/pixelstudio.htm` e `/jogos.htm`. Para mudar uma ferramenta, edite o `*.src.htm` e rode o `build.py` dela.
 
 Dicas aprendidas na prática:
 - OTA: feche as outras abas do navegador que apontam para a placa e use `curl -H "Expect:"`. Se a placa responder ao ping mas não ao HTTP depois de uma gravação, desligue e ligue e confira se a
@@ -714,6 +732,9 @@ Dicas aprendidas na prática:
 ## Estrutura do repositório
 
 ```
+INSTALAR.bat             instalador de duplo clique para Windows
+instalador/              o script do instalador
+firmware/                firmware pronto para gravar, o código de conferência e a licença
 patches/                 diff contra o WLED (commit em WLED_BASE_COMMIT.txt)
 lowram_libs/             AnimatedGIF (tabelas reduzidas) e GifDecoder (todas as arquiteturas)
 usermods/mqtt_rules/     motor de regras + readme
@@ -723,4 +744,5 @@ platformio_override.ini  ambientes de compilação para a D1 R2
 docs/img/                prints e gráficos de memória
 ```
 
-O WLED usa licença MIT; a AnimatedGIF usa Apache-2.0. Confira a licença de cada projeto de origem antes de reutilizar o código.
+O WLED usa a licença [EUPL v1.2 ou posterior](firmware/LICENSE-WLED.txt); a AnimatedGIF usa Apache-2.0. O firmware publicado é compilado a partir do commit do WLED em
+`patches/WLED_BASE_COMMIT.txt` mais o patch, `usermods/`, `lowram_libs/` e o `platformio_override.ini` deste repositório. Confira a licença de cada projeto de origem antes de reutilizar o código.

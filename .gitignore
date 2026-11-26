@@ -2,3 +2,6 @@
 build_output/
 *.bin
 __pycache__/
+instalador/esptool/
+instalador/backup/
+!firmware/*.bin
