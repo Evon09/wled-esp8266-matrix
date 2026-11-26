@@ -98,6 +98,11 @@ button{cursor:pointer}
 .scrbody{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)}
 
 /* clima */
+.wxnow{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.wxnow canvas{width:140px;height:140px;background:#07080a;border:1px solid var(--bd);border-radius:12px}
+.wxgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-top:8px}
+.wxgrid button{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--tx);font:inherit;font-size:12px}
+.wxgrid button:hover{border-color:var(--ac)}.wxgrid canvas{width:80px;height:80px;background:#07080a;border-radius:8px}
 .list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .city{background:var(--card2);border:1px solid var(--bd);border-radius:10px;padding:9px 12px;text-align:left;display:flex;justify-content:space-between;gap:10px}
 .city:hover{border-color:var(--ac)}.city small{color:var(--mu)}
@@ -254,9 +259,20 @@ details>summary{cursor:pointer;color:var(--mu);padding:6px 0;list-style:none}det
       <div class="small mu" id="wxInfo" style="margin-top:8px"></div>
     </div>
     <div class="card">
-      <h2><span class="num">2</span> Atualização</h2>
+      <h2><span class="num">2</span> Desenho do tempo no relógio</h2>
+      <div class="hint">Uma animação que muda sozinha conforme o tempo na sua cidade: sol, lua, nuvens, neblina, garoa, chuva, tempestade ou neve.</div>
+      <label class="sw"><input type="checkbox" data-b="anim.on"><i></i><span><b>Mostrar no ciclo do relógio</b></span></label>
+      <div class="row"><label class="col"><span class="lbl">Fica na tela (segundos)</span><input type="number" min="1" max="600" data-b="anim.dur" data-t="n"></label>
+        <label class="sw"><input type="checkbox" data-b="anim.temp"><i></i><span>Com a temperatura embaixo</span></label></div>
+      <div class="wxnow"><canvas id="wxNow" width="160" height="160"></canvas><div><div class="lbl">Agora</div><b id="wxNowName">escolha a cidade</b><div class="small mu">É assim que aparece na matriz.</div></div></div>
+      <div class="lbl">Todos os desenhos (clique em um para ver na matriz)</div>
+      <div class="wxgrid" id="wxGrid"></div>
+      <div class="row"><button class="btn" id="btnWxSave">💾 Salvar os 10 GIFs na placa</button><span class="small mu">Eles aparecem no Estúdio de GIFs, na categoria “Clima”.</span></div>
+    </div>
+    <div class="card">
+      <h2><span class="num">3</span> Atualização</h2>
       <label class="sw"><input type="checkbox" data-b="clima.auto"><i></i><span>Atualizar sozinho a cada <input type="number" min="5" max="180" data-b="clima.every" data-t="n" style="width:66px;min-height:34px;padding:4px 8px"> minutos</span></label>
-      <div class="hint" style="margin-top:10px">⚠ A atualização automática só funciona <b>enquanto esta página estiver aberta</b> em algum aparelho. Com ela fechada, a placa continua mostrando o último valor recebido.</div>
+      <div class="hint" style="margin-top:10px">⚠ A atualização automática só funciona <b>enquanto esta página estiver aberta</b> em algum aparelho. Com ela fechada, a placa continua mostrando o último valor e o último desenho recebidos.</div>
       <details><summary>Opções avançadas</summary>
         <div class="row">
           <label class="col"><span class="lbl">Latitude</span><input type="number" step="0.0001" data-b="clima.lat" data-t="n" style="width:120px"></label>
@@ -382,7 +398,74 @@ const $=id=>document.getElementById(id);
 const qs=new URLSearchParams(location.search);
 const BASE=qs.get('ip')?'http://'+qs.get('ip'):'';
 let MW=16,MH=16,SEGN=1,CFG=null,STATE=null,INFO=null,drag=null,pvTouched=false,applied=false,dirty=false,wxTimer=null,pvScreen='hora',tab='rel',lastApply=null;
-const W={t:null,h:null,when:null};
+const W={t:null,h:null,when:null,code:null,day:true,file:null,sig:null};
+/* ---------- desenhos animados do tempo, 16x16 (sem DOM: este trecho também roda no Node para conferir a arte) ---------- */
+const WX_KINDS=[['sol','Sol'],['lua','Noite limpa'],['solnuvem','Sol e nuvens'],['luanuvem','Noite e nuvens'],['nublado','Nublado'],['neblina','Neblina'],['garoa','Garoa'],['chuva','Chuva'],['tempestade','Tempestade'],['neve','Neve']];
+const WX_FRAMES=12,WX_DELAY={sol:20,lua:25,solnuvem:25,luanuvem:25,nublado:30,neblina:22,garoa:16,chuva:10,tempestade:12,neve:20}; // atraso em centésimos de segundo
+const wxName=k=>(WX_KINDS.find(x=>x[0]===k)||[k,k])[1];
+// código de tempo da WMO (o que o Open-Meteo devolve) + dia ou noite -> desenho
+function wxKind(code,isDay){
+  if(code==null)return null;
+  if(code<=1)return isDay?'sol':'lua';
+  if(code===2)return isDay?'solnuvem':'luanuvem';
+  if(code===45||code===48)return'neblina';
+  if(code>=51&&code<=57)return'garoa';
+  if((code>=61&&code<=67)||(code>=80&&code<=82))return'chuva';
+  if((code>=71&&code<=77)||code===85||code===86)return'neve';
+  if(code>=95)return'tempestade';
+  return'nublado';
+}
+const WX_DIG={'0':'75557','1':'26227','2':'71747','3':'71717','4':'55711','5':'74717','6':'74757','7':'71111','8':'75757','9':'75717','-':'00700','°':'75700'};
+const WX_CLOUD=['....###....','..######...','.########..','.##########','###########','.#########.'];
+// H é a altura da área do desenho: 16 (tela toda) ou 10 (com a temperatura embaixo)
+function wxDraw(kind,f,H,px){
+  const set=(x,y,c)=>{x=Math.round(x);y=Math.round(y);if(x>=0&&x<16&&y>=0&&y<H)px[y*16+x]=c};
+  const t=f/WX_FRAMES,big=H===16,drift=Math.round(Math.sin(t*2*Math.PI));
+  const cloud=(ox,oy,main,shade)=>WX_CLOUD.forEach((row,j)=>{for(let i=0;i<row.length;i++)if(row[i]==='#')set(ox+i,oy+j,j>=4?shade:main)});
+  const disk=(cx,cy,r,c,core)=>{for(let y=0;y<H;y++)for(let x=0;x<16;x++){const d=Math.hypot(x-cx,y-cy);if(d<=r)set(x,y,core&&d<=r-1.3?core:c)}};
+  const crescent=(cx,cy,r)=>{for(let y=0;y<H;y++)for(let x=0;x<16;x++)if(Math.hypot(x-cx,y-cy)<=r&&Math.hypot(x-cx-r*.62,y-cy+r*.38)>r*.9)set(x,y,0xf0e4a0)};
+  const stars=list=>list.forEach(([x,y],i)=>{const p=(f+i*5)%WX_FRAMES;if(p<4)set(x,y,0xffffff);else if(p<8)set(x,y,0x506080)});
+  // gotas e flocos: cada um percorre a faixa "top..H-1" um número inteiro de vezes por volta, então a animação emenda sem salto
+  const fall=(cols,top,turns,fn)=>{const span=H-top;cols.forEach((x,i)=>{const y=top+Math.floor(((t*turns+i*.37)%1)*span);fn(x,y,i)})};
+  const R=0xff9000;
+  if(kind==='sol'){const long=Math.floor(f/3)%2===0;
+    if(big){disk(7.5,7.5,3.7,0xffb000,0xffe030);
+      for(const x of [7,8]){for(const y of long?[0,1,2]:[1,2]){set(x,y,R);set(x,15-y,R);set(y,x,R);set(15-y,x,R)}}
+      for(const d of long?[2,3]:[1,2,3]){set(d,d,R);set(15-d,d,R);set(d,15-d,R);set(15-d,15-d,R)}}
+    else{disk(7.5,4.5,2.7,0xffb000,0xffe030);
+      for(const x of long?[2,3]:[1,2,3]){set(x,4,R);set(x,5,R);set(15-x,4,R);set(15-x,5,R)}
+      for(const x of [7,8]){set(x,0,R);set(x,9,R)}
+      for(const d of long?[1]:[0,1]){set(3+d,d,R);set(12-d,d,R);set(3+d,9-d,R);set(12-d,9-d,R)}}}
+  else if(kind==='lua'){if(big){crescent(7,8,5.2);stars([[13,2],[2,3],[14,10],[11,14],[1,13]])}else{crescent(7,4.5,4.2);stars([[13,1],[1,2],[14,7],[1,8]])}}
+  else if(kind==='solnuvem'||kind==='luanuvem'){const sx=11,sy=big?4:2.5;
+    if(kind==='solnuvem'){disk(sx,sy,big?2.6:2.2,0xffb000,0xffe030);const on=Math.floor(f/3)%2===0,r=big?4:3;
+      for(const[dx,dy]of on?[[0,-1],[1,0],[.75,-.75]]:[[-.75,-.75],[.75,.75],[1,0]])set(sx+dx*r,sy+dy*r,R)}
+    else{crescent(sx,sy,big?3.2:2.4);stars(big?[[2,2],[14,12],[5,14]]:[[1,1],[6,0]])}
+    cloud(1+drift,big?7:3,0xd0dae8,0x7888a0)}
+  else if(kind==='nublado'){cloud(5-drift,big?2:0,0x707c90,0x485468);cloud(drift,big?8:4,0xd0dae8,0x7888a0)}
+  else if(kind==='neblina'){const pat='#####..###..';(big?[2,4,6,8,10,12,14]:[1,3,5,7,9]).forEach((y,j)=>{for(let x=0;x<16;x++){const s=j%2?-f:f;if(pat[((x+s+j*5)%12+12)%12]==='#')set(x,y,j%2?0x8896a8:0x566272)}})}
+  else{const oy=big?1:0,top=oy+6,flash=kind==='tempestade'&&(f===2||f===8);
+    if(kind==='tempestade')cloud(2,oy,flash?0xb8c0d8:0x606a80,flash?0x808aa8:0x3a4258);
+    else if(kind==='neve')cloud(2+drift,oy,0xc0ccdc,0x6c7c94);
+    else cloud(2+drift,oy,0xa8b4c8,0x566478);
+    if(kind==='chuva')fall([3,5,7,9,11,13],top,big?2:3,(x,y)=>{set(x,y,0x30a0ff);if(y-1>=top)set(x,y-1,0x0c3c80)});
+    else if(kind==='garoa')fall([3,6,9,12],top,big?1:2,(x,y)=>set(x,y,0x60c0ff));
+    else if(kind==='neve')fall([2,5,7,10,13],top,1,(x,y,i)=>set(x+Math.round(Math.sin(t*2*Math.PI+i*2)),y,0xffffff));
+    else{fall([3,6,12],top,big?2:3,(x,y)=>set(x,y,0x2080e0));
+      if(f===2||f===3||f===8){const bolt=big?[[9,7],[8,8],[7,9],[8,9],[9,9],[8,10],[7,11],[6,12]]:[[9,6],[8,7],[9,7],[8,8],[7,9]];bolt.forEach(([x,y])=>set(x,y,0xffe020))}}}
+}
+const wxTempColor=v=>v<=5?0x40a0ff:v<=15?0x50e0ff:v<=24?0xffffff:v<=31?0xffa000:0xff4020;
+function wxTemp(v,px){const s=String(Math.round(v))+'°',w=s.length*4-1;let x=Math.max(0,Math.floor((16-w+1)/2));
+  for(const ch of s){const g=WX_DIG[ch];for(let r=0;r<5;r++){const b=+g[r];for(let k=0;k<3;k++)if(b&(4>>k)&&x+k<16)px[(11+r)*16+x+k]=wxTempColor(v)}x+=4}}
+// temp = null desenha a tela toda; com número, o desenho fica em cima e a temperatura embaixo
+function wxFrames(kind,temp){const withT=temp!=null,out=[];for(let f=0;f<WX_FRAMES;f++){const px=new Uint32Array(256);wxDraw(kind,f,withT?10:16,px);if(withT)wxTemp(temp,px);out.push(px)}return out}
+function wxGif(kind,temp,Writer){
+  const fr=wxFrames(kind,temp),idx=new Map();for(const f of fr)for(const c of f)if(!idx.has(c))idx.set(c,idx.size);
+  let n=2;while(n<idx.size)n<<=1;const pal=[...idx.keys()];while(pal.length<n)pal.push(0);
+  const buf=[],w=new Writer(buf,16,16,{palette:pal,loop:0});
+  for(const f of fr)w.addFrame(0,0,16,16,Uint8Array.from(f,c=>idx.get(c)),{delay:WX_DELAY[kind]||20,disposal:2});
+  return new Uint8Array(buf.slice(0,w.end()))}
+
 
 /* ---------- configuração do usuário ---------- */
 const DEF={ntp:true,ntpHost:'200.160.0.8',tz:23,h12:false,bootClock:true,extras:[],
@@ -390,7 +473,7 @@ const DEF={ntp:true,ntpHost:'200.160.0.8',tz:23,h12:false,bootClock:true,extras:
   custom:{h:{x:2,y:0,font:2},m:{x:2,y:8,font:2}},
   screens:{hora:{on:true,dur:20},data:{on:true,dur:4,font:2,col:'#7cfc00',fmt:'dm2'},temp:{on:true,dur:4,font:1,col:'#ff5030',unit:true},
     umid:{on:true,dur:4,font:1,col:'#40a0ff',unit:true},texto:{on:false,dur:6,font:2,col:'#ffffff',txt:'OLA'}},
-  clima:{lat:null,lon:null,name:'',every:15,auto:true,suffix:'C'},
+  clima:{lat:null,lon:null,name:'',every:15,auto:true,suffix:'C'},anim:{on:true,dur:6,temp:true},
   sensor:{on:false,pin:5,type:5,a1:'mensagem',a2:'nada',a3:'nada',msg:'ALERTA',msgDur:5,msgCol:'#ff2020',msgFont:2,cfgPin:-1}};
 let S=JSON.parse(JSON.stringify(DEF));
 function merge(a,b){for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')merge(a[k],b[k]);else a[k]=b[k]}return a}
@@ -476,6 +559,7 @@ const extraSkipped=ex=>ex.on&&ex.t==='gif'&&gifTooBig(GIFI[ex.file]); // GIF gra
 function activeScreens(){
   const a=SCREENS.filter(([k])=>k==='hora'||S.screens[k].on).filter(([k])=>!noData(k))
     .map(([k,n])=>({key:k,name:n,dur:S.screens[k].dur,items:screenItems(k)}));
+  if(S.anim.on&&W.code!=null)a.splice(1,0,{key:'anim',name:'Clima animado',dur:S.anim.dur,extra:{t:'gif',file:W.file||WX_FILES[0]},items:[]}); // logo depois da hora
   S.extras.forEach((ex,i)=>{if(ex.on&&!extraSkipped(ex))a.push({key:'ex'+i,name:extraName(ex),dur:ex.dur,extra:ex,xi:i,items:[]})});
   return a;
 }
@@ -498,8 +582,11 @@ function drawPreview(){
   const tv=($('pvTime').value||'12:34').split(':'),d=new Date(2026,10,24,+tv[0],+tv[1],0);
   const mx=/^ex(\d+)$/.exec(pvScreen),exi=mx&&S.extras[+mx[1]];
   const k=exi?'ex':(SCREENS.some(([x])=>x===pvScreen)?pvScreen:'hora');
-  const items=exi?[]:(k==='hora'?clockItems():infoItems(k)),warns=[],infos=[];
+  const wxp=pvScreen==='anim';
+  const items=exi||wxp?[]:(k==='hora'?clockItems():infoItems(k)),warns=[],infos=[];
   const buf=Array.from({length:MH},()=>Array(MW).fill(null));
+  if(wxp){if(W.code==null)infos.push('Escolha a cidade na aba Clima para ver o desenho do tempo.');
+    else{const g=wxKind(W.code,W.day),f=wxCached(g,S.anim.temp?W.t:null)[wxIndex(g)];for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const c=f[Math.floor(y*16/MH)*16+Math.floor(x*16/MW)];if(c)buf[y][x]=wxCss(c)}infos.push('Clima de agora: '+wxName(g)+'.')}}
   if(exi){
     if(exi.t==='gif'){const e=GIFI[exi.file];
       if(e&&e.ok){const oc=document.createElement('canvas');oc.width=MW;oc.height=MH;const c2=oc.getContext('2d');c2.imageSmoothingEnabled=false;c2.drawImage(e.img,0,0,MW,MH);
@@ -594,7 +681,7 @@ function buildPresets(){
   const trs=scr.map((s,i)=>(isGif(s)||isGif(scr[(i-1+scr.length)%scr.length]))?0:S.trans);
   let si=0;
   scr.forEach((s,i)=>{
-    const id=s.extra?PRESET_EXTRA+s.xi:PRESET_BASE+(si++);
+    const id=s.xi!==undefined?PRESET_EXTRA+s.xi:PRESET_BASE+(si++);
     P[id]=s.extra?extraPreset(s.extra,'Relógio: '+s.name,nseg,trs[i]):presetState(s.items,'Relógio: '+s.name,nseg,trs[i]);
     ids.push(id);durs.push(Math.max(1,Math.round(s.dur*10)))});
   P[PRESET_CYCLE]=ids.length===1?Object.assign({},P[ids[0]],{n:'Relógio (ciclo)'})
@@ -608,6 +695,7 @@ function buildPresets(){
 async function pushPresets(){
   let cur={};try{cur=await jget('/presets.json')}catch(e){}
   await backupOnce('/presets.json','relogio-presets-backup.json',cur);
+  await syncWeatherGif(cur);
   for(let id=200;id<=239;id++)delete cur[id];
   const P=buildPresets();Object.assign(cur,P);
   const txt=JSON.stringify(cur);await upload('presets.json',txt);
@@ -628,8 +716,8 @@ async function pickCity(i){const c=CITIES[i];if(!c)return;S.clima.lat=+c.latitud
   $('cityList').innerHTML='';markDirty();save();fillForm();await fetchWx();wxSchedule()}
 async function fetchWx(){
   const c=S.clima;if(c.lat==null||c.lon==null){log('Escolha a cidade primeiro.','er');return false}
-  try{const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,relative_humidity_2m&timezone=auto`);
-    const j=await r.json();W.t=Math.round(j.current.temperature_2m);W.h=Math.round(j.current.relative_humidity_2m);W.when=new Date();
+  try{const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${c.lat}&longitude=${c.lon}&current=temperature_2m,relative_humidity_2m,weather_code,is_day&timezone=auto`);
+    const j=await r.json();W.t=Math.round(j.current.temperature_2m);W.h=Math.round(j.current.relative_humidity_2m);W.code=j.current.weather_code??null;W.day=j.current.is_day!==0;W.when=new Date();
     jpost('/json/state',{mqttr:{set:{t:W.t,h:W.h}}}).catch(()=>{}); // as regras por hora do módulo MQTT podem usar esses valores
     updateWx();drawPreview();drawTimeline();updateBanners();return true}
   catch(e){log('Falha ao buscar o clima: '+e.message,'er');return false}
@@ -638,15 +726,57 @@ function updateWx(){
   $('wxCity').textContent=S.clima.name||(S.clima.lat!=null?`${S.clima.lat}, ${S.clima.lon}`:'nenhuma escolhida');
   $('wxT').textContent=W.t==null?'--':W.t+'°';$('wxH').textContent=W.h==null?'--':W.h+'%';
   $('wxInfo').textContent=W.when?'Atualizado às '+W.when.toLocaleTimeString():'';
+  $('wxNowName').textContent=W.code==null?'escolha a cidade':wxName(wxKind(W.code,W.day))+(W.t==null?'':', '+W.t+'°');
 }
 function wxSchedule(){clearInterval(wxTimer);wxTimer=null;
-  if(S.clima.auto&&S.clima.lat!=null)wxTimer=setInterval(async()=>{if(await fetchWx()&&applied){try{await pushPresets();log('Clima atualizado na placa: '+W.t+S.clima.suffix+' e '+W.h+'%','ok')}catch(e){log(e.message,'er')}}},Math.max(5,S.clima.every)*60000)}
+  if(S.clima.auto&&S.clima.lat!=null)wxTimer=setInterval(async()=>{if(await fetchWx()&&applied&&!dirty){try{await pushPresets();log('Clima atualizado na placa: '+W.t+S.clima.suffix+' e '+W.h+'%','ok')}catch(e){log(e.message,'er')}}},Math.max(5,S.clima.every)*60000)}
+
+/* ---------- desenho animado do tempo ---------- */
+const WX_FILES=['clima-agora-a.gif','clima-agora-b.gif']; // dois nomes alternados: nunca se grava por cima do que a placa está tocando
+async function ensureWriter(){if(typeof GifWriter!=='undefined')return;
+  await new Promise((res,rej)=>{const e=document.createElement('script');e.src=BASE+'/omggif.js';e.onload=res;e.onerror=()=>rej(new Error('não carregou o gerador de GIF da placa (omggif.js)'));document.head.appendChild(e)})}
+async function uploadGif(name,bytes){
+  for(let n=0;;n++){try{const fd=new FormData();fd.append('data',new Blob([bytes],{type:'image/gif'}),name);const r=await fetch(BASE+'/upload',{method:'POST',body:fd});if(!r.ok)throw new Error('upload '+name+' → HTTP '+r.status);return}
+    catch(e){if(n>=2)throw e;await sleep(1500)}}} // a placa pode recusar quando a memória está curta (GIF tocando)
+// grava o GIF do tempo de agora, se mudou; "presets" diz qual dos dois arquivos a placa está usando
+async function syncWeatherGif(presets){
+  if(!S.anim.on||W.code==null)return;
+  const kind=wxKind(W.code,W.day),temp=S.anim.temp?W.t:null,sig=kind+'|'+temp,used=(JSON.stringify(presets).match(/clima-agora-[ab]\.gif/)||[])[0];
+  if(sig===W.sig&&W.file&&W.file===used)return;
+  await ensureWriter();const file=used===WX_FILES[0]?WX_FILES[1]:WX_FILES[0];
+  await uploadGif(file,wxGif(kind,temp,GifWriter));W.file=file;W.sig=sig;delete GIFI[file];
+}
+async function tryWx(kind){
+  try{await ensureWriter();const file='clima-'+kind+'.gif';await uploadGif(file,wxGif(kind,null,GifWriter));
+    const segs=[extraSeg({t:'gif',file})];for(let k=1;k<Math.max(SEGN,3);k++)segs.push({id:k,stop:0});
+    await jpost('/json/state',{on:true,bri:S.bri,pl:-1,seg:segs});applied=false;updateApplyBtn();log('“'+wxName(kind)+'” na matriz. Para voltar ao relógio, clique em “Enviar relógio para a placa”.','ok')}
+  catch(e){log(e.message,'er')}}
+async function saveAllWx(){
+  const b=$('btnWxSave');b.disabled=true;
+  try{await ensureWriter();
+    let idx={v:1,cats:[],map:{}};try{const j=await jget('/gifstudio.json');if(j&&Array.isArray(j.cats))idx={v:1,cats:j.cats,map:j.map||{}}}catch(e){}
+    let cat=idx.cats.find(c=>c.name.toLowerCase()==='clima');if(!cat){cat={id:'clima',name:'Clima',color:'#38d6ff'};idx.cats.push(cat)}
+    let n=0;for(const[k]of WX_KINDS){const file='clima-'+k+'.gif';b.textContent=`Salvando ${++n} de ${WX_KINDS.length}…`;await uploadGif(file,wxGif(k,null,GifWriter));idx.map[file]=cat.id;delete GIFI[file];await sleep(250)}
+    await upload('gifstudio.json',JSON.stringify(idx));FILES=null;log('10 GIFs do tempo salvos na placa (clima-sol.gif, clima-chuva.gif…).','ok')}
+  catch(e){log('Erro ao salvar os GIFs: '+e.message,'er')}
+  b.disabled=false;b.textContent='💾 Salvar os 10 GIFs na placa'}
+/* animação das amostras e da pré-visualização */
+const wxCache={},wxCached=(k,t)=>wxCache[k+'|'+t]||(wxCache[k+'|'+t]=wxFrames(k,t));
+const wxIndex=k=>Math.floor(Date.now()/(WX_DELAY[k]*10))%WX_FRAMES;
+const wxCss=c=>'#'+c.toString(16).padStart(6,'0');
+function wxPaint(cv,px){const c=cv.getContext('2d'),S2=cv.width/16;c.fillStyle='#07080a';c.fillRect(0,0,cv.width,cv.height);
+  for(let i=0;i<256;i++){c.fillStyle=px[i]?wxCss(px[i]):'#14171d';c.beginPath();c.arc((i%16+.5)*S2,(Math.floor(i/16)+.5)*S2,S2*.4,0,6.2832);c.fill()}}
+function wxTick(){
+  if(tab==='clima'){const k=W.code==null?'solnuvem':wxKind(W.code,W.day);wxPaint($('wxNow'),wxCached(k,S.anim.temp&&W.code!=null?W.t:null)[wxIndex(k)]);
+    document.querySelectorAll('#wxGrid canvas').forEach(cv=>{const g=cv.dataset.wx;wxPaint(cv,wxCached(g,null)[wxIndex(g)])})}
+  if(pvScreen==='anim')drawPreview();
+}
 
 /* ---------- enviar / parar ---------- */
 async function apply(){
   $('btnApply').disabled=true;
   try{
-    if((S.screens.temp.on||S.screens.umid.on)&&W.t==null&&S.clima.lat!=null)await fetchWx();
+    if((S.anim.on&&W.code==null||(S.screens.temp.on||S.screens.umid.on)&&W.t==null)&&S.clima.lat!=null)await fetchWx();
     if((S.screens.temp.on||S.screens.umid.on)&&W.t==null)log('Sem dados de clima: as telas de temperatura e umidade ficam de fora por enquanto.');
     try{STATE=await jget('/json/state');SEGN=STATE.seg.length}catch(e){}
     const r=await pushPresets();log(`Pronto! ${r.count} itens gravados na placa (${r.bytes} bytes).`);
@@ -725,14 +855,15 @@ function updateBanners(){
   const b=[];
   if(!INFO)b.push({k:'er',t:'Sem conexão com a placa. Abra esta página pelo endereço da placa (por exemplo http://192.168.0.170/relogio.htm).'});
   else if(boardYear()<2025)b.push({k:'warn',t:'A placa está sem a hora certa, então o relógio mostraria a hora errada.',btn:['Corrigir agora','placa']});
-  if((S.screens.temp.on||S.screens.umid.on)&&W.t==null)b.push({k:'info',t:'Para mostrar temperatura e umidade, escolha a sua cidade.',btn:['Escolher cidade','clima']});
+  if((S.screens.temp.on||S.screens.umid.on||S.anim.on)&&S.clima.lat==null)b.push({k:'info',t:'Para mostrar o clima no relógio, escolha a sua cidade.',btn:['Escolher cidade','clima']});
   $('banners').innerHTML=b.map(x=>`<div class="banner ${x.k}"><span>${x.k==='er'?'⛔':x.k==='warn'?'⚠':'ℹ'} ${x.t}</span>${x.btn?`<button data-goto="${x.btn[1]}">${x.btn[0]}</button>`:''}</div>`).join('');
 }
 function drawTimeline(){
   const scr=activeScreens(),total=scr.reduce((a,s)=>a+s.dur,0);
   const skipped=SCREENS.filter(([k])=>k!=='hora'&&S.screens[k].on&&noData(k)).map(([k,n])=>`<div class="tl skip"><b>${n}</b><span>sem dados</span></div>`)
+    .concat(S.anim.on&&W.code==null?['<div class="tl skip"><b>🌦 Clima animado</b><span>sem dados</span></div>']:[])
     .concat(S.extras.filter(extraSkipped).map(ex=>`<div class="tl skip"><b>🎞 ${esc(extraName(ex))}</b><span>GIF grande demais</span></div>`));
-  $('timeline').innerHTML=scr.map(s=>`<div class="tl"><b>${s.extra?(s.extra.t==='gif'?'🎞 ':'✨ '):''}${esc(s.name)}</b><span>${s.dur} s</span></div>`).join('<i class="arrow">→</i>')+skipped.join('')+
+  $('timeline').innerHTML=scr.map(s=>`<div class="tl"><b>${s.key==='anim'?'🌦 ':s.extra?(s.extra.t==='gif'?'🎞 ':'✨ '):''}${esc(s.name)}</b><span>${s.dur} s</span></div>`).join('<i class="arrow">→</i>')+skipped.join('')+
     `<div class="small mu" style="width:100%">Um ciclo completo dura ${total} segundos e depois recomeça.</div>`;
 }
 
@@ -757,6 +888,7 @@ function fillForm(){
   $('a3l').parentElement.classList.toggle('hide',sw);
   $('sensorBox').classList.toggle('hide',!S.sensor.on);
   $('pvTabs').innerHTML=SCREENS.filter(([k])=>k==='hora'||S.screens[k].on).map(([k,n])=>[k,n])
+    .concat(S.anim.on?[['anim','🌦 Clima']]:[])
     .concat(S.extras.map((ex,i)=>ex.on?['ex'+i,(ex.t==='gif'?'🎞 ':'✨ ')+extraName(ex).slice(0,14)]:null).filter(Boolean))
     .map(([k,n])=>`<button data-pv="${k}" class="${pvScreen===k?'on':''}">${esc(n)}</button>`).join('');
   document.querySelectorAll('#scrCards .scr').forEach(c=>c.classList.toggle('off',!S.screens[c.dataset.k].on&&c.dataset.k!=='hora'));
@@ -953,6 +1085,8 @@ function initStatic(){
   $('pvTime').addEventListener('input',()=>{pvTouched=true;drawPreview()});
   $('cityQ').addEventListener('keydown',e=>{if(e.key==='Enter')geoSearch()});
   $('btnGeo').onclick=geoSearch;$('btnWx').onclick=async()=>{if(await fetchWx()&&applied){try{await pushPresets();log('Clima atualizado na placa.','ok')}catch(e){log(e.message,'er')}}};
+  $('wxGrid').innerHTML=WX_KINDS.map(([k,n])=>`<button data-wxk="${k}" title="Ver na matriz"><canvas data-wx="${k}" width="96" height="96"></canvas>${n}</button>`).join('');
+  $('wxGrid').onclick=e=>{const b=e.target.closest('[data-wxk]');if(b)tryWx(b.dataset.wxk)};$('btnWxSave').onclick=saveAllWx;setInterval(wxTick,100);
   $('btnAddGif').onclick=()=>addExtra('gif');$('btnAddFx').onclick=()=>addExtra('fx');
   $('btnApply').onclick=apply;$('btnStop').onclick=stopClock;$('btnCfg').onclick=applyBoardCfg;$('btnTime').onclick=syncTime;
   window.addEventListener('resize',drawPreview);
@@ -965,9 +1099,16 @@ function initStatic(){
   initStatic();showTab(t0);window.scrollTo(0,0);fillForm();drawPreview();
   await loadBoard();
   if(await exists('/relogio-config.json')){try{const b=await jget('/relogio-config.json');const keep={ntp:S.ntp,ntpHost:S.ntpHost,tz:S.tz,h12:S.h12,bootClock:S.bootClock};merge(S,b);Object.assign(S,keep);fillForm();drawPreview()}catch(e){}}
-  wxSchedule();if(S.clima.lat!=null)fetchWx();
+  wxSchedule();
   buildExtras();if(S.extras.length){await ensureLists();buildExtras();fillForm();refreshGifCards()}
-  dirty=false;updateApplyBtn();
+  dirty=false;
+  // se o relógio já está rodando na placa, a atualização do clima volta a valer sem precisar enviar de novo
+  applied=!!STATE&&(STATE.pl===PRESET_CYCLE||STATE.ps===PRESET_CYCLE);
+  if(S.clima.lat!=null&&await fetchWx()&&applied&&S.anim.on){
+    let pr=null;try{pr=await jget('/presets.json')}catch(e){}
+    if(pr&&JSON.stringify(pr).includes('clima-agora-')){try{await pushPresets()}catch(e){log(e.message,'er')}}
+    else{markDirty();log('Novidade: o desenho do tempo entra no relógio quando você clicar em “Enviar alterações para a placa”.')}}
+  updateApplyBtn();
   log('Pronto. Ajuste as abas e use “Enviar relógio para a placa”.');
 })();
 </script>

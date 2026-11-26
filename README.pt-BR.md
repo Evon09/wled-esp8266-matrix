@@ -204,6 +204,24 @@ Antes de substituir qualquer coisa, a ferramenta guarda na placa um backup dos p
 - Os valores também são enviados à placa para as regras MQTT (`{"mqttr":{"set":{"t":..,"h":..}}}`).
 - A placa não tem sensor e não alcança a internet por nome, então a página faz o download e entrega os números à placa.
 
+#### Desenho animado do tempo
+
+![Opções do desenho do tempo](docs/img/clock-6-weather-anim.jpg)
+
+Uma tela do ciclo do relógio (logo depois da hora) mostra uma animação de acordo com o tempo agora: **sol, noite limpa, sol e nuvens, noite e nuvens, nublado, neblina,
+garoa, chuva, tempestade ou neve**. Ela pode levar a **temperatura** embaixo do desenho (colorida do azul, frio, ao vermelho, quente) e tem duração própria. Os dez desenhos:
+
+![As dez animações do tempo](docs/img/weather-gifs.png)
+
+- A página escolhe o desenho pelo código de tempo do Open-Meteo e pelo indicador de dia / noite, monta um GIF 16x16 pequeno (12 quadros, menos de 1 KB) e envia como
+  `clima-agora-a.gif` ou `clima-agora-b.gif`, alternando para nunca gravar por cima do arquivo que está tocando. Só faz isso quando o desenho ou a temperatura mudam.
+- Clique em um desenho para vê-lo na matriz. **Salvar os 10 GIFs na placa** grava `clima-sol.gif`, `clima-chuva.gif` e os outros, e coloca todos na categoria *Clima* do
+  Estúdio de GIFs, para usar em outros lugares (telas extras, regras MQTT).
+- Só atualiza enquanto esta página estiver aberta, como a temperatura. Se o relógio já estiver rodando quando a página for aberta, a atualização volta sem enviar de novo.
+- O desenho foi feito para 16x16.
+- **Verificado** contra uma placa simulada no PC: os presets e a playlist, a alternância dos arquivos, desligar a tela, salvar os dez arquivos e a categoria, e que os GIFs
+  abrem (16x16, 12 quadros). **Ainda não verificado na placa de verdade**: tocar esses GIFs na matriz e enviar um novo enquanto outro toca (a memória livre fica curta nessa hora).
+
 ### Aba 📡 Sensor (botão, movimento, porta)
 
 ![Aba Sensor](docs/img/clock-4-sensor.png)
@@ -503,6 +521,7 @@ as condições de temperatura bloquearam e liberaram corretamente, e as regras d
 | `mqttrules.jsonl` | as regras que o usermod executa |
 | `mqttrules-ui.json` | as regras como aparecem na ferramenta (e os tópicos dos sensores) |
 | `pixelstudio-sprites.json` | sprites guardados pelo Pixel Estúdio (opcional) |
+| `clima-agora-a.gif`, `clima-agora-b.gif` | o desenho do tempo de agora da ferramenta de relógio |
 | `*.gif` | os seus GIFs |
 
 As ferramentas usam só a API normal do WLED: `/json/state`, `/json/info`, `/json/effects`, `/json/fxdata`, `/json/palettes`, `/presets.json`,

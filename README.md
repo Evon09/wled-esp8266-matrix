@@ -204,6 +204,24 @@ Before replacing anything it keeps a backup of the previous presets and configur
 - The values are also sent to the board for the MQTT rules (`{"mqttr":{"set":{"t":..,"h":..}}}`).
 - The board has no sensor and cannot reach the internet by name, so the page does the download and hands the numbers to the board.
 
+#### Animated weather drawing
+
+![Weather drawing options](docs/img/clock-6-weather-anim.jpg)
+
+A screen of the clock cycle (right after the time) shows an animation that matches the weather now: **sun, clear night, sun and clouds, night and clouds, overcast, fog, drizzle,
+rain, storm or snow**. It can carry the **temperature** under the drawing (coloured from blue, cold, to red, hot) and has its own duration. The ten drawings:
+
+![The ten weather animations](docs/img/weather-gifs.png)
+
+- The page chooses the drawing from the Open-Meteo weather code and the day / night flag, builds a small 16x16 GIF (12 frames, under 1 KB) and uploads it as
+  `clima-agora-a.gif` or `clima-agora-b.gif`, alternating so that the file being played is never overwritten. It does this only when the drawing or the temperature changes.
+- Click a drawing to see it on the matrix. **Salvar os 10 GIFs na placa** writes `clima-sol.gif`, `clima-chuva.gif` and the others, and puts them in the *Clima* category of
+  Estúdio de GIFs, so you can use them in other places (extra screens, MQTT rules).
+- It updates only while this page is open, like the temperature. If the clock is already running when the page is opened, updates resume without sending again.
+- The drawing is made for 16x16.
+- **Verified** against a simulated board on the PC: the presets and playlist, the file alternation, turning the screen off, saving the ten files and the category, and that the GIFs
+  open (16x16, 12 frames). **Not verified on the real board yet**: playing these GIFs on the matrix and uploading a new one while another is playing (free memory is short then).
+
 ### Tab 📡 Sensor (button, motion, door)
 
 ![Clock tab: sensor](docs/img/clock-4-sensor.png)
@@ -505,6 +523,7 @@ conditions on temperature gated correctly, and value-triggered rules fired once 
 | `mqttrules.jsonl` | the rules the usermod runs |
 | `mqttrules-ui.json` | the rules as shown in the tool (and the sensor topics) |
 | `pixelstudio-sprites.json` | sprites saved from Pixel Estúdio (optional) |
+| `clima-agora-a.gif`, `clima-agora-b.gif` | the current weather drawing of the Clock tool |
 | `*.gif` | your GIFs |
 
 The tools only use the normal WLED API: `/json/state`, `/json/info`, `/json/effects`, `/json/fxdata`, `/json/palettes`, `/presets.json`,

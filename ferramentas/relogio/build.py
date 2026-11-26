@@ -5,7 +5,9 @@ FILES = ['font_tom-thumb_6px.wbf', 'font_TinyUnicode_8px.wbf', 'console_font_6x8
 fonts = [base64.b64encode((FONT_DIR / f).read_bytes()).decode() for f in FILES]
 here = pathlib.Path(__file__).parent
 src = (here / 'relogio.src.htm').read_text(encoding='utf-8')
+assert src.count('/*WX*/') == 1
 out = src.replace('/*FONTS*/[]', '[' + ','.join('"%s"' % f for f in fonts) + ']')
+out = out.replace('/*WX*/', (here / 'clima_gif.js').read_text(encoding='utf-8'))  # desenhos animados do tempo
 (here / 'relogio.htm').write_text(out, encoding='utf-8')
 import gzip
 (here / 'relogio.htm.gz').write_bytes(gzip.compress(out.encode('utf-8'), 9))
