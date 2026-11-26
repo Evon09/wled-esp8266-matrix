@@ -97,7 +97,7 @@ and the matrix stayed black.
 | `wled_server.cpp` | `GET /giflog` (only with `-D GIF_LOG`) | serves that log |
 | `FX_fcn.cpp` | `Segment::setName` releases the decoder before replacing the name | WLED refuses allocations below `MIN_HEAP_SIZE` (9 KB) on ESP8266; with the decoder alive the new image name was silently ignored |
 | `fcn_declare.h` | declaration of `gifLogText()` | support for the above |
-| `data/index.htm` | Four shortcut buttons (Clock, GIFs, Pixel Art, MQTT) next to PixelForge on the main page | one click from the WLED controls to the custom tools (the tools have a matching top bar) |
+| `data/index.htm` | Five shortcut buttons (Clock, GIFs, Pixel Art, MQTT, Games) next to PixelForge on the main page; the row wraps on narrow screens | one click from the WLED controls to the custom tools (the tools have a matching top bar) |
 | `data/pixelforge/pixelforge.htm` | removed the "not available on ESP8266" gate; the play request sends `ix:0` | the block came from page JavaScript; `ix` is blur and must be 0 for the Image effect on this CPU |
 
 ### 4. Settings made on the board (not in the code)

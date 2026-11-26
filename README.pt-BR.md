@@ -97,7 +97,7 @@ alocação sempre falhava e a matriz ficava preta.
 | `wled_server.cpp` | `GET /giflog` (só com `-D GIF_LOG`) | serve esse log |
 | `FX_fcn.cpp` | `Segment::setName` libera o decodificador antes de trocar o nome | o WLED recusa alocações abaixo de `MIN_HEAP_SIZE` (9 KB) no ESP8266; com o decodificador vivo, o nome da nova imagem era ignorado em silêncio |
 | `fcn_declare.h` | declaração de `gifLogText()` | apoio ao item acima |
-| `data/index.htm` | Quatro botões de atalho (Clock, GIFs, Pixel Art, MQTT) ao lado do PixelForge na página principal | um clique dos controles do WLED até as ferramentas (as ferramentas têm a barra equivalente no topo) |
+| `data/index.htm` | Cinco botões de atalho (Clock, GIFs, Pixel Art, MQTT, Games) ao lado do PixelForge na página principal; a fileira quebra em duas linhas em telas estreitas | um clique dos controles do WLED até as ferramentas (as ferramentas têm a barra equivalente no topo) |
 | `data/pixelforge/pixelforge.htm` | removida a trava "não disponível no ESP8266"; o pedido de reprodução envia `ix:0` | o bloqueio vinha do JavaScript da página; `ix` é o blur e precisa ser 0 no efeito Imagem nesta CPU |
 
 ### 4. Ajustes feitos na placa (não estão no código)

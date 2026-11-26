@@ -17,10 +17,19 @@ index 9c869e3..69b7116 100644
        if (newBuf) {
          strlcpy(newBuf, newName, newLen+1);
 diff --git a/wled00/data/index.htm b/wled00/data/index.htm
-index 6b7853f..d734612 100644
+index 6b7853f..a66284a 100644
 --- a/wled00/data/index.htm
 +++ b/wled00/data/index.htm
-@@ -141,6 +141,24 @@
+@@ -128,7 +128,7 @@
+ 			<button id="hexcnf" class="btn btn-xs" onclick="fromHex();"><i class="icons btn-icon">&#xe390;</i></button>
+ 		</div>
+ 
+-		<div style="padding: 12px 0; display:flex; justify-content:center; gap:16px;" id="btns">
++		<div style="padding: 12px 0; display:flex; flex-wrap:wrap; justify-content:center; gap:16px;" id="btns">
+ 			<div>
+ 				<button class="btn btn-xs" title="File editor" type="button" onclick="window.location.href=getURL('/edit')">
+ 				<i class="icons btn-icon">&#xe901;</i>
+@@ -141,6 +141,28 @@
  				</button>
  				<div class="iconlabel">PixelForge</div>
  			</div>
@@ -40,6 +49,10 @@ index 6b7853f..d734612 100644
 +			<div>
 +				<button class="btn btn-xs" title="Regras MQTT" type="button" onclick="window.location.href=getURL('/mqttrules.htm')">&#x1F4E1;</button>
 +				<div class="iconlabel">MQTT</div>
++			</div>
++			<div>
++				<button class="btn btn-xs" title="Jogos na Matriz" type="button" onclick="window.location.href=getURL('/jogos.htm')">&#x1F3AE;</button>
++				<div class="iconlabel">Games</div>
 +			</div>
 +			<!-- AI: end -->
  			<div>
