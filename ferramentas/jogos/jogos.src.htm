@@ -56,19 +56,33 @@ body.playing #pfnav{display:none}
   .arena.duo .who{writing-mode:vertical-rl}
 }
 @media(orientation:landscape) and (pointer:coarse){.pad{min-width:150px}}
+.arena.onlyL .padR,.arena.onlyR .padL{display:none}
+@media(orientation:portrait){.arena.onlyL:not(.duo) .padL,.arena.onlyR:not(.duo) .padR{grid-column:1/-1}}
+@media(pointer:coarse) and (min-height:600px){#play.noprev .arena:not(.duo) .dpad{zoom:1.15}#play.noprev .arena:not(.duo) .ab{width:92px;height:92px;font-size:16px}#play.noprev .arena:not(.duo) .abs{flex-direction:column}}
 @media(max-height:430px){.dpad{transform:scale(.85)}.ab{width:58px;height:58px}}
 @media(hover:hover) and (pointer:fine){#play:not(.showpads) .pad.auto{display:none}}
+#info{display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:8px;pointer-events:none}
+#infoTitle{font-size:22px;font-weight:700}#infoHud{font-size:16px;color:var(--ac)}#infoNet{font-size:13px;color:var(--mu)}#infoBtns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;pointer-events:auto;margin-top:6px}
+#play.noprev #cv{display:none}#play.noprev #info{display:flex}
+#play.noprev .screen{border:1px dashed var(--bd);border-radius:14px;align-self:stretch}
+#play.remote .screen{border-style:none}
+#play.remote #btnPause,#play.remote #btnRestart,#play.remote #btnSound,#play.remote #btnMat,#play.remote #btnPrev,#play.remote #btnPads{display:none}
+.hostbar,#join .box{background:#11222c;border:1px solid #38d6ff;border-radius:14px}
+.hostbar{max-width:980px;margin:12px auto;padding:10px 14px}.hostbar .row,#join .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;justify-content:center}
+#join{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:60}#join h2{margin:0 0 6px;font-size:20px}
+.btn:disabled{opacity:.45;cursor:default}
 .over{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
 .box{pointer-events:auto;background:#12161fee;border:1px solid var(--bd);border-radius:14px;padding:14px 16px;max-width:min(94%,360px);max-height:100%;overflow:auto;text-align:center}
 .box h2{margin:0 0 4px;font-size:19px}.box .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;align-items:center}
 .box label{font-size:13px;color:var(--mu);display:flex;gap:6px;align-items:center}
 kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5px;font-size:11.5px}
-#toasts{position:fixed;right:12px;bottom:12px;z-index:80;display:flex;flex-direction:column;gap:6px;max-width:min(92vw,360px)}
+#toasts{position:fixed;right:12px;top:60px;pointer-events:none;z-index:80;display:flex;flex-direction:column;gap:6px;max-width:min(92vw,360px)}
 .toast{background:#202733;border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:10px;padding:8px 12px;font-size:13.5px}
 </style>
 </head>
 <body>
 <div id="toasts"></div>
+<div id="join" class="hide"></div>
 
 <section id="menu">
   <header class="top">
@@ -76,18 +90,19 @@ kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5p
     <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip" id="chipConn">conectando…</span><button class="btn" id="btnMatM">📺 Matriz: ligada</button></div>
   </header>
   <div class="grid" id="list"></div>
-  <div class="note">Abra os jogos em <b>um aparelho só</b>: a placa tem pouca memória. Os jogos para 2 jogadores usam o mesmo aparelho (teclado dividido, dois controles na tela ou dois controles USB/Bluetooth). Enquanto um jogo está aberto ele usa a matriz inteira; ao sair, a placa volta como estava.</div>
+  <div class="hostbar hide" id="hostBar"></div>
+  <div class="note">Abra os jogos em <b>um aparelho só</b>: a placa tem pouca memória. Nos jogos para 2, o segundo jogador pode usar o mesmo aparelho ou o próprio celular: é só abrir esta página nele e escolher quem é. Enquanto um jogo está aberto ele usa a matriz inteira; ao sair, a placa volta como estava.</div>
 </section>
 
 <section id="play" class="hide">
   <div class="hud">
     <button class="btn" id="btnBack">← Jogos</button><span class="t" id="gTitle"></span><span class="sc" id="gScore"></span>
     <button class="btn" id="btnPause" title="Pausar (P)">⏸</button><button class="btn" id="btnRestart" title="Reiniciar (R)">↻</button>
-    <button class="btn" id="btnSound" title="Som">🔊</button><button class="btn" id="btnMat" title="Mostrar na matriz">📺</button><button class="btn" id="btnPads" title="Mostrar controles na tela">🕹</button><button class="btn" id="btnFull" title="Tela cheia">⛶</button>
+    <button class="btn" id="btnSound" title="Som">🔊</button><button class="btn" id="btnMat" title="Mostrar na matriz">📺</button><button class="btn" id="btnPrev" title="Mostrar ou esconder a prévia nesta tela">👁</button><button class="btn" id="btnPads" title="Mostrar controles na tela">🕹</button><button class="btn" id="btnFull" title="Tela cheia">⛶</button>
   </div>
   <div class="arena" id="arena">
     <div class="padL pad auto" id="padL"></div>
-    <div class="screen" id="screen"><canvas id="cv" width="320" height="320"></canvas><div class="over" id="over"></div></div>
+    <div class="screen" id="screen"><canvas id="cv" width="320" height="320"></canvas><div id="info"><div id="infoTitle"></div><div id="infoHud"></div><div id="infoNet"></div><div id="infoBtns"></div></div><div class="over" id="over"></div></div>
     <div class="padR pad auto" id="padR"></div>
   </div>
 </section>
@@ -438,26 +453,41 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;$('toasts').appendChild(t);setTimeout(()=>t.remove(),4000)}
 async function jget(p){const r=await fetch(BASE+p+'?cb='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
 async function jpost(p,o,extra){const r=await fetch(BASE+p,Object.assign({method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)},extra||{}));if(!r.ok)throw new Error('HTTP '+r.status);return r.json().catch(()=>({}))}
-let MW=16,MH=16,boardOk=false,wantMatrix=store.get('matrix',true);
-const LIVE={on:false,ws:null,prev:null,saved:null,acks:0,sent:0,lastSend:0,busy:false,frames:0};
-function openWs(){return new Promise((res,rej)=>{let done=false;const ws=new WebSocket(WSURL);ws.onopen=()=>{done=true;LIVE.ws=ws;LIVE.acks=0;LIVE.sent=0;res()};
-  ws.onmessage=()=>{LIVE.acks++};ws.onclose=()=>{if(LIVE.ws===ws)LIVE.ws=null};ws.onerror=()=>{if(!done)rej(new Error('WebSocket'))};setTimeout(()=>{if(!done){try{ws.close()}catch(e){}rej(new Error('tempo esgotado'))}},4000)})}
+let MW=16,MH=16,boardOk=false,wantMatrix=store.get('matrix',true),showPrev=store.get('preview',false);
+
+/* ---------- conexão WebSocket (uma só por página: desenha na matriz e troca comandos entre aparelhos) ---------- */
+const NET={ws:null,opening:null,sent:0,acks:0,relay:false,id:Math.random().toString(36).slice(2,8)};
+function wsOpen(){
+  if(NET.ws&&NET.ws.readyState===1)return Promise.resolve();if(NET.opening)return NET.opening;
+  NET.opening=new Promise((res,rej)=>{let done=false;const ws=new WebSocket(WSURL);
+    ws.onopen=()=>{done=true;NET.ws=ws;NET.sent=0;NET.acks=0;LIVE.prev=null;res()};
+    ws.onmessage=e=>{if(typeof e.data!=='string')return;if(e.data.startsWith('{"gm"')){let m=null;try{m=JSON.parse(e.data).gm}catch(x){}if(m&&m.id!==NET.id)onGame(m)}else NET.acks++};
+    ws.onclose=()=>{if(NET.ws===ws)NET.ws=null};ws.onerror=()=>{if(!done)rej(new Error('WebSocket'))};
+    setTimeout(()=>{if(!done){try{ws.close()}catch(e){}rej(new Error('tempo esgotado'))}},4000)}).finally(()=>{NET.opening=null});
+  return NET.opening}
+function wsSend(s){const ws=NET.ws;if(!ws||ws.readyState!==1)return false;try{ws.send(s);NET.sent++;return true}catch(e){return false}}
+function gm(o){if(!NET.relay)return false;o.id=NET.id;return wsSend(JSON.stringify({gm:o}))}
+
+/* ---------- desenhar na matriz ---------- */
+const LIVE={on:false,failed:false,prev:null,saved:null,lastSend:0,frames:0};
 let liveQ=Promise.resolve();
 const liveStart=()=>liveQ=liveQ.then(doStart),liveStop=()=>liveQ=liveQ.then(doStop);
 async function doStart(){
-  if(LIVE.on||!playing||!wantMatrix)return;
-  try{const st=await jget('/json/state');LIVE.saved=st;
-    const segs=[{id:0,start:0,stop:MW,startY:0,stopY:MH,grp:1,spc:0,of:0,on:true,rev:false,mi:false,fx:0,frz:false}];for(const s of st.seg||[])if(s.id>0)segs.push({id:s.id,stop:0});
-    await jpost('/json/state',{on:true,pl:-1,seg:segs});await sleep(350);await openWs();LIVE.on=true;LIVE.prev=null}
-  catch(e){toast('Não consegui usar a matriz: '+e.message+'. O jogo continua na tela.')}
-  matBtns();if(LIVE.on&&(!playing||!wantMatrix))await doStop()}
+  if(LIVE.on||!playing||remote||!wantMatrix)return;
+  let st=null; // o estado de antes é lido uma vez só: uma nova tentativa não pode guardar a matriz já tomada pelo jogo
+  for(let n=0;;n++){
+    try{if(!st){st=await jget('/json/state');LIVE.saved=st}
+      const segs=[{id:0,start:0,stop:MW,startY:0,stopY:MH,grp:1,spc:0,of:0,on:true,rev:false,mi:false,fx:0,frz:false}];for(const s of st.seg||[])if(s.id>0)segs.push({id:s.id,stop:0});
+      await jpost('/json/state',{on:true,pl:-1,seg:segs});await sleep(350);await wsOpen();LIVE.on=true;LIVE.failed=false;LIVE.prev=null;break}
+    catch(e){if(n<2){await sleep(800);continue}LIVE.failed=true;toast('Não consegui usar a matriz: '+e.message+'. O jogo aparece aqui na tela.');break}}
+  matBtns();updateView();if(LIVE.on&&(!playing||!wantMatrix))await doStop()}
 function restoreBody(){const sv=LIVE.saved;if(!sv)return null;if(sv.pl>=0)return{pl:sv.pl};if(sv.ps>0)return{ps:sv.ps};
   return{on:sv.on,bri:sv.bri,seg:(sv.seg||[]).map(s=>({id:s.id,start:s.start,stop:s.stop,startY:s.startY,stopY:s.stopY,grp:s.grp,spc:s.spc,of:s.of,on:s.on,bri:s.bri,col:s.col,fx:s.fx,sx:s.sx,ix:s.ix,pal:s.pal,c1:s.c1,c2:s.c2,c3:s.c3,o1:s.o1,o2:s.o2,o3:s.o3,n:s.n,sel:s.sel,rev:s.rev,mi:s.mi,frz:false}))}}
 async function doStop(){
-  if(!LIVE.on)return;LIVE.on=false;try{if(LIVE.ws)LIVE.ws.close()}catch(e){}LIVE.ws=null;matBtns();
+  if(!LIVE.on)return;LIVE.on=false;matBtns();
   try{await jpost('/json/state',{seg:{id:0,frz:false}});const b=restoreBody();if(b)await jpost('/json/state',b)}catch(e){toast('Aviso ao restaurar a placa: '+e.message)}}
 // ao sair da página a conexão WebSocket já aberta é o caminho mais garantido: a placa pode recusar um pedido HTTP novo enquanto serve a próxima página
-function sendRestore(ws,b){if(!ws||ws.readyState!==1)return;try{const list=Array.isArray(b.seg)?[{on:b.on,bri:b.bri},...b.seg.map(s=>({seg:s}))]:[{seg:{id:0,frz:false}},b];for(const m of list)ws.send(JSON.stringify(m))}catch(e){}}
+function sendRestore(b){const list=Array.isArray(b.seg)?[{on:b.on,bri:b.bri},...b.seg.map(s=>({seg:s}))]:[{seg:{id:0,frz:false}},b];for(const m of list)wsSend(JSON.stringify(m))}
 function fitMatrix(px){if(MW===N&&MH===N)return px;const o=new Uint32Array(MW*MH),ox=(MW-N)>>1,oy=(MH-N)>>1;for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const X=x-ox,Y=y-oy;if(X>=0&&Y>=0&&X<N&&Y<N)o[y*MW+x]=px[Y*N+X]}return o}
 // A placa (ESP8266) só aceita mensagens WebSocket de até ~528 bytes: cada quadro vira mensagens pequenas, só com o que mudou.
 function encodeFrame(px,prev){const toks=[];let i=0;const n=px.length,hx=c=>(c&0xFFFFFF).toString(16).padStart(6,'0');
@@ -466,13 +496,15 @@ function encodeFrame(px,prev){const toks=[];let i=0;const n=px.length,hx=c=>(c&0
   for(const t of toks){if(len+t.length+1>470&&cur.length){msgs.push(head+cur.join(',')+tail);cur=[];len=head.length+tail.length}cur.push(t);len+=t.length+1}
   if(cur.length)msgs.push(head+cur.join(',')+tail);return msgs}
 function liveSend(px){
-  if(!LIVE.on)return false;const now=performance.now();
-  if(!LIVE.ws||LIVE.ws.readyState>1){if(!LIVE.busy){LIVE.busy=true;openWs().then(()=>{LIVE.prev=null}).catch(()=>{}).finally(()=>{LIVE.busy=false})}return false}
-  if(LIVE.ws.readyState!==1||now-LIVE.lastSend<40||LIVE.ws.bufferedAmount>600||(LIVE.sent-LIVE.acks>2&&now-LIVE.lastSend<500))return false;
-  const m=encodeFrame(fitMatrix(px),LIVE.prev);if(!m.length)return true;
-  try{for(const s of m){LIVE.ws.send(s);LIVE.sent++}LIVE.prev=fitMatrix(px).slice();LIVE.lastSend=now;LIVE.frames++}catch(e){LIVE.prev=null;return false}return true}
+  if(!LIVE.on)return false;const now=performance.now(),ws=NET.ws;
+  if(!ws){wsOpen().catch(()=>{});return false}
+  if(ws.readyState!==1||now-LIVE.lastSend<40||ws.bufferedAmount>600)return false;
+  // espera a placa responder; a placa às vezes não responde a uma mensagem, então depois de um tempo a conta é zerada
+  if(NET.sent-NET.acks>2){if(now-LIVE.lastSend<200)return false;NET.acks=NET.sent}
+  const f=fitMatrix(px),m=encodeFrame(f,LIVE.prev);if(!m.length)return true;
+  for(const s of m)if(!wsSend(s)){LIVE.prev=null;return false}LIVE.prev=f.slice();LIVE.lastSend=now;LIVE.frames++;return true}
 function matBtns(){$('btnMat').classList.toggle('on',wantMatrix&&LIVE.on);$('btnMatM').textContent='📺 Matriz: '+(wantMatrix?'ligada':'desligada');$('btnMatM').classList.toggle('on',wantMatrix)}
-function toggleMatrix(){wantMatrix=!wantMatrix;store.set('matrix',wantMatrix);if(!wantMatrix)liveStop();else if(playing)liveStart();matBtns();toast(wantMatrix?'O jogo aparece na matriz.':'O jogo aparece só nesta tela.')}
+function toggleMatrix(){wantMatrix=!wantMatrix;store.set('matrix',wantMatrix);LIVE.failed=false;if(!wantMatrix)liveStop();else if(playing)liveStart();matBtns();updateView();toast(wantMatrix?'O jogo aparece na matriz.':'O jogo aparece só nesta tela.')}
 
 /* ---------- som e vibração ---------- */
 let AC=null,soundOn=store.get('sound',true);
@@ -482,11 +514,11 @@ const API={sfx(n){if(n==='lose'&&navigator.vibrate)try{navigator.vibrate(120)}ca
   else if(n==='win'){[523,659,784,1046].forEach((f,i)=>beep(f,.1,'square',i*.09))}else if(n[0]==='n')beep([392,329,261,220][+n[1]],.3,'triangle')}};
 function wakeAudio(){if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)try{AC=new C()}catch(e){}}if(AC&&AC.state==='suspended')AC.resume()}
 
-/* ---------- entrada: teclado, toque, arrastar e controle (gamepad) ---------- */
-const src=[new Map(),new Map()],latch=[new Set(),new Set()],ptr=[null,null],taps=[null,null];
-function press(p,k,id){let s=src[p].get(k);if(!s){s=new Set();src[p].set(k,s)}if(!s.size)latch[p].add(k);s.add(id)}
-function release(p,k,id){const s=src[p].get(k);if(s)s.delete(id)}
-function releaseAll(){for(let p=0;p<2;p++){src[p].clear();latch[p].clear();ptr[p]=null;taps[p]=null}}
+/* ---------- entrada: teclado, toque, arrastar, controle (gamepad) e outro aparelho ---------- */
+const src=[new Map(),new Map()],latch=[new Set(),new Set()],ptr=[null,null],taps=[null,null],KB=['up','down','left','right','a','b'];
+function press(p,k,id){let s=src[p].get(k);if(!s){s=new Set();src[p].set(k,s)}const first=!s.size;if(first)latch[p].add(k);s.add(id);if(first&&remote)netKeys()}
+function release(p,k,id){const s=src[p].get(k);if(s&&s.delete(id)&&!s.size&&remote)netKeys()}
+function releaseAll(){for(let p=0;p<2;p++){src[p].clear();latch[p].clear();ptr[p]=null;taps[p]=null}for(const r of remotes)if(r)r.m=0;if(remote)netKeys()}
 const INPUT={held:(p,k)=>latch[p].has(k)||!!(src[p].get(k)&&src[p].get(k).size),hit:(p,k)=>latch[p].has(k),pointer:p=>ptr[p],tap:p=>taps[p]};
 function keyMap(code,duo){
   const w={KeyW:'up',KeyS:'down',KeyA:'left',KeyD:'right'},ar={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right'};
@@ -494,27 +526,29 @@ function keyMap(code,duo){
     if(code==='Space'||code==='KeyF')return[0,'a'];if(code==='KeyG')return[0,'b'];if(code==='Enter'||code==='Numpad0'||code==='KeyK')return[1,'a'];if(code==='KeyL'||code==='ShiftRight')return[1,'b'];return null}
   if(w[code])return[0,w[code]];if(ar[code])return[0,ar[code]];
   if(code==='Space'||code==='Enter'||code==='KeyJ'||code==='KeyZ')return[0,'a'];if(code==='KeyK'||code==='KeyX'||code==='ShiftLeft'||code==='ShiftRight')return[0,'b'];return null}
+// jogadores controlados por este aparelho
+function localSlots(){if(remote)return[remote.p];if(opt.players!==2)return[0];if(!NET.relay)return[0,1];return[0,1].filter(p=>!remotes[p]&&(opt.me==='both'||+opt.me===p))}
+function keyTarget(code){const l=localSlots();if(l.length===2)return keyMap(code,true);const m=keyMap(code,false);return m&&l.length?[l[0],m[1]]:null}
 const gpPrev=[{},{}];
 function pollPads(){if(!navigator.getGamepads)return;let pads=[];try{pads=[...navigator.getGamepads()].filter(Boolean)}catch(e){return}
-  for(let p=0;p<2;p++){const g=pads[duo?p:0];if(!g||(!duo&&p))continue;const b=i=>g.buttons[i]&&g.buttons[i].pressed,ax=g.axes||[];
+  localSlots().forEach((p,n)=>{const g=pads[n];if(!g)return;const b=i=>g.buttons[i]&&g.buttons[i].pressed,ax=g.axes||[];
     const st={up:b(12)||ax[1]<-.5,down:b(13)||ax[1]>.5,left:b(14)||ax[0]<-.5,right:b(15)||ax[0]>.5,a:b(0)||b(3),b:b(1)||b(2),start:b(9)};
-    for(const k in st){if(st[k]&&!gpPrev[p][k]){if(k==='start')togglePause();else{press(p,k,'gp');if(over&&k==='a')tryRestart()}}else if(!st[k]&&gpPrev[p][k]&&k!=='start')release(p,k,'gp');gpPrev[p][k]=st[k]}}}
+    for(const k in st){if(st[k]&&!gpPrev[p][k]){if(k==='start')pauseButton();else if(!(k==='a'&&aAdvances()))press(p,k,'gp')}else if(!st[k]&&gpPrev[p][k]&&k!=='start')release(p,k,'gp');gpPrev[p][k]=st[k]}})}
+// na tela de opções ou de fim de jogo o botão A começa a partida; devolve true quando foi usado para isso
+function aAdvances(){if(remote){if(remote.st==='ready'||remote.st==='over'){netCmd('start');return true}return false}if(ready){begin();return true}if(over){tryRestart();return true}return false}
+function pauseButton(){if(remote)netCmd(remote.st==='ready'||remote.st==='over'?'start':'pause');else togglePause()}
 
 /* ---------- controles na tela ---------- */
-function buildPad(el,p,g,opt,rotated){
-  el.innerHTML='';el.classList.toggle('auto',true);
-  const who=opt.players===2?`<div class="who">J${p+1}</div>`:'';
-  const axis=g.pad==='axis'?(opt.layout==='tb'?'lr':'ud'):g.pad==='lr'?'lr':'dpad';
-  const dp=g.pad==='none'?'':`<div class="dpad ${axis==='dpad'?'':axis}"><i data-d="up">▲</i><i data-d="down">▼</i><i data-d="left">◀</i><i data-d="right">▶</i></div>`;
-  const ab=(g.a?`<button class="ab" data-k="a">${g.a}</button>`:'')+(g.b?`<button class="ab b" data-k="b">${g.b}</button>`:'');
-  if(opt.players===2)el.innerHTML=who+dp+(ab?`<div class="abs">${ab}</div>`:'');
-  else if(el.id==='padL')el.innerHTML=dp||'';else el.innerHTML=ab?`<div class="abs">${ab}</div>`:'';
+function padHtml(g,axis){return g.pad==='none'?'':`<div class="dpad ${axis==='dpad'?'':axis}"><i data-d="up">▲</i><i data-d="down">▼</i><i data-d="left">◀</i><i data-d="right">▶</i></div>`}
+function abHtml(g){const ab=(g.a?`<button class="ab" data-k="a">${g.a}</button>`:'')+(g.b?`<button class="ab b" data-k="b">${g.b}</button>`:'');return ab?`<div class="abs">${ab}</div>`:''}
+// rotated: controle virado para quem está do outro lado; swap: o aparelho pediu para inverter as direções
+function bindPad(el,p,axis,rotated){
   const d=el.querySelector('.dpad');
-  if(d){const active=new Map(),down=new Set();
-    const dirAt=e=>{const r=d.getBoundingClientRect();const x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);if(Math.hypot(x,y)<9)return null;
-      if(axis==='lr')return x<0?'left':'right';if(axis==='ud')return y<0?'up':'down';return Math.abs(x)>Math.abs(y)?(x<0?'left':'right'):(y<0?'up':'down')};
+  if(d){const active=new Map(),down=new Set(),flip={up:'down',down:'up',left:'right',right:'left'};
+    const dirAt=e=>{const r=d.getBoundingClientRect(),x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);if(Math.hypot(x,y)<9)return null;
+      let v=axis==='lr'?(x<0?'left':'right'):axis==='ud'?(y<0?'up':'down'):Math.abs(x)>Math.abs(y)?(x<0?'left':'right'):(y<0?'up':'down');if(remote&&remote.swap)v=flip[v];return v};
     // a direção é a da tela (a raquete vai para o lado tocado); no controle girado, o desenho aceso é o oposto no HTML
-    const flip={up:'down',down:'up',left:'right',right:'left'},paint=()=>{const on=new Set([...active.values()].map(v=>rotated?flip[v]:v));d.querySelectorAll('i').forEach(i=>i.classList.toggle('on',on.has(i.dataset.d)))};
+    const paint=()=>{const on=new Set([...active.values()].map(v=>rotated||(remote&&remote.swap)?flip[v]:v));d.querySelectorAll('i').forEach(i=>i.classList.toggle('on',on.has(i.dataset.d)))};
     const move=e=>{const id='t'+e.pointerId,old=active.get(id),now=dirAt(e);if(now===old)return;if(old)release(p,old,id);if(now){press(p,now,id);active.set(id,now)}else active.delete(id);paint()};
     const end=e=>{const id='t'+e.pointerId,old=active.get(id);if(old)release(p,old,id);active.delete(id);down.delete(id);paint()};
     d.addEventListener('pointerdown',e=>{e.preventDefault();wakeAudio();down.add('t'+e.pointerId);try{d.setPointerCapture(e.pointerId)}catch(x){}move(e)});
@@ -522,84 +556,177 @@ function buildPad(el,p,g,opt,rotated){
     d.addEventListener('pointerup',end);d.addEventListener('pointercancel',end)}
   el.querySelectorAll('.ab').forEach(b=>{const k=b.dataset.k;
     const up=e=>{release(p,k,'t'+e.pointerId);b.classList.remove('on')};
-    b.addEventListener('pointerdown',e=>{e.preventDefault();wakeAudio();if(ready&&k==='a'){begin();return}try{b.setPointerCapture(e.pointerId)}catch(x){}press(p,k,'t'+e.pointerId);b.classList.add('on');if(over&&k==='a')tryRestart()});
+    b.addEventListener('pointerdown',e=>{e.preventDefault();wakeAudio();if(k==='a'&&aAdvances())return;try{b.setPointerCapture(e.pointerId)}catch(x){}press(p,k,'t'+e.pointerId);b.classList.add('on')});
     b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up)});
 }
-const cv=$('cv'),cx=cv.getContext('2d'),drags=new Map();
-function cvPos(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width*N,y:(e.clientY-r.top)/r.height*N}}
-function dragPlayer(q){if(!duo)return 0;return (opt.layout==='tb'?q.y>N/2:q.x<N/2)?0:1}
-cv.addEventListener('pointerdown',e=>{e.preventDefault();wakeAudio();if(!def)return;const q=cvPos(e),p=dragPlayer(q);try{cv.setPointerCapture(e.pointerId)}catch(x){}drags.set(e.pointerId,p);taps[p]=q;if(def.drag)ptr[p]=q;if(def.tapA){press(0,'a','c'+e.pointerId);if(over)tryRestart()}});
-cv.addEventListener('pointermove',e=>{const p=drags.get(e.pointerId);if(p!==undefined&&def&&def.drag)ptr[p]=cvPos(e)});
-const cvEnd=e=>{const p=drags.get(e.pointerId);if(p===undefined)return;drags.delete(e.pointerId);ptr[p]=null;release(0,'a','c'+e.pointerId)};
-cv.addEventListener('pointerup',cvEnd);cv.addEventListener('pointercancel',cvEnd);
+function setupPads(){
+  const L=$('padL'),R=$('padR'),a=$('arena'),slots=localSlots(),two=slots.length===2,g=def;
+  const layout=remote?remote.lay:opt.layout,axis=g.pad==='axis'?(layout==='tb'?'lr':'ud'):g.pad==='lr'?'lr':'dpad';
+  const facing=two&&layout==='tb'&&g.id==='pong';
+  a.classList.toggle('duo',two);a.classList.toggle('facing',facing);a.classList.remove('onlyL','onlyR');L.innerHTML=R.innerHTML='';
+  const rot=facing&&matchMedia('(orientation:portrait)').matches;
+  if(two){[L,R].forEach((el,i)=>{el.innerHTML=`<div class="who">J${i+1}</div>`+padHtml(g,axis)+abHtml(g);bindPad(el,i,axis,i===1&&rot)})}
+  else if(slots.length){const p=slots[0],d=padHtml(g,axis),ab=abHtml(g);L.innerHTML=d;R.innerHTML=ab;if(!ab)a.classList.add('onlyL');if(!d)a.classList.add('onlyR');bindPad(L,p,axis,false);bindPad(R,p,axis,false)}
+  resize()}
+
+/* arrastar ou tocar na área do jogo (também funciona com a prévia escondida) */
+const screenEl=$('screen'),cv=$('cv'),cx=cv.getContext('2d'),drags=new Map();
+function areaPos(e){const r=($('play').classList.contains('noprev')?screenEl:cv).getBoundingClientRect();return{x:lim((e.clientX-r.left)/r.width,0,1)*N,y:lim((e.clientY-r.top)/r.height,0,1)*N}}
+function dragPlayer(q){const l=localSlots();if(l.length<2)return l[0];return (opt.layout==='tb'?q.y>N/2:q.x<N/2)?0:1}
+screenEl.addEventListener('pointerdown',e=>{if(!def||remote||e.target.closest('.box'))return;e.preventDefault();wakeAudio();const q=areaPos(e),p=dragPlayer(q);if(p===undefined)return;
+  try{screenEl.setPointerCapture(e.pointerId)}catch(x){}drags.set(e.pointerId,p);taps[p]=q;if(def.drag)ptr[p]=q;if(def.tapA&&!aAdvances())press(p,'a','c'+e.pointerId)});
+screenEl.addEventListener('pointermove',e=>{const p=drags.get(e.pointerId);if(p!==undefined&&def&&def.drag)ptr[p]=areaPos(e)});
+const dragEnd=e=>{const p=drags.get(e.pointerId);if(p===undefined)return;drags.delete(e.pointerId);ptr[p]=null;release(p,'a','c'+e.pointerId)};
+screenEl.addEventListener('pointerup',dragEnd);screenEl.addEventListener('pointercancel',dragEnd);
+
+/* ---------- jogar junto em outro aparelho ---------- */
+const remotes=[null,null]; // no aparelho que roda o jogo: quem está em cada vaga {id,m,last}
+let remote=null;           // neste aparelho quando ele é só o controle {p,host,st,lay,swap,joined,last}
+let seen=null,joinAsked='';// último jogo para 2 anunciado por outro aparelho
+const hosting=()=>playing&&!remote&&def&&opt.players===2;
+const owner=p=>remotes[p]?remotes[p].id:(opt.me===String(p)?'H':'');
+function beacon(){if(!hosting())return;gm({t:'b',g:def.id,st:ready?'ready':over?'over':paused?'pause':'play',o:[owner(0),owner(1)],lay:opt.layout,hud:game.hud().slice(0,60),win:over?(game.winner||'').slice(0,30):''})}
+function slotsChanged(){setupPads();releaseAll();if(ready)showReady(true);netLine();beacon()}
+function onHostMsg(m){
+  const p=m.p===1?1:0,r=remotes[p];
+  if(m.t==='q'){beacon();return}
+  if(m.t==='j'){if(!r&&opt.me!==String(p)&&!remotes.some(z=>z&&z.id===m.id)){remotes[p]={id:m.id,m:0,last:Date.now()};toast(`Jogador ${p+1} entrou por outro aparelho.`);slotsChanged()}else{if(r&&r.id===m.id)r.last=Date.now();beacon()}return}
+  if(!r||r.id!==m.id)return;r.last=Date.now();
+  if(m.t==='k'){const old=r.m,now=m.m|0;r.m=now;KB.forEach((k,i)=>{const bit=1<<i;if(now&bit&&!(old&bit)){if(!(k==='a'&&aAdvances()))press(p,k,'net')}else if(!(now&bit)&&old&bit)release(p,k,'net')})}
+  else if(m.t==='c'){if(m.c==='start'&&(ready||over))begin();else if(m.c==='pause'&&!ready&&!over)togglePause();beacon()}
+  else if(m.t==='l')dropRemote(p,'saiu')}
+function dropRemote(p,why){remotes[p]=null;for(const k of KB)release(p,k,'net');toast(`Jogador ${p+1} ${why}.`);if(!ready&&!over&&!paused)togglePause();slotsChanged()}
+function onGame(m){
+  if(hosting()&&m.t!=='b'&&m.t!=='x'){onHostMsg(m);return}
+  if(m.t==='b'){
+    if(remote){if(m.id!==remote.host)return;remote.last=Date.now();const o=m.o||[];
+      if(o[remote.p]===NET.id){if(!remote.joined){remote.joined=true;toast(`Você é o Jogador ${remote.p+1}.`);netKeys()}}else if(o[remote.p]){toast('Essa vaga foi ocupada.');closeGame();return}
+      const relay=remote.lay!==m.lay;remote.st=m.st;remote.lay=m.lay;if(relay)setupPads();remoteView(m)}
+    else{seen={...m,at:Date.now()};if(!playing)showSeen()}}
+  else if(m.t==='x'){if(remote&&m.id===remote.host){toast('O jogo terminou no outro aparelho.');closeGame()}else if(seen&&m.id===seen.id){seen=null;showSeen()}}}
+// menu: avisa que há um jogo para 2 rodando e deixa a pessoa escolher quem ela é
+function showSeen(){
+  const b=$('hostBar'),j=$('join');if(!seen||Date.now()-seen.at>4000||playing){b.classList.add('hide');if(!seen||playing){j.classList.add('hide');j.innerHTML=''}if(seen&&Date.now()-seen.at>4000){seen=null;j.classList.add('hide');j.innerHTML=''}return}
+  const g=GAMES.find(z=>z.id===seen.g);if(!g)return;
+  const btns=[0,1].map(p=>`<button class="btn primary" data-join="${p}" ${seen.o&&seen.o[p]?'disabled':''}>Sou o Jogador ${p+1}${seen.o&&seen.o[p]?' (ocupado)':''}</button>`).join('');
+  const key=seen.id+seen.g+(seen.o||[]).join();
+  if(b.dataset.k!==key){b.dataset.k=key;b.innerHTML=`<div><b>${g.icon} ${g.name}</b> para 2 está rodando em outro aparelho.</div><div class="row">${btns}</div>`;
+    if(!j.classList.contains('hide'))j.innerHTML=joinBox(g,btns)}
+  b.classList.remove('hide');
+  if(joinAsked!==seen.id+seen.g){joinAsked=seen.id+seen.g;j.innerHTML=joinBox(g,btns);j.classList.remove('hide')}}
+const joinBox=(g,btns)=>`<div class="box"><h2>${g.icon} ${g.name} em andamento</h2><div class="mu">Quem é você?</div><div class="row">${btns}</div><div class="row"><button class="btn" data-join="x">Agora não</button></div></div>`;
+function joinClick(e){const b=e.target.closest('[data-join]');if(!b||b.disabled)return;const v=b.dataset.join;$('join').classList.add('hide');$('join').innerHTML='';if(v!=='x'&&seen){wakeAudio();openRemote(seen,+v)}}
+function openRemote(s,p){
+  def=GAMES.find(g=>g.id===s.g);if(!def)return;
+  remote={p,host:s.id,st:s.st,lay:s.lay,swap:def.id==='pong'&&s.lay==='tb'&&p===1&&store.get('swap',false),joined:false,last:Date.now()};
+  enterPlay(`${def.name} · Jogador ${p+1}`);setupPads();remoteView(s);gm({t:'j',p});remoteLoop()}
+function remoteView(m){
+  if(!remote)return;const st=m.st,p=remote.p;
+  $('gScore').textContent=m.hud||'';$('infoTitle').textContent=`Você é o Jogador ${p+1}`;$('infoHud').textContent=m.hud||'';
+  $('infoNet').textContent=!remote.joined?'entrando…':st==='ready'?'esperando começar':st==='pause'?'pausado':st==='over'?(m.win||'fim de jogo'):'olhe para a matriz';
+  const swapBtn=def.id==='pong'?`<button class="btn" id="bSwap">↔ Inverter direções${remote.swap?' ✓':''}</button>`:'';
+  const act=st==='ready'?'<button class="btn primary" id="bNet">▶ Começar</button>':st==='over'?'<button class="btn primary" id="bNet">Jogar de novo (A)</button>':st==='pause'?'<button class="btn primary" id="bNet">▶ Continuar</button>':'';
+  const sig=st+remote.swap+remote.joined;if($('infoBtns').dataset.s===sig)return;$('infoBtns').dataset.s=sig;$('infoBtns').innerHTML=act+swapBtn;
+  if($('bNet'))$('bNet').onclick=pauseButton;if($('bSwap'))$('bSwap').onclick=()=>{remote.swap=!remote.swap;store.set('swap',remote.swap);releaseAll();remoteView(m)}}
+function netMask(){let m=0;KB.forEach((k,i)=>{const s=src[remote.p].get(k);if(s&&s.size)m|=1<<i});return m}
+let resendT=null;
+function netKeys(){if(!remote||!remote.joined)return;gm({t:'k',p:remote.p,m:netMask()});clearTimeout(resendT);resendT=setTimeout(()=>{if(remote&&remote.joined)gm({t:'k',p:remote.p,m:netMask()})},90)} // repete o estado: a placa descarta mensagens quando está ocupada
+function netCmd(c){if(remote)gm({t:'c',p:remote.p,c})}
+function remoteLoop(){if(!remote)return;pollPads();requestAnimationFrame(remoteLoop)}
+function netLine(){
+  if(!playing||remote)return;let t='';
+  if(opt.players===2)t=!NET.relay?'':[0,1].map(p=>`J${p+1}: ${remotes[p]?'outro aparelho ✓':localSlots().includes(p)?'este aparelho':'aguardando outro aparelho'}`).join(' · ');
+  $('infoNet').textContent=t||(LIVE.on?'olhe para a matriz':'')}
+function netTick(){
+  if(!boardOk||!NET.relay){return}
+  if(!NET.ws){wsOpen().then(()=>gm({t:'q'})).catch(()=>{});return}
+  if(hosting()){for(let p=0;p<2;p++)if(remotes[p]&&Date.now()-remotes[p].last>4500)dropRemote(p,'perdeu a conexão');beacon()}
+  else if(remote){if(!remote.joined)gm({t:'j',p:remote.p});else netKeys();const gone=Date.now()-remote.last;if(gone>12000){toast('Sem resposta do jogo.');closeGame()}else if(gone>3500)$('infoNet').textContent='sem resposta do jogo…'}
+  else if(!playing){if(!seen)gm({t:'q'});showSeen()}}
 
 /* ---------- motor ---------- */
-let def=null,game=null,opt={},duo=false,playing=false,paused=false,ready=false,over=false,overT=0,last=0,acc=0,raf=0,msgX=16,endMsg='';
+let def=null,game=null,opt={},playing=false,paused=false,ready=false,over=false,overT=0,last=0,acc=0,raf=0,msgX=16,endMsg='';
 function render(){const S=cv.width/N;cx.fillStyle='#050608';cx.fillRect(0,0,cv.width,cv.height);
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){const c=F.px[y*N+x],X=(x+.5)*S,Y=(y+.5)*S;if(c){const h='#'+c.toString(16).padStart(6,'0');cx.globalAlpha=.28;cx.fillStyle=h;cx.fillRect(x*S,y*S,S,S);cx.globalAlpha=1;cx.fillStyle=h}else cx.fillStyle='#12151b';cx.beginPath();cx.arc(X,Y,S*.4,0,6.3);cx.fill()}}
-function resize(){const s=$('screen').getBoundingClientRect(),side=Math.max(128,Math.floor(Math.min(s.width,s.height)-4)),d=Math.min(window.devicePixelRatio||1,2);cv.style.width=cv.style.height=side+'px';cv.width=cv.height=Math.floor(side*d/N)*N;if(playing)render()}
-function loop(ts){if(!playing)return;raf=requestAnimationFrame(loop);const dt=Math.min(.1,(ts-last)/1000||0);last=ts;pollPads();
+// a prévia fica escondida quando o jogo está na matriz, a não ser que a pessoa peça para ver
+function updateView(){const vis=!remote&&(showPrev||!boardOk||!wantMatrix||LIVE.failed);$('play').classList.toggle('noprev',!vis);$('btnPrev').classList.toggle('on',vis);resize()}
+function resize(){if(!playing)return;const s=screenEl.getBoundingClientRect(),side=Math.max(128,Math.floor(Math.min(s.width,s.height)-4)),d=Math.min(window.devicePixelRatio||1,2);cv.style.width=cv.style.height=side+'px';cv.width=cv.height=Math.floor(side*d/N)*N;if(!remote&&game)render()}
+function loop(ts){if(!playing||remote)return;raf=requestAnimationFrame(loop);const dt=Math.min(.1,(ts-last)/1000||0);last=ts;pollPads();
   if(!paused&&!ready){acc+=dt;while(acc>=1/60){acc-=1/60;
       if(!over){game.update(1/60,INPUT);if(game.over)finish()}else{overT+=1/60;msgX-=1/60*11;if(msgX<-endMsg.length*4)msgX=16}
       latch[0].clear();latch[1].clear();taps[0]=taps[1]=null}}
   if(over&&overT>.9){F.clear();F.text(endMsg,Math.round(msgX),5,0xffb020)}else game.draw();
-  render();liveSend(F.px);$('gScore').textContent=game.hud()+(store.get('hi.'+def.id,0)&&!duo?` · recorde ${store.get('hi.'+def.id,0)}`:'')}
-function finish(){over=true;overT=0;msgX=16;const hi=store.get('hi.'+def.id,0),rec=!duo&&game.score>hi;if(rec)store.set('hi.'+def.id,game.score);
-  const title=game.winner||'Fim de jogo';endMsg=(game.winner?(duo?game.winner.replace('Jogador ','J'):game.winner):'FIM '+game.score).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
-  setTimeout(()=>{if(!over||!playing)return;box(`<h2>${title}</h2><div class="mu">${duo?game.hud():`Pontos: <b>${game.score}</b>${rec?' · 🏆 novo recorde':hi?' · recorde '+Math.max(hi,game.score):''}`}</div><div class="row"><button class="btn primary" id="bAgain">Jogar de novo (A)</button><button class="btn" id="bCfg">Opções</button></div>`);$('bAgain').onclick=()=>begin();$('bCfg').onclick=showReady},900)}
+  if(!$('play').classList.contains('noprev'))render();liveSend(F.px);
+  const hud=game.hud()+(store.get('hi.'+def.id,0)&&opt.players!==2?` · recorde ${store.get('hi.'+def.id,0)}`:'');
+  if($('gScore').textContent!==hud){$('gScore').textContent=hud;$('infoHud').textContent=hud}}
+function finish(){over=true;overT=0;msgX=16;const two=opt.players===2,hi=store.get('hi.'+def.id,0),rec=!two&&game.score>hi;if(rec)store.set('hi.'+def.id,game.score);
+  const title=game.winner||'Fim de jogo';endMsg=(game.winner?(two?game.winner.replace('Jogador ','J'):game.winner):'FIM '+game.score).normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase();
+  beacon();setTimeout(()=>{if(!over||!playing||remote)return;box(`<h2>${title}</h2><div class="mu">${two?game.hud():`Pontos: <b>${game.score}</b>${rec?' · 🏆 novo recorde':hi?' · recorde '+Math.max(hi,game.score):''}`}</div><div class="row"><button class="btn primary" id="bAgain">Jogar de novo (A)</button><button class="btn" id="bCfg">Opções</button></div>`);$('bAgain').onclick=()=>begin();$('bCfg').onclick=()=>showReady()},900)}
 function tryRestart(){if(over&&overT>1)begin()}
 function box(html){$('over').innerHTML=html?`<div class="box">${html}</div>`:''}
-function showReady(){
-  ready=true;over=false;paused=false;releaseAll();newGame();
-  const g=def,two=g.players&&g.players.includes(2);
+function slotStatus(){if(!NET.relay)return opt.players===2?'<div class="small mu" style="margin-top:6px">Para o segundo jogador usar outro celular, a placa precisa do firmware com o repasse (game_relay).</div>':'';
+  const line=p=>remotes[p]?'conectado por outro aparelho ✓':opt.me==='both'||opt.me===String(p)?'neste aparelho':'<b>esperando</b>: abra Jogos no outro aparelho';
+  return `<div class="small mu" style="margin-top:8px">J1: ${line(0)}<br>J2: ${line(1)}</div>`}
+function showReady(keep){
+  ready=true;over=false;paused=false;if(!keep){releaseAll();newGame()}
+  const g=def,two=opt.players===2;
+  const who=two&&NET.relay?`<div class="row"><span class="mu small">Quem é você?</span>${[['0','Jogador 1'],['1','Jogador 2'],['both','Os dois neste aparelho']].map(([v,n])=>`<button class="btn${opt.me===v?' on':''}" data-me="${v}" ${v!=='both'&&remotes[+v]?'disabled':''}>${n}</button>`).join('')}</div>`:'';
   box(`<h2>${g.icon} ${g.name}</h2><div class="small mu">${g.help}</div>
-    <div class="small mu" style="margin-top:6px">${opt.players===2?'Teclado: J1 <kbd>W A S D</kbd> + <kbd>espaço</kbd> · J2 <kbd>setas</kbd> + <kbd>Enter</kbd>':'Teclado: <kbd>setas</kbd>/<kbd>WASD</kbd> · A = <kbd>espaço</kbd> · B = <kbd>X</kbd> · <kbd>P</kbd> pausa'}</div>
-    <div class="row">${two?`<label>Jogadores <select id="oP"><option value="1">1 (contra a placa)</option><option value="2">2</option></select></label>`:''}
-    ${g.level&&opt.players!==2?`<label>Dificuldade <select id="oL"><option value="0">Fácil</option><option value="1">Média</option><option value="2">Difícil</option></select></label>`:''}
+    <div class="small mu" style="margin-top:6px">${localSlots().length===2?'Teclado: J1 <kbd>W A S D</kbd> + <kbd>espaço</kbd> · J2 <kbd>setas</kbd> + <kbd>Enter</kbd>':'Teclado: <kbd>setas</kbd>/<kbd>WASD</kbd> · A = <kbd>espaço</kbd> · B = <kbd>X</kbd> · <kbd>P</kbd> pausa'}</div>
+    <div class="row">${g.players?`<label>Jogadores <select id="oP"><option value="1">1 (contra a placa)</option><option value="2">2</option></select></label>`:''}
+    ${g.level&&!two?`<label>Dificuldade <select id="oL"><option value="0">Fácil</option><option value="1">Média</option><option value="2">Difícil</option></select></label>`:''}
     ${g.layout?`<label>Raquetes <select id="oY"><option value="lr">Nas laterais</option><option value="tb">Em cima e embaixo</option></select></label>`:''}
     ${g.walls?`<label>Paredes <select id="oW"><option value="wrap">Atravessa</option><option value="wall">Mata</option></select></label>`:''}</div>
-    <div class="row"><button class="btn primary" id="bGo">▶ Começar</button></div>`);
-  const bind=(id,k,num)=>{const e=$(id);if(!e)return;e.value=opt[k];e.onchange=()=>{opt[k]=num?+e.value:e.value;store.set('opt.'+g.id,opt);showReady();setupPads();resize()}};
-  bind('oP','players',true);bind('oL','level',true);bind('oY','layout');bind('oW','walls');$('bGo').onclick=begin;setupPads()}
-function setupPads(){duo=opt.players===2;const a=$('arena');a.classList.toggle('duo',duo);a.classList.toggle('facing',duo&&opt.layout==='tb'&&def.id==='pong');
-  const rot=duo&&a.classList.contains('facing')&&matchMedia('(orientation:portrait)').matches;
-  buildPad($('padL'),0,def,opt,false);buildPad($('padR'),duo?1:0,def,opt,rot);resize()}
-function newGame(){game=def.make(Object.assign({},opt),API);game.draw()}
-function begin(){wakeAudio();releaseAll();newGame();ready=false;over=false;paused=false;acc=0;box('');$('btnPause').textContent='⏸'}
-function togglePause(){if(!playing||over)return;if(ready){begin();return}paused=!paused;$('btnPause').textContent=paused?'▶':'⏸';releaseAll();box(paused?`<h2>Pausado</h2><div class="row"><button class="btn primary" id="bRes">▶ Continuar</button><button class="btn" id="bCfg">Opções</button></div>`:'');if(paused){$('bRes').onclick=togglePause;$('bCfg').onclick=showReady}}
+    ${who}${two?slotStatus():''}<div class="row"><button class="btn primary" id="bGo">▶ Começar</button></div>`);
+  const save=()=>store.set('opt.'+g.id,opt);
+  const bind=(id,k,num)=>{const e=$(id);if(!e)return;e.value=opt[k];e.onchange=()=>{const was=hosting();opt[k]=num?+e.value:e.value;save();if(was&&opt.players!==2){gm({t:'x'});remotes[0]=remotes[1]=null}showReady();netLine();beacon()}};
+  bind('oP','players',true);bind('oL','level',true);bind('oY','layout');bind('oW','walls');
+  $('over').querySelectorAll('[data-me]').forEach(b=>b.onclick=()=>{opt.me=b.dataset.me;save();showReady(true);netLine();beacon()});
+  $('bGo').onclick=begin;setupPads();netLine()}
+function newGame(){game=def.make(Object.assign({},opt),API);game.draw();$('gScore').textContent='';$('infoHud').textContent=game.hud()}
+function begin(){wakeAudio();releaseAll();newGame();ready=false;over=false;paused=false;acc=0;box('');$('btnPause').textContent='⏸';netLine();beacon()}
+function togglePause(){if(!playing||remote||over)return;if(ready){begin();return}paused=!paused;$('btnPause').textContent=paused?'▶':'⏸';releaseAll();box(paused?`<h2>Pausado</h2><div class="row"><button class="btn primary" id="bRes">▶ Continuar</button><button class="btn" id="bCfg">Opções</button></div>`:'');if(paused){$('bRes').onclick=togglePause;$('bCfg').onclick=()=>showReady()}beacon()}
+function enterPlay(title){
+  $('menu').classList.add('hide');$('play').classList.remove('hide');document.body.classList.add('playing');$('play').classList.toggle('remote',!!remote);window.scrollTo(0,0);
+  $('gTitle').textContent=title;$('infoTitle').textContent=def.name;$('infoBtns').innerHTML='';$('infoBtns').dataset.s='';$('gScore').textContent='';$('infoHud').textContent='';$('infoNet').textContent='';box('');playing=true;$('hostBar').classList.add('hide');
+  if(!remote&&matchMedia('(hover:hover) and (pointer:fine)').matches)$('play').classList.toggle('showpads',$('btnPads').classList.contains('on'));else if(remote)$('play').classList.add('showpads');
+  updateView();try{history.pushState({game:def.id},'')}catch(e){}}
 function openGame(id){
-  def=GAMES.find(g=>g.id===id);opt=Object.assign({players:1,level:1,layout:'lr',walls:'wrap'},store.get('opt.'+id,{}));if(!def.players)opt.players=1;
-  $('menu').classList.add('hide');$('play').classList.remove('hide');document.body.classList.add('playing');window.scrollTo(0,0);
-  $('gTitle').textContent=def.name;playing=true;showReady();resize();last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
-  if(wantMatrix&&boardOk)liveStart();try{history.pushState({game:id},'')}catch(e){}}
-function closeGame(){if(!playing)return;playing=false;cancelAnimationFrame(raf);def=null;releaseAll();box('');$('play').classList.add('hide');$('menu').classList.remove('hide');document.body.classList.remove('playing');
-  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});liveStop();renderMenu();boardInfo()}
+  def=GAMES.find(g=>g.id===id);opt=Object.assign({players:1,level:1,layout:'lr',walls:'wrap',me:'0'},store.get('opt.'+id,{}));if(!def.players)opt.players=1;
+  remotes[0]=remotes[1]=null;enterPlay(def.name);showReady();updateView();last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  if(wantMatrix&&boardOk)liveStart();beacon()}
+function closeGame(){if(!playing)return;if(hosting())gm({t:'x'});if(remote)gm({t:'l',p:remote.p});
+  const wasRemote=!!remote;playing=false;remote=null;remotes[0]=remotes[1]=null;cancelAnimationFrame(raf);clearTimeout(resendT);def=null;game=null;releaseAll();box('');
+  $('play').classList.add('hide');$('menu').classList.remove('hide');document.body.classList.remove('playing');
+  if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});if(!wasRemote)liveStop();seen=null;renderMenu();boardInfo()}
 function renderMenu(){$('list').innerHTML=GAMES.map(g=>{const hi=store.get('hi.'+g.id,0);return`<button class="gc" data-g="${g.id}"><span class="ic">${g.icon}</span><b>${g.name}</b><span>${g.desc}</span><span class="tag">${g.players?'1 ou 2 jogadores':'1 jogador'}${hi?' · recorde '+hi:''}</span></button>`}).join('')}
-async function boardInfo(){try{const i=await jget('/json/info');const m=i.leds&&i.leds.matrix;if(m){MW=m.w;MH=m.h}boardOk=true;$('chipConn').textContent=`● ${i.name||'placa'} · matriz ${MW}×${MH}`;$('chipConn').className='chip good'}
+async function boardInfo(){try{const i=await jget('/json/info');const m=i.leds&&i.leds.matrix;if(m){MW=m.w;MH=m.h}boardOk=true;NET.relay=!!i.gmr;$('chipConn').textContent=`● ${i.name||'placa'} · matriz ${MW}×${MH}`;$('chipConn').className='chip good';netTick()}
   catch(e){boardOk=false;$('chipConn').textContent='sem placa: jogue só na tela';$('chipConn').className='chip bad'}}
 function init(){
   renderMenu();matBtns();$('btnSound').textContent=soundOn?'🔊':'🔇';
   $('list').onclick=e=>{const b=e.target.closest('.gc');if(b){wakeAudio();openGame(b.dataset.g)}};
-  $('btnBack').onclick=()=>{closeGame()};$('btnPause').onclick=togglePause;$('btnRestart').onclick=begin;$('btnMat').onclick=toggleMatrix;$('btnMatM').onclick=toggleMatrix;
+  $('hostBar').onclick=joinClick;$('join').onclick=joinClick;
+  $('btnBack').onclick=()=>{closeGame()};$('btnPause').onclick=pauseButton;$('btnRestart').onclick=begin;$('btnMat').onclick=toggleMatrix;$('btnMatM').onclick=toggleMatrix;
+  $('btnPrev').onclick=()=>{showPrev=$('play').classList.contains('noprev');store.set('preview',showPrev);if(!showPrev&&!(boardOk&&wantMatrix&&!LIVE.failed))toast('Sem a matriz, a prévia continua aparecendo.');updateView()};
   $('btnSound').onclick=()=>{soundOn=!soundOn;store.set('sound',soundOn);$('btnSound').textContent=soundOn?'🔊':'🔇';wakeAudio()};
   $('btnFull').onclick=()=>{const d=document.documentElement;if(document.fullscreenElement)document.exitFullscreen();else if(d.requestFullscreen)d.requestFullscreen().catch(()=>toast('Tela cheia não disponível.'));else toast('Este navegador não tem tela cheia.')};
   if(!document.documentElement.requestFullscreen)$('btnFull').classList.add('hide');
-  if(matchMedia('(hover:hover) and (pointer:fine)').matches)$('btnPads').onclick=()=>{$('play').classList.toggle('showpads');$('btnPads').classList.toggle('on');resize()};else $('btnPads').classList.add('hide');
+  if(matchMedia('(hover:hover) and (pointer:fine)').matches)$('btnPads').onclick=()=>{$('btnPads').classList.toggle('on');$('play').classList.toggle('showpads',$('btnPads').classList.contains('on'));resize()};else $('btnPads').classList.add('hide');
   document.querySelector('.hud').addEventListener('click',e=>{const b=e.target.closest('button');if(b)b.blur()});
   addEventListener('keydown',e=>{if(!playing||e.ctrlKey||e.metaKey||e.altKey||e.target.tagName==='SELECT')return;
-    if(e.code==='Escape'){closeGame();return}if(e.code==='KeyP'){togglePause();return}if(e.code==='KeyR'){begin();return}
-    const m=keyMap(e.code,duo);if(!m)return;e.preventDefault();if(e.repeat)return;wakeAudio();
-    if(ready){if(m[1]==='a'){begin()}return}if(over){if(m[1]==='a')tryRestart();return}press(m[0],m[1],e.code)});
-  addEventListener('keyup',e=>{const m=keyMap(e.code,duo);if(m)release(m[0],m[1],e.code)});
+    if(e.code==='Escape'){closeGame();return}if(e.code==='KeyP'){pauseButton();return}if(e.code==='KeyR'&&!remote){begin();return}
+    const m=keyTarget(e.code);if(!m){if(e.code==='Space'||e.code==='Enter'){e.preventDefault();if(!e.repeat)aAdvances()}return}e.preventDefault();if(e.repeat)return;wakeAudio();
+    if(m[1]==='a'&&aAdvances())return;if(!remote&&(ready||over))return;press(m[0],m[1],e.code)});
+  addEventListener('keyup',e=>{const m=keyTarget(e.code);if(m)release(m[0],m[1],e.code)});
   addEventListener('blur',releaseAll);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing&&!ready&&!paused&&!over)togglePause()});
-  addEventListener('resize',()=>{if(playing){resize();if(duo)setupPads()}});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)return;if(remote)releaseAll();else if(playing&&!ready&&!paused&&!over)togglePause()});
+  addEventListener('resize',()=>{if(!playing)return;if(localSlots().length===2)setupPads();else resize()});
   addEventListener('popstate',()=>closeGame());
-  // saiu da página com o jogo aberto: devolve a placa como estava
-  addEventListener('pagehide',()=>{if(!LIVE.on)return;LIVE.on=false;const b=restoreBody(),ws=LIVE.ws;LIVE.ws=null;if(!b)return;
-    sendRestore(ws,b);try{ws&&ws.close()}catch(e){}jpost('/json/state',b,{keepalive:true}).catch(()=>{})});
+  // saiu da página: avisa o outro aparelho e devolve a placa como estava
+  addEventListener('pagehide',()=>{if(hosting())gm({t:'x'});if(remote)gm({t:'l',p:remote.p});
+    if(LIVE.on){LIVE.on=false;const b=restoreBody();if(b){sendRestore(b);jpost('/json/state',b,{keepalive:true}).catch(()=>{})}}try{NET.ws&&NET.ws.close()}catch(e){}});
   addEventListener('contextmenu',e=>{if(playing)e.preventDefault()});
-  boardInfo();
+  setInterval(netTick,1000);boardInfo();
 }
 init();
 </script>

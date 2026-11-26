@@ -625,7 +625,8 @@ function encodeFrame(px,prev){const toks=[];let i=0;const n=px.length;
   const msgs=[],head='{"seg":{"id":'+LIVE.id+',"i":[',tail=']}}';let cur2=[],len=head.length+tail.length;
   for(const t of toks){if(len+t.length+1>470&&cur2.length){msgs.push(head+cur2.join(',')+tail);cur2=[];len=head.length+tail.length}cur2.push(t);len+=t.length+1}
   if(cur2.length)msgs.push(head+cur2.join(',')+tail);return msgs}
-function liveReady(){const ws=LIVE.ws;if(!ws||ws.readyState!==1)return false;return ws.bufferedAmount<600&&(LIVE.sent-LIVE.acks<=3||Date.now()-LIVE.lastSend>600)}
+// espera a placa responder; ela às vezes não responde a uma mensagem, então depois de um tempo a conta é zerada
+function liveReady(){const ws=LIVE.ws;if(!ws||ws.readyState!==1||ws.bufferedAmount>=600)return false;if(LIVE.sent-LIVE.acks>3){if(Date.now()-LIVE.lastSend<200)return false;LIVE.acks=LIVE.sent}return true}
 function liveSend(px){
   if(!LIVE.on)return false;
   if(!LIVE.ws||LIVE.ws.readyState>1){if(!LIVE.busy){LIVE.busy=true;openWs().then(()=>{LIVE.prev=null}).catch(()=>{}).finally(()=>{LIVE.busy=false})}return false}

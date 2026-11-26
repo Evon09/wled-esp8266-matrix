@@ -65,7 +65,7 @@ about 17 KB of free heap when idle (see [memory](#the-esp8266-and-its-memory)).
 | `-D GIF_LOW_RAM`, `-D GIF_CODE_LIMIT=576` | selects the reduced decoder (see 2) |
 | `-D WLED_DISABLE_ALEXA`, `HUESYNC`, `INFRARED`, `ADALIGHT`, `LOXONE` | features not used here; they cost flash and RAM. **MQTT stays on** on purpose |
 | `-D WLED_DISABLE_PARTICLESYSTEM2D` | saves flash; particle effects are not needed on 16x16 |
-| `custom_usermods = mqtt_rules` | adds the rules engine |
+| `custom_usermods = mqtt_rules game_relay` | adds the rules engine and the message relay used by two-device games |
 | `lib_extra_dirs = lowram_libs` | uses the patched libraries instead of the registry ones |
 | envs `d1_r2_gif_debug`, `_netdebug`, `_log` | serial log, UDP log, and `/giflog` for diagnosing the matrix when USB cannot be used |
 
@@ -429,10 +429,35 @@ matrix. Without a board it still plays on screen.
 |---|---|
 | ![Tetris on a phone](docs/img/games-tetris-phone.jpg) | ![Platformer on a PC](docs/img/games-platform-pc.jpg) |
 
+### The screen of your device
+
+The game is meant to be watched **on the matrix**, so the preview on the device is **hidden**: the screen shows the score, a short status line and large controls.
+The 👁 button shows the preview (the choice is remembered). The preview appears by itself when there is no board, the matrix button is off, or the matrix could not be taken.
+With the preview hidden you can still drag in Pong, Tijolos and Invasores, using the empty area above the buttons.
+
+### Two players, one or two devices
+
+In Pong, Cobrinha and Tron choose **2** players and then **who you are**: *Jogador 1*, *Jogador 2* or *Os dois neste aparelho* (shared keyboard, two on-screen pads, two gamepads).
+
+To use two phones (or a PC and a phone):
+
+1. On the first device choose the game, 2 players, and *Jogador 1* (or 2). It runs the game and draws it on the matrix.
+2. Open `jogos.htm` on the second device. A box appears: **"Pong em andamento, quem é você?"**. Pick the free player.
+3. The second device shows **only that player's controller**. Either device can start, and the second one can pause.
+
+If the second device goes away (closed, or no signal for 4.5 s) the game pauses and its place becomes free again. In Pong with paddles at top and bottom, the second controller has
+a button to invert left and right, for a player sitting on the other side of the matrix.
+
+| Joining a running game | The second player's controller |
+|---|---|
+| ![Join](docs/img/games-join.jpg) | ![Controller](docs/img/games-controller.jpg) |
+
+This needs the `game_relay` usermod in the firmware ([usermods/game_relay](usermods/game_relay/readme.md)): the board copies the small `{"gm":…}` messages between the open
+pages. Without it everything else works, and two players share one device.
+
 ### Things to know
 
-- **Two players share one device.** Two phones cannot play against each other: the board has no way to relay inputs fast enough.
-- Open the games on **one device only**. While a game is open it takes the whole matrix; going back (or leaving the page) restores the previous segments, preset or playlist.
+- Run a game on **one device**; a second phone only sends button presses. Every open page uses board memory, so do not keep extra tabs open. While a game is open it takes the whole matrix; going back (or leaving the page) restores the previous segments, preset or playlist.
 - The matrix is updated about 6 to 14 times per second (as often as the picture changes, up to that), measured on the board. The screen of your device is smoother than the matrix.
 - High scores are kept in the browser.
 - The games are designed for 16x16; on other sizes the picture is centred and cropped.
@@ -443,8 +468,11 @@ matrix. Without a board it still plays on screen.
   (a search using the real game physics reaches the flag); automatic players clear bricks, fly through pipes and repeat Genius sequences; line clearing, game over and winners behave.
 - In the browser, on the board: keyboard play, simulated touch events (walk and jump with two fingers, two Pong pads, drag), phone portrait and landscape layouts,
   the picture on the matrix, restore on leaving the page, and 3.4 minutes of continuous play with no reboot (lowest free heap 10.8 KB).
+- Two devices: the relay delivered 100 of 100 messages (median 15 ms, 95 % under 39 ms) without changing the board state. With a game streaming and a second client
+  (a script that loads the page and sends commands four times a second) for 2 minutes: no reboot, a command came back in 17 ms (median), lowest free heap 10 to 11 KB,
+  and the matrix received about 10 pictures per second out of 13 changes. Joining, controlling, refusing a taken place, losing the connection and leaving were tested with a simulated second page.
 - The board restarted once during an earlier, unpaced network test; the cause was not identified and it did not happen again.
-- **Not verified**: a real phone and real fingers, a physical gamepad, sound, full screen on iOS.
+- **Not verified**: two real phones, real fingers, a physical gamepad, sound, full screen on iOS.
 
 ## MQTT rules usermod
 
@@ -488,6 +516,7 @@ git checkout 356d5e71c2107fac9475ff488c48d89ac2d382e9
 git apply ..\wled-esp8266-matrix\patches\0001-wled-esp8266-gif.patch
 Copy-Item -Recurse ..\wled-esp8266-matrix\lowram_libs .
 Copy-Item -Recurse ..\wled-esp8266-matrix\usermods\mqtt_rules usermods\
+Copy-Item -Recurse ..\wled-esp8266-matrix\usermods\game_relay usermods\
 Copy-Item ..\wled-esp8266-matrix\platformio_override.ini .
 npm ci; npm run build
 pio run -e d1_r2_gif
@@ -581,6 +610,7 @@ Tips learned the hard way:
 patches/                 diff against WLED (commit in WLED_BASE_COMMIT.txt)
 lowram_libs/             AnimatedGIF (reduced tables) and GifDecoder (all architectures)
 usermods/mqtt_rules/     rules engine + readme
+usermods/game_relay/     message relay for two-device games + readme
 ferramentas/             relogio, gifstudio, mqtt, pixelstudio, jogos tools (source, build script, gzip); nav.snip.html is their shared top bar
 platformio_override.ini  build environments for the D1 R2
 docs/img/                screenshots and memory charts

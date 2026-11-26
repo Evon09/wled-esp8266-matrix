@@ -64,7 +64,7 @@ cerca de 17 KB de heap livre parada (veja a [memória](#o-esp8266-e-a-memória-d
 | `-D GIF_LOW_RAM`, `-D GIF_CODE_LIMIT=576` | escolhe o decodificador reduzido (veja o item 2) |
 | `-D WLED_DISABLE_ALEXA`, `HUESYNC`, `INFRARED`, `ADALIGHT`, `LOXONE` | recursos que não uso; gastam flash e RAM. O **MQTT continua ligado** de propósito |
 | `-D WLED_DISABLE_PARTICLESYSTEM2D` | economiza flash; efeitos de partículas não fazem falta em 16x16 |
-| `custom_usermods = mqtt_rules` | inclui o motor de regras |
+| `custom_usermods = mqtt_rules game_relay` | inclui o motor de regras e o repasse de mensagens usado nos jogos em dois aparelhos |
 | `lib_extra_dirs = lowram_libs` | usa as bibliotecas modificadas no lugar das do registro |
 | ambientes `d1_r2_gif_debug`, `_netdebug`, `_log` | log pela serial, log por UDP e `/giflog`, para diagnosticar a matriz quando o USB não pode ficar ligado |
 
@@ -427,10 +427,35 @@ matriz. Sem a placa ele continua funcionando só na tela.
 |---|---|
 | ![Tetris no celular](docs/img/games-tetris-phone.jpg) | ![Plataforma no PC](docs/img/games-platform-pc.jpg) |
 
+### A tela do aparelho
+
+O jogo é feito para ser visto **na matriz**, então a prévia no aparelho fica **escondida**: a tela mostra o placar, uma linha de situação e controles grandes.
+O botão 👁 mostra a prévia (a escolha fica guardada). Ela aparece sozinha quando não há placa, quando o botão da matriz está desligado ou quando não foi possível usar a matriz.
+Com a prévia escondida ainda dá para arrastar no Pong, no Tijolos e no Invasores, na área livre acima dos botões.
+
+### Dois jogadores, em um ou dois aparelhos
+
+No Pong, na Cobrinha e no Tron escolha **2** jogadores e depois **quem você é**: *Jogador 1*, *Jogador 2* ou *Os dois neste aparelho* (teclado dividido, dois controles na tela, dois joysticks).
+
+Para usar dois celulares (ou um PC e um celular):
+
+1. No primeiro aparelho escolha o jogo, 2 jogadores e *Jogador 1* (ou 2). Ele roda o jogo e desenha na matriz.
+2. Abra o `jogos.htm` no segundo aparelho. Aparece a caixa **"Pong em andamento, quem é você?"**. Escolha o jogador livre.
+3. O segundo aparelho mostra **só o controle daquele jogador**. Qualquer um dos dois pode começar, e o segundo pode pausar.
+
+Se o segundo aparelho sair (fechar, ou ficar 4,5 s sem sinal), o jogo pausa e a vaga fica livre. No Pong com raquetes em cima e embaixo, o segundo controle tem um botão
+para inverter esquerda e direita, para quem está sentado do outro lado da matriz.
+
+| Entrando em um jogo em andamento | O controle do segundo jogador |
+|---|---|
+| ![Entrar](docs/img/games-join.jpg) | ![Controle](docs/img/games-controller.jpg) |
+
+Isso precisa do usermod `game_relay` no firmware ([usermods/game_relay](usermods/game_relay/readme.md)): a placa copia as mensagens pequenas `{"gm":…}` entre as páginas
+abertas. Sem ele o resto funciona, e os dois jogadores dividem um aparelho.
+
 ### O que saber
 
-- **Dois jogadores dividem um aparelho só.** Dois celulares não conseguem jogar um contra o outro: a placa não tem como repassar os comandos rápido o bastante.
-- Abra os jogos em **um aparelho só**. Enquanto um jogo está aberto ele usa a matriz inteira; ao voltar (ou sair da página) a placa volta aos segmentos, preset ou playlist de antes.
+- O jogo roda em **um aparelho**; o segundo celular só envia os botões. Cada página aberta usa memória da placa, então não deixe abas sobrando. Enquanto um jogo está aberto ele usa a matriz inteira; ao voltar (ou sair da página) a placa volta aos segmentos, preset ou playlist de antes.
 - A matriz é atualizada umas 6 a 14 vezes por segundo (conforme a imagem muda, até esse ritmo), medido na placa. A tela do aparelho é mais suave que a matriz.
 - Os recordes ficam no navegador.
 - Os jogos foram feitos para 16x16; em outros tamanhos a imagem é centralizada e cortada.
@@ -441,8 +466,11 @@ matriz. Sem a placa ele continua funcionando só na tela.
   (uma busca com a física real do jogo chega na bandeira); jogadores automáticos limpam blocos, passam pelos canos e repetem sequências do Genius; remoção de linhas, fim de jogo e vencedores funcionam.
 - No navegador, com a placa: jogo pelo teclado, toques simulados (andar e pular com dois dedos, dois controles no Pong, arrastar), layouts de celular em pé e deitado,
   a imagem na matriz, a restauração ao sair da página e 3,4 minutos de jogo contínuo sem reiniciar (menor heap livre 10,8 KB).
+- Dois aparelhos: o repasse entregou 100 de 100 mensagens (mediana 15 ms, 95 % abaixo de 39 ms) sem alterar o estado da placa. Com um jogo desenhando e um segundo cliente
+  (um script que carrega a página e manda comandos quatro vezes por segundo) por 2 minutos: nenhum reinício, o comando voltou em 17 ms (mediana), menor heap livre de 10 a 11 KB,
+  e a matriz recebeu uns 10 quadros por segundo de 13 mudanças. Entrar, controlar, recusar vaga ocupada, perder a conexão e sair foram testados com uma segunda página simulada.
 - A placa reiniciou uma vez durante um teste de rede anterior, sem intervalo entre os envios; a causa não foi identificada e não se repetiu.
-- **Não verificado**: um celular de verdade com dedos de verdade, um controle físico, o som e a tela cheia no iOS.
+- **Não verificado**: dois celulares de verdade, dedos de verdade, um controle físico, o som e a tela cheia no iOS.
 
 ## Usermod de regras MQTT
 
@@ -486,6 +514,7 @@ git checkout 356d5e71c2107fac9475ff488c48d89ac2d382e9
 git apply ..\wled-esp8266-matrix\patches\0001-wled-esp8266-gif.patch
 Copy-Item -Recurse ..\wled-esp8266-matrix\lowram_libs .
 Copy-Item -Recurse ..\wled-esp8266-matrix\usermods\mqtt_rules usermods\
+Copy-Item -Recurse ..\wled-esp8266-matrix\usermods\game_relay usermods\
 Copy-Item ..\wled-esp8266-matrix\platformio_override.ini .
 npm ci; npm run build
 pio run -e d1_r2_gif
@@ -579,6 +608,7 @@ Dicas aprendidas na prática:
 patches/                 diff contra o WLED (commit em WLED_BASE_COMMIT.txt)
 lowram_libs/             AnimatedGIF (tabelas reduzidas) e GifDecoder (todas as arquiteturas)
 usermods/mqtt_rules/     motor de regras + readme
+usermods/game_relay/     repasse de mensagens dos jogos em dois aparelhos + readme
 ferramentas/             ferramentas relogio, gifstudio, mqtt, pixelstudio, jogos (fonte, script de build, gzip); nav.snip.html é a barra do topo comum
 platformio_override.ini  ambientes de compilação para a D1 R2
 docs/img/                prints e gráficos de memória
