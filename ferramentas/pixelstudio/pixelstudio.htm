@@ -89,11 +89,11 @@ kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5p
 <body>
 <div id="toasts"></div><div id="modal" class="hide"></div>
 <header class="top">
-  <div class="brand"><div class="logo">🎨</div><div><h1>Pixel Estúdio</h1><div class="sub">Desenhe, crie sprites, monte GIFs quadro a quadro e espelhe a tela do PC na matriz</div></div></div>
+  <div class="brand"><div class="logo">🎨</div><div><h1>Pixel Estúdio</h1><div class="sub">Desenhe, crie sprites, monte GIFs quadro a quadro e espelhe a tela do PC ou a webcam na matriz</div></div></div>
   <div class="chips"><span class="chip" id="chipConn">conectando…</span><span class="chip" id="chipMat"></span><span class="chip" id="chipLive">ao vivo: desligado</span></div>
 </header>
 <main class="wrap">
-<nav class="tabs" id="tabs"><button data-tab="ed">✏️ Editor</button><button data-tab="sp">🧩 Sprites <span class="mu" id="spCount"></span></button><button data-tab="mr">🖥 Espelho de tela</button></nav>
+<nav class="tabs" id="tabs"><button data-tab="ed">✏️ Editor</button><button data-tab="sp">🧩 Sprites <span class="mu" id="spCount"></span></button><button data-tab="mr">🖥 Espelho / webcam</button></nav>
 
 <!-- ================= EDITOR ================= -->
 <section class="pane on" data-pane="ed">
@@ -220,17 +220,18 @@ kbd{background:#222a36;border:1px solid var(--bd);border-radius:5px;padding:0 5p
 <div class="cols2">
   <div>
     <div class="card">
-      <h2>🖥 Espelho de tela</h2>
-      <div class="hint">Mostra na matriz o que está na tela do computador (ou na câmera), em tempo real. A imagem é reduzida para o tamanho da matriz e enviada pelo WebSocket da placa.</div>
+      <h2>🖥 Espelho de tela e webcam</h2>
+      <div class="hint">Mostra na matriz, em tempo real, o que está na tela do computador ou na frente da webcam. A imagem é reduzida para o tamanho da matriz e enviada pelo WebSocket da placa.</div>
       <div id="mrSecure"></div>
       <div class="row">
-        <label class="col"><span class="lbl">Fonte</span><select id="mrSrc"><option value="screen">Tela / janela / aba</option><option value="cam">Câmera</option></select></label>
-        <button class="btn primary" id="mrStart">▶ Iniciar espelho</button>
+        <button class="btn primary" id="mrScreen">🖥 Espelhar a tela</button>
+        <button class="btn primary" id="mrCamBtn">📷 Usar a webcam</button>
         <button class="btn danger hide" id="mrStop">■ Parar e restaurar a placa</button>
         <label class="sw"><input type="checkbox" id="mrSend" checked><i></i><span class="small">Enviar para a matriz</span></label>
       </div>
+      <div class="row hide" id="mrCamRow"><label class="col"><span class="lbl">Câmera</span><select id="mrCam"></select></label></div>
       <canvas id="mrView" width="560" height="315"></canvas>
-      <div class="row small mu" style="margin-bottom:0"><span>Arraste na imagem para escolher só uma parte da tela.</span><button class="btn sm" id="mrFull">Tela inteira</button><span id="mrInfo"></span></div>
+      <div class="row small mu" style="margin-bottom:0"><span>Arraste na imagem para escolher só uma parte.</span><button class="btn sm" id="mrFull">Imagem inteira</button><span id="mrInfo"></span></div>
     </div>
     <div class="card">
       <h3>Gravar no editor</h3>
@@ -641,12 +642,14 @@ function liveEditor(){if(!LIVE.on||LIVE.owner!=='editor'||playing)return;clearTi
 /* ---------- espelho de tela ---------- */
 const MR={stream:null,video:document.createElement('video'),run:false,crop:null,timer:null,rec:0,recMax:0,lastPx:null,sentN:0,t0:0,drag:null,lut:null,size:[16,16]};
 const mrView=$('mrView');
-function mrSecureCheck(){const ok=window.isSecureContext&&navigator.mediaDevices&&navigator.mediaDevices.getDisplayMedia;
-  $('mrSecure').innerHTML=ok?'':`<div class="warnbox"><b>O navegador bloqueou a captura de tela nesta página.</b> Capturar a tela só é permitido em páginas seguras (https ou arquivo local), e a placa serve a página por http.<br>
+// capturar a tela e usar a câmera só são permitidos em página segura; celulares em geral não capturam a tela
+function mrCan(src){const m=navigator.mediaDevices;return !!(window.isSecureContext&&m&&(src==='cam'?m.getUserMedia:m.getDisplayMedia))}
+function mrSecureCheck(){const cam=mrCan('cam'),scr=mrCan('screen');
+  $('mrScreen').disabled=!scr;$('mrCamBtn').disabled=!cam;
+  $('mrSecure').innerHTML=(cam||scr)?(scr?'':'<div class="infobox">Este navegador não captura a tela (comum no celular). A webcam funciona.</div>'):`<div class="warnbox"><b>O navegador bloqueou a tela e a webcam nesta página.</b> Isso só é permitido em páginas seguras (https ou arquivo local), e a placa serve a página por http.<br>
   <b>Solução:</b> baixe este arquivo e abra-o direto do computador (duplo clique). Ele pergunta o IP da placa na primeira vez.
   <div class="row"><button class="btn primary" id="mrDownload">⬇ Baixar a ferramenta para abrir no PC</button></div></div>`;
-  const b=$('mrDownload');if(b)b.onclick=async()=>{try{const t=await (await fetch(location.href.split('?')[0],{cache:'no-store'})).text();download('pixelstudio.html',new Blob([t],{type:'text/html'}))}catch(e){toast('Erro: '+e.message,'er')}};
-  return !!ok}
+  const b=$('mrDownload');if(b)b.onclick=async()=>{try{const t=await (await fetch(location.href.split('?')[0],{cache:'no-store'})).text();download('pixelstudio.html',new Blob([t],{type:'text/html'}))}catch(e){toast('Erro: '+e.message,'er')}}}
 function mrAdj(){return{fps:+$('mrFps').value,br:+$('mrBr').value/100,co:+$('mrCo').value/100,sa:+$('mrSa').value/100,ga:+$('mrGa').value/100,fit:$('mrFit').value,fh:$('mrFlipH').checked,fv:$('mrFlipV').checked}}
 function mrSample(tw,th,a){
   const v=MR.video;if(!v.videoWidth)return null;const c=MR.crop||{x:0,y:0,w:1,h:1};
@@ -670,26 +673,55 @@ function mrLut(ga){if(MR.lut&&MR.lut.ga===ga)return MR.lut.t;const t=new Uint8Ar
 function mrDrawView(){const v=MR.video;if(!v.videoWidth)return;const c=mrView,x=c.getContext('2d');c.height=Math.round(c.width*v.videoHeight/v.videoWidth);x.drawImage(v,0,0,c.width,c.height);
   const r=MR.crop;if(r){x.fillStyle='#0009';x.fillRect(0,0,c.width,r.y*c.height);x.fillRect(0,(r.y+r.h)*c.height,c.width,c.height);x.fillRect(0,r.y*c.height,r.x*c.width,r.h*c.height);x.fillRect((r.x+r.w)*c.width,r.y*c.height,c.width,r.h*c.height);
     x.strokeStyle='#ffb020';x.lineWidth=2;x.setLineDash([6,4]);x.strokeRect(r.x*c.width,r.y*c.height,r.w*c.width,r.h*c.height);x.setLineDash([])}}
-async function mrTick(){
-  if(!MR.run)return;const a=mrAdj();MR.timer=setTimeout(mrTick,1000/a.fps);
+// o relógio do espelho vem de um Worker: com a aba escondida o navegador atrasa o setTimeout da página para uma vez por segundo
+function mrLater(ms){if(MR.worker===undefined){try{MR.worker=new Worker(URL.createObjectURL(new Blob(['let t;onmessage=e=>{clearTimeout(t);if(e.data>0)t=setTimeout(()=>postMessage(0),e.data)}'],{type:'text/javascript'})));MR.worker.onmessage=()=>mrTick()}catch(e){MR.worker=null}}
+  clearTimeout(MR.timer);if(MR.worker)MR.worker.postMessage(ms);else if(ms>0)MR.timer=setTimeout(mrTick,ms)}
+function mrTick(){
+  if(!MR.run)return;const a=mrAdj();mrLater(1000/a.fps);
   const[tw,th]=MR.size,px=mrSample(tw,th,a);if(!px)return;mrDrawView();drawLed($('mrLed'),px,tw,th);MR.lastPx=px;
   if($('mrSend').checked&&LIVE.on&&liveSend(px))MR.sentN++;
   if(MR.rec>0){const f=newFrame(fitTo(px,tw,th,W,H));f.ms=Math.round(1000/a.fps);frames.push(f);MR.rec--;if(!MR.rec){cur=frames.length-1;refreshAll();toast('Gravação concluída: '+frames.length+' quadros no editor.','ok');$('mrRec').textContent='⏺ Gravar'}}
   const now=Date.now();if(now-MR.t0>1000){$('mrInfo').textContent=`enviando ~${MR.sentN} quadros/s`;MR.sentN=0;MR.t0=now}}
-async function mrStart(){
-  if(!mrSecureCheck())return toast('Abra a ferramenta pelo arquivo baixado para capturar a tela.','er');
-  try{MR.stream=$('mrSrc').value==='cam'?await navigator.mediaDevices.getUserMedia({video:{width:640}}):await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15,cursor:'always'},audio:false})}
-  catch(e){return toast('Captura cancelada ou bloqueada: '+e.message,'er')}
-  MR.video.muted=true;MR.video.srcObject=MR.stream;try{await MR.video.play()}catch(e){}
-  MR.stream.getVideoTracks()[0].addEventListener('ended',mrStop);
-  if($('liveSw').checked){await liveStop()}
-  if(!(await liveStart('mirror'))){mrStop(true);return}
-  MR.size=[LIVE.sw,LIVE.sh];
-  try{const st=await jget('/json/state');$('mrBd').value=st.bri||64;$('vBd').textContent=st.bri}catch(e){}
-  MR.run=true;MR.t0=Date.now();$('mrStart').classList.add('hide');$('mrStop').classList.remove('hide');mrTick();toast('Espelho ligado.','ok')}
+// cada fonte lembra o próprio encaixe e espelhamento; a webcam começa como um espelho, preenchendo a matriz
+const MR_DEF={screen:{fit:'stretch',fh:false},cam:{fit:'cover',fh:true}};
+function mrPrefs(src){try{return Object.assign({},MR_DEF[src],JSON.parse(localStorage.getItem('pxs.mr.'+src)||'{}'))}catch(e){return MR_DEF[src]}}
+function mrSavePrefs(){if(MR.src)try{localStorage.setItem('pxs.mr.'+MR.src,JSON.stringify({fit:$('mrFit').value,fh:$('mrFlipH').checked}))}catch(e){}}
+function mrErrorText(e,src){const n=e&&e.name;
+  if(n==='NotAllowedError'||n==='SecurityError')return src==='cam'?'A câmera não foi liberada. Permita a câmera no ícone ao lado do endereço e tente de novo. No Windows, confira também Configurações › Privacidade › Câmera.':'A captura da tela foi cancelada ou não foi liberada.';
+  if(n==='NotFoundError'||n==='OverconstrainedError')return 'Nenhuma câmera encontrada.';
+  if(n==='NotReadableError')return 'A câmera está ocupada por outro programa (Teams, Zoom, app Câmera…). Feche-o e tente de novo.';
+  return 'Não consegui iniciar: '+((e&&e.message)||n)}
+function mrOpen(src,id){return src==='cam'?navigator.mediaDevices.getUserMedia({audio:false,video:id?{deviceId:{exact:id},width:{ideal:640}}:{width:{ideal:640},facingMode:'user'}})
+  :navigator.mediaDevices.getDisplayMedia({video:{frameRate:15,cursor:'always'},audio:false})}
+async function mrListCams(){
+  let list=[];try{list=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput')}catch(e){}
+  const t=MR.stream&&MR.stream.getVideoTracks()[0],now=t&&t.getSettings?t.getSettings().deviceId:'';
+  $('mrCam').innerHTML=list.map((d,i)=>`<option value="${esc(d.deviceId)}"${d.deviceId===now?' selected':''}>${esc(d.label||'Câmera '+(i+1))}</option>`).join('');
+  $('mrCamRow').classList.toggle('hide',MR.src!=='cam'||list.length<2)}
+function mrButtons(){$('mrStop').classList.toggle('hide',!MR.run);$('mrScreen').classList.toggle('primary',!MR.run||MR.src==='screen');$('mrCamBtn').classList.toggle('primary',!MR.run||MR.src==='cam');if(!MR.run||MR.src!=='cam')$('mrCamRow').classList.add('hide')}
+let mrBusy=false;
+async function mrStart(src,id){
+  if(mrBusy)return;if(!mrCan(src))return toast('Abra a ferramenta pelo arquivo baixado para usar a tela ou a webcam.','er');
+  mrBusy=true;
+  try{
+    // trocando de câmera: solta a atual antes, porque muitos aparelhos não abrem duas ao mesmo tempo
+    if(id&&MR.stream)MR.stream.getTracks().forEach(t=>t.stop());
+    let s;try{s=await mrOpen(src,id)}catch(e){toast(mrErrorText(e,src),'er');if(id)await mrStop();return}
+    const old=MR.stream;MR.stream=s;MR.src=src;if(old)old.getTracks().forEach(t=>t.stop());
+    const p=mrPrefs(src);$('mrFit').value=p.fit;$('mrFlipH').checked=p.fh;MR.crop=null;
+    MR.video.muted=true;MR.video.playsInline=true;MR.video.srcObject=s;try{await MR.video.play()}catch(e){}
+    s.getVideoTracks()[0].addEventListener('ended',()=>{if(MR.stream===s)mrStop()});
+    if(!MR.run){
+      if($('liveSw').checked)await liveStop();
+      if(!(await liveStart('mirror'))){await mrStop(true);return}
+      MR.size=[LIVE.sw,LIVE.sh];
+      try{const st=await jget('/json/state');$('mrBd').value=st.bri||64;$('vBd').textContent=st.bri}catch(e){}
+      MR.run=true;MR.t0=Date.now();MR.sentN=0;mrTick();toast(src==='cam'?'Webcam na matriz.':'Espelho ligado.','ok')}
+    mrButtons();if(src==='cam')await mrListCams();
+  }finally{mrBusy=false}}
 async function mrStop(keepLive){
-  MR.run=false;clearTimeout(MR.timer);MR.rec=0;try{if(MR.stream)MR.stream.getTracks().forEach(t=>t.stop())}catch(e){}MR.stream=null;MR.video.srcObject=null;
-  $('mrStart').classList.remove('hide');$('mrStop').classList.add('hide');$('mrInfo').textContent='';$('mrRec').textContent='⏺ Gravar';
+  MR.run=false;mrLater(0);MR.rec=0;try{if(MR.stream)MR.stream.getTracks().forEach(t=>t.stop())}catch(e){}MR.stream=null;MR.video.srcObject=null;
+  mrButtons();$('mrInfo').textContent='';$('mrRec').textContent='⏺ Gravar';
   if(keepLive!==true&&LIVE.on&&LIVE.owner==='mirror')await liveStop();chipLive()}
 function mrPos(e){const r=mrView.getBoundingClientRect();return[clamp((e.clientX-r.left)/r.width,0,1),clamp((e.clientY-r.top)/r.height,0,1)]}
 mrView.addEventListener('pointerdown',e=>{if(!MR.run)return;mrView.setPointerCapture(e.pointerId);MR.drag=mrPos(e)});
@@ -744,12 +776,12 @@ function initEvents(){
   $('spFromSel').onclick=spFromSel;$('spFromFrame').onclick=spFromFrame;$('spNew').onclick=spNew;$('spToBoard').onclick=spToBoard;$('spFromBoard').onclick=spFromBoard;
   $('spExport').onclick=()=>download('sprites.json',new Blob([JSON.stringify({sprites:SP.list.map(s=>({name:s.name,w:s.w,h:s.h,px:Array.from(s.px,v=>v&TR?-1:v)}))})],{type:'application/json'}));
   $('mGo').onclick=genMotion;
-  $('mrStart').onclick=mrStart;$('mrStop').onclick=()=>mrStop();$('mrFull').onclick=()=>{MR.crop=null};
+  $('mrScreen').onclick=()=>mrStart('screen');$('mrCamBtn').onclick=()=>mrStart('cam');$('mrCam').onchange=e=>mrStart('cam',e.target.value);$('mrStop').onclick=()=>mrStop();$('mrFit').onchange=$('mrFlipH').onchange=mrSavePrefs;$('mrFull').onclick=()=>{MR.crop=null};
   [['mrFps','vFps',v=>v],['mrBr','vBr',v=>v],['mrCo','vCo',v=>v],['mrSa','vSa',v=>v],['mrGa','vGa',v=>(v/100).toFixed(1)],['mrBd','vBd',v=>v]].forEach(([i,o,f])=>$(i).oninput=e=>{$(o).textContent=f(+e.target.value)});
   $('mrBd').onchange=e=>{if(LIVE.ws&&LIVE.ws.readyState===1)LIVE.ws.send(JSON.stringify({bri:+e.target.value}))};
-  $('mrRec').onclick=()=>{if(!MR.run)return toast('Inicie o espelho antes.');if(MR.rec>0){MR.rec=0;$('mrRec').textContent='⏺ Gravar';return}
+  $('mrRec').onclick=()=>{if(!MR.run)return toast('Inicie o espelho ou a webcam antes.');if(MR.rec>0){MR.rec=0;$('mrRec').textContent='⏺ Gravar';return}
     const n=clamp(+$('recN').value|0,2,120);if(frames.length===1&&!frames[0].px.some(v=>v)){frames=[]}snap();MR.rec=n;$('mrRec').textContent='■ Gravando…'};
-  $('mrSnap').onclick=()=>{if(!MR.lastPx)return toast('Inicie o espelho antes.');snap();const f=newFrame(fitTo(MR.lastPx,MR.size[0],MR.size[1],W,H));frames.splice(cur+1,0,f);cur++;refreshAll();toast('Quadro capturado.','ok')};
+  $('mrSnap').onclick=()=>{if(!MR.lastPx)return toast('Inicie o espelho ou a webcam antes.');snap();const f=newFrame(fitTo(MR.lastPx,MR.size[0],MR.size[1],W,H));frames.splice(cur+1,0,f);cur++;refreshAll();toast('Quadro capturado.','ok')};
   addEventListener('keydown',keyHandler);addEventListener('resize',()=>{layout();redraw()});
   // saiu da página com o modo ao vivo ligado: devolve a placa como estava
   addEventListener('pagehide',()=>{if(!LIVE.on)return;LIVE.on=false;const ws=LIVE.ws,sv=LIVE.saved;LIVE.ws=null;if(!sv)return;

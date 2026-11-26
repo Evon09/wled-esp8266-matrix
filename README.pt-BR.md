@@ -365,22 +365,24 @@ A biblioteca fica no navegador; **Guardar sprites na placa** grava o `pixelstudi
   freia, suave), fundo (o quadro atual ou preto), inserir depois do quadro atual ou substituir todos, "dar a volta na tela" e "voltar ao início" (ida e volta).
   O resultado são quadros normais, prontos para editar e salvar como GIF.
 
-### Aba 🖥 Espelho de tela
+### Aba 🖥 Espelho / webcam
 
-![Pixel Estúdio, espelho de tela](docs/img/pixelstudio-mirror.jpg)
+![Pixel Estúdio, espelho da webcam](docs/img/pixelstudio-mirror.jpg)
 
-Mostra na matriz, em tempo real, o que está na tela do computador (a tela inteira, uma janela ou uma aba do navegador) ou a câmera. A imagem acima mostra o aviso que a
-página dá quando é aberta pela placa, com uma imagem de teste sintética.
+Mostra na matriz, em tempo real, a **tela do computador** (a tela inteira, uma janela ou uma aba do navegador) ou a sua **webcam**. Use **Espelhar a tela** ou **Usar a webcam**;
+dá para trocar entre elas sem parar. (A imagem do print é um teste sintético no lugar da câmera.)
 
-- **Como funciona**: o navegador captura o vídeo, recorta a parte escolhida (arraste sobre a imagem; "Tela inteira" desfaz), encaixa no tamanho da matriz tirando a média
+- **Webcam**: começa como um espelho (invertida na horizontal) e preenche a matriz (corta as laterais de uma imagem larga). Com mais de uma câmera, escolha na lista
+  **Câmera**. Em um celular que não captura a tela, só o botão da webcam fica ativo. Cada fonte lembra o próprio encaixe e espelhamento.
+- **Como funciona**: o navegador captura o vídeo, recorta a parte escolhida (arraste sobre a imagem; "Imagem inteira" desfaz), encaixa no tamanho da matriz tirando a média
   dos pixels, aplica os ajustes e envia só os pixels que mudaram pelo WebSocket, em mensagens pequenas (o ESP8266 aceita uns 528 bytes por mensagem).
-  Ele espera a placa responder antes de mandar mais.
+  Ele espera a placa responder antes de mandar mais. O ritmo vem de um Web Worker, para uma aba escondida não cair para um quadro por segundo.
 - **Ajustes**: quadros por segundo (1 a 20, padrão 8), brilho da imagem, contraste, saturação, gama, espelhar na horizontal / vertical, encaixe (esticar, imagem inteira, preencher)
   e o **brilho da placa**.
-- **Gravar no editor**: grava N quadros do espelho como quadros do editor (vira um GIF), ou captura um único quadro.
+- **Gravar no editor**: grava N quadros como quadros do editor (vira um GIF), ou captura um único quadro.
 - **Iniciar e parar**: o espelho assume a matriz inteira como um segmento. Ao parar, a ferramenta devolve a placa como estava (os segmentos, o preset ou a playlist de antes).
   Se o relógio estava sendo desenhado pela página do Relógio LED, ele volta quando essa página enviar de novo.
-- **Capturar a tela exige uma página segura.** A placa serve as páginas em `http` simples, e os navegadores só permitem capturar a tela em `https` ou em arquivo local. Por isso a página mostra o
+- **É preciso uma página segura.** A placa serve as páginas em `http` simples, e os navegadores só permitem usar a tela e a câmera em `https` ou em arquivo local. Por isso a página mostra o
   botão **Baixar a ferramenta para abrir no PC**: salve o `pixelstudio.html`, dê dois cliques e digite o IP da placa na primeira vez (ou abra como `pixelstudio.html?ip=192.168.0.170`).
   O resto (desenhar, salvar, ao vivo) funciona nas duas páginas.
 
@@ -392,7 +394,9 @@ página dá quando é aberta pela placa, com uma imagem de teste sintética.
 - Espelho: testado com um vídeo sintético (metades vermelha e azul e um círculo branco em movimento) no lugar da tela. A matriz reproduziu a imagem a uns 8 quadros por segundo, com cerca de 13,7 KB de
   heap livre durante o teste, e ao parar voltou o layout do relógio com dois segmentos.
 - De outra origem (`localhost` com `?ip=`) a página alcançou a placa (informações, WebSocket, envio de arquivo e a biblioteca de GIFs), que é o que a cópia baixada faz.
-- **Não verificado**: capturar uma tela ou janela de verdade (o navegador pede permissão à pessoa, e um script não consegue dar), a câmera, a cópia baixada aberta como página `file://` e telas de toque.
+- Webcam: testada com uma câmera sintética: o botão, o espelhamento padrão, a troca entre duas câmeras e para a tela, os avisos de câmera recusada, ausente ou ocupada,
+  a imagem na matriz e a restauração da placa ao parar.
+- **Não verificado**: capturar uma tela ou janela e uma câmera de verdade (o navegador pede permissão à pessoa, e um script não consegue dar), uma aba escondida, a cópia baixada aberta como página `file://` e telas de toque.
 
 ## Ferramenta 5: Jogos na Matriz
 
@@ -582,7 +586,7 @@ Dicas aprendidas na prática:
 - **Pixel Estúdio**: o modo ao vivo e o espelho usam um WebSocket e pegam a matriz inteira como um segmento, então a memória livre cai uns 1 a 3 KB enquanto rodam; mantenha uma aba só.
 - O espelho envia pixel a pixel pela API JSON, então roda a uns 8 quadros por segundo (dá para escolher até 20, mas a placa pode não acompanhar). Não é transmissão de vídeo: para
   vídeo fluido use um emissor DDP/E1.31, o que uma página web não consegue fazer (não tem UDP).
-- Capturar a tela só funciona em página segura (veja [a aba do espelho](#aba--espelho-de-tela)): baixe a página e abra pelo computador.
+- Capturar a tela só funciona em página segura (veja [a aba do espelho](#aba--espelho--webcam)): baixe a página e abra pelo computador.
 - Os sprites e o projeto salvo automaticamente ficam no armazenamento do navegador (por navegador e por endereço); use *Guardar sprites na placa* ou *Salvar projeto* para levar de um lugar a outro.
 
 ## Segurança

@@ -366,22 +366,24 @@ The library keeps them in the browser; **Guardar sprites na placa** writes `pixe
   braking, smooth), background (the current frame or black), insert after the current frame or replace all, "wrap around the screen" and "come back" (there and back).
   The result is normal frames, ready to edit and save as a GIF.
 
-### Tab 🖥 Espelho de tela (screen mirror)
+### Tab 🖥 Espelho / webcam (screen and webcam mirror)
 
-![Pixel Estúdio, screen mirror](docs/img/pixelstudio-mirror.jpg)
+![Pixel Estúdio, webcam mirror](docs/img/pixelstudio-mirror.jpg)
 
-Shows what is on your computer screen (a whole screen, a window or a browser tab) or the camera on the matrix, in real time. The screenshot above shows the warning the
-page gives when it is opened from the board, plus a synthetic test image.
+Shows your **computer screen** (a whole screen, a window or a browser tab) or your **webcam** on the matrix, in real time. Press **Espelhar a tela** or **Usar a webcam**; you can
+switch between them without stopping. (The picture in the screenshot is a synthetic test image in place of a camera.)
 
-- **How it works**: the browser captures the video, crops the part you chose (drag on the image; "Tela inteira" resets), fits it to the matrix size by averaging the
+- **Webcam**: it starts like a mirror (flipped left to right) and fills the matrix (the sides of a wide picture are cut). With more than one camera, choose it in the **Câmera**
+  list. On a phone that cannot capture the screen, only the webcam button is enabled. Each source remembers its own fit and flip.
+- **How it works**: the browser captures the video, crops the part you chose (drag on the image; "Imagem inteira" resets), fits it to the matrix size by averaging the
   pixels, applies the adjustments and sends only the pixels that changed over the WebSocket, in small messages (the ESP8266 accepts about 528 bytes per message).
-  It waits for the board to answer before sending more.
+  It waits for the board to answer before sending more. The timing comes from a Web Worker, so that a hidden tab is not slowed to one picture per second.
 - **Adjustments**: frames per second (1 to 20, default 8), image brightness, contrast, saturation, gamma, flip horizontal / vertical, fit (stretch, whole image, fill),
   and the **board brightness**.
-- **Gravar no editor**: records N frames of the mirror as editor frames (so it becomes a GIF), or captures a single frame.
+- **Gravar no editor**: records N frames as editor frames (so it becomes a GIF), or captures a single frame.
 - **Starting and stopping**: the mirror takes over the whole matrix as one segment. When you stop, the tool puts the board back as it was (the previous segments, preset or
   playlist). If the clock was drawn by the Relógio LED page, it comes back when that page sends again.
-- **Screen capture needs a secure page.** The board serves its pages over plain `http`, and browsers only allow screen capture on `https` or on a local file. So the page shows a
+- **A secure page is required.** The board serves its pages over plain `http`, and browsers only allow the screen and the camera on `https` or on a local file. So the page shows a
   button, **Baixar a ferramenta para abrir no PC**: save `pixelstudio.html`, double-click it, and type the board's IP the first time (or open it as `pixelstudio.html?ip=192.168.0.170`).
   Everything else (drawing, saving, live) works from either page.
 
@@ -393,7 +395,9 @@ page gives when it is opened from the board, plus a synthetic test image.
 - Mirror: tested with a synthetic video (red and blue halves and a moving white circle) in place of the screen. The matrix reproduced it at about 8 frames per second, with about 13.7 KB of
   free heap during the test, and stopping restored the two-segment clock layout.
 - From another origin (`localhost` with `?ip=`) the page reached the board (info, WebSocket, upload and the GIF library), which is what the downloaded copy does.
-- **Not verified**: capturing a real screen or window (the browser asks the person for permission, which a script cannot give), the camera source, the downloaded copy opened as a
+- Webcam: tested with a synthetic camera: the button, the mirrored default, switching between two cameras and to the screen, the messages for a refused, missing or busy camera,
+  the picture on the matrix, and restoring the board on stop.
+- **Not verified**: capturing a real screen or window and a real camera (the browser asks the person for permission, which a script cannot give), a hidden tab, the downloaded copy opened as a
   `file://` page, and touch screens.
 
 ## Tool 5: Jogos na Matriz (games)
@@ -584,7 +588,7 @@ Tips learned the hard way:
 - **Pixel Estúdio**: the live mode and the mirror use one WebSocket and take the whole matrix as one segment, so the free heap drops by about 1 to 3 KB while they run; keep one tab open.
 - The mirror sends pixel by pixel through the JSON API, so it runs at about 8 frames per second (up to 20 is selectable, but the board may not keep up). It is not a video stream: for
   smooth video use a DDP/E1.31 sender, which a web page cannot do (no UDP).
-- Screen capture only works from a secure page (see [the mirror tab](#tab--espelho-de-tela-screen-mirror)): download the page and open it from the computer.
+- Screen capture only works from a secure page (see [the mirror tab](#tab--espelho--webcam-screen-and-webcam-mirror)): download the page and open it from the computer.
 - Sprites and the autosaved project live in the browser's storage (per browser and per address); use *Guardar sprites na placa* or *Salvar projeto* to move them.
 
 ## Security notes
