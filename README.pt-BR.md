@@ -6,7 +6,7 @@ Conjunto de mudanças sobre o [WLED](https://github.com/wled/WLED) (17.0.0-devV5
 **matriz de LEDs 16x16 controlada por uma Wemos D1 R2 (ESP8266, 4 MB de flash, cerca de 80 KB de RAM)**.
 
 O WLED desliga o efeito Imagem/GIF no ESP8266 porque o decodificador de GIF precisa de uns 24 KB de RAM.
-Este projeto faz o efeito funcionar, enxuga o firmware para abrir espaço e acrescenta quatro ferramentas web
+Este projeto faz o efeito funcionar, enxuga o firmware para abrir espaço e acrescenta cinco ferramentas web
 e um motor de regras MQTT, tudo rodando na própria placa.
 
 > Tudo foi feito e testado em uma placa real. É um projeto pessoal, não uma versão oficial do WLED.
@@ -22,13 +22,14 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 6. [Ferramenta 2: Estúdio de GIFs](#ferramenta-2-estúdio-de-gifs)
 7. [Ferramenta 3: Regras MQTT](#ferramenta-3-regras-mqtt)
 8. [Ferramenta 4: Pixel Estúdio (pixel art, sprites, GIF, espelho de tela)](#ferramenta-4-pixel-estúdio-pixel-art-sprites-gif-e-espelho-de-tela)
-9. [Usermod de regras MQTT](#usermod-de-regras-mqtt)
-10. [Arquivos e API usados na placa](#arquivos-e-api-usados-na-placa)
-11. [Compilar e instalar](#compilar-e-instalar)
-12. [Limitações](#limitações)
-13. [Segurança](#segurança)
-14. [O que não foi feito](#o-que-não-foi-feito)
-15. [Estrutura do repositório](#estrutura-do-repositório)
+9. [Ferramenta 5: Jogos na Matriz](#ferramenta-5-jogos-na-matriz)
+10. [Usermod de regras MQTT](#usermod-de-regras-mqtt)
+11. [Arquivos e API usados na placa](#arquivos-e-api-usados-na-placa)
+12. [Compilar e instalar](#compilar-e-instalar)
+13. [Limitações](#limitações)
+14. [Segurança](#segurança)
+15. [O que não foi feito](#o-que-não-foi-feito)
+16. [Estrutura do repositório](#estrutura-do-repositório)
 
 ## O que você ganha
 
@@ -39,6 +40,7 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 | Relógio, data, clima, sensor, GIFs e efeitos como telas | ferramenta **Relógio LED** |
 | Várias imagens em um GIF, sprite sheets, categorias | ferramenta **Estúdio de GIFs** |
 | Editor de pixel art com quadros, sprites, exportação de GIF e **espelho de tela** | ferramenta **Pixel Estúdio** |
+| Dez jogos para PC e celular, 1 ou 2 jogadores | ferramenta **Jogos na Matriz** |
 | MQTT: mensagem → ação na matriz; mudança de estado → mensagem; regras por hora, dia da semana, temperatura e umidade | usermod `mqtt_rules` + ferramenta **Regras MQTT** |
 
 Tamanho do firmware na D1 R2: flash 86,1 % (899.715 de 1.044.464 bytes), RAM 59,3 % estática na compilação e
@@ -48,7 +50,7 @@ cerca de 17 KB de heap livre parada (veja a [memória](#o-esp8266-e-a-memória-d
 
 1. Compile e grave o firmware ([Compilar e instalar](#compilar-e-instalar)).
 2. Abra `http://IP-DA-PLACA/` uma vez e configure a saída dos LEDs (pino, 256 LEDs, ordem de cores) e o tamanho da matriz 2D nas configurações do WLED.
-3. Envie as quatro páginas das ferramentas (arquivos gzip em `ferramentas/`) e registre-as no `pftools.json`.
+3. Envie as cinco páginas das ferramentas (arquivos gzip em `ferramentas/`) e registre-as no `pftools.json`.
 4. Abra `http://IP-DA-PLACA/relogio.htm` para montar o relógio, `/gifstudio.htm` para criar GIFs e `/mqttrules.htm` para criar regras MQTT e `/pixelstudio.htm` para desenhar, criar sprites e espelhar a tela.
 5. **Mantenha uma única aba do navegador aberta na placa enquanto um GIF toca** (veja a [memória](#o-esp8266-e-a-memória-dele)).
 
@@ -392,6 +394,56 @@ página dá quando é aberta pela placa, com uma imagem de teste sintética.
 - De outra origem (`localhost` com `?ip=`) a página alcançou a placa (informações, WebSocket, envio de arquivo e a biblioteca de GIFs), que é o que a cópia baixada faz.
 - **Não verificado**: capturar uma tela ou janela de verdade (o navegador pede permissão à pessoa, e um script não consegue dar), a câmera, a cópia baixada aberta como página `file://` e telas de toque.
 
+## Ferramenta 5: Jogos na Matriz
+
+Dez jogos para a matriz 16x16, jogados no PC ou no celular: abra `http://IP-DA-PLACA/jogos.htm`. O jogo roda no navegador, que desenha na tela e envia para a
+matriz. Sem a placa ele continua funcionando só na tela.
+
+![Menu dos jogos](docs/img/games-menu.jpg)
+
+| Jogo | Jogadores | Como é |
+|---|---|---|
+| Tetris | 1 | sete peças, sombra da peça, próxima peça, níveis |
+| Pong | 1 ou 2 | contra a placa (3 dificuldades) ou um amigo, até 7; raquetes nas laterais ou em cima/embaixo |
+| Cobrinha | 1 ou 2 | paredes que atravessam ou matam; duas cobras no modo de 2 |
+| Tijolos | 1 | quatro desenhos de blocos, blocos de duas batidas a partir da fase 2, 3 vidas |
+| Plataforma | 1 | três fases com rolagem, moedas, espinhos, inimigos que dá para pisar, plataformas que atravessam por baixo |
+| Invasores | 1 | ondas de naves, escudos, bombas |
+| Pássaro | 1 | voar entre os canos |
+| Corrida | 1 | quatro faixas, turbo |
+| Tron | 1 ou 2 | contra a placa ou um amigo, melhor de 5 |
+| Genius | 1 | repetir a sequência de cores |
+
+### Controles
+
+| | Teclado do PC | Celular / tablet | Controle (USB ou Bluetooth) |
+|---|---|---|---|
+| 1 jogador | setas ou WASD, `espaço` = A, `X` = B | direcional e botões na tela; arrastar na tela no Pong, Tijolos e Invasores; tocar no Pássaro e no Genius | direcional ou analógico, botões A / B, Start pausa |
+| 2 jogadores | J1 `WASD` + `espaço`; J2 setas + `Enter` | um controle para cada jogador no mesmo aparelho; no Pong com raquetes em cima/embaixo o segundo controle fica virado para o outro jogador | um controle para cada um |
+
+`P` pausa, `R` reinicia, `Esc` volta ao menu. A barra tem pausa, reiniciar, som, matriz ligada/desligada, tela cheia e, no PC, um botão que mostra os controles na tela.
+
+| Celular deitado (toque) | PC |
+|---|---|
+| ![Tetris no celular](docs/img/games-tetris-phone.jpg) | ![Plataforma no PC](docs/img/games-platform-pc.jpg) |
+
+### O que saber
+
+- **Dois jogadores dividem um aparelho só.** Dois celulares não conseguem jogar um contra o outro: a placa não tem como repassar os comandos rápido o bastante.
+- Abra os jogos em **um aparelho só**. Enquanto um jogo está aberto ele usa a matriz inteira; ao voltar (ou sair da página) a placa volta aos segmentos, preset ou playlist de antes.
+- A matriz é atualizada umas 6 a 14 vezes por segundo (conforme a imagem muda, até esse ritmo), medido na placa. A tela do aparelho é mais suave que a matriz.
+- Os recordes ficam no navegador.
+- Os jogos foram feitos para 16x16; em outros tamanhos a imagem é centralizada e cortada.
+
+### O que foi verificado
+
+- Testes por script (`node ferramentas/jogos/test/test_games.js`): centenas de partidas aleatórias em todas as combinações de opções sem erro; cada fase da plataforma dá para terminar
+  (uma busca com a física real do jogo chega na bandeira); jogadores automáticos limpam blocos, passam pelos canos e repetem sequências do Genius; remoção de linhas, fim de jogo e vencedores funcionam.
+- No navegador, com a placa: jogo pelo teclado, toques simulados (andar e pular com dois dedos, dois controles no Pong, arrastar), layouts de celular em pé e deitado,
+  a imagem na matriz, a restauração ao sair da página e 3,4 minutos de jogo contínuo sem reiniciar (menor heap livre 10,8 KB).
+- A placa reiniciou uma vez durante um teste de rede anterior, sem intervalo entre os envios; a causa não foi identificada e não se repetiu.
+- **Não verificado**: um celular de verdade com dedos de verdade, um controle físico, o som e a tela cheia no iOS.
+
 ## Usermod de regras MQTT
 
 `usermods/mqtt_rules` guarda as regras em `/mqttrules.jsonl` (um objeto JSON por linha, até 760 caracteres,
@@ -411,7 +463,7 @@ as condições de temperatura bloquearam e liberaram corretamente, e as regras d
 
 | Na placa (LittleFS) | O que é |
 |---|---|
-| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz`, `pixelstudio.htm.gz` | as quatro páginas das ferramentas |
+| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz`, `pixelstudio.htm.gz`, `jogos.htm.gz` | as cinco páginas das ferramentas |
 | `pftools.json` | a lista mostrada no PixelForge → *Other tools* |
 | `relogio-config.json` | estado da ferramenta de relógio |
 | `relogio-cfg-backup.json`, `relogio-presets-backup.json`, `mqtt-cfg-backup.json` | backups feitos antes de as ferramentas mudarem a configuração |
@@ -494,7 +546,7 @@ Dicas aprendidas na prática:
 
 **Ferramentas**
 - Feitas para uma matriz 16x16 de um segmento. Outros tamanhos funcionam em princípio, mas não foram testados.
-- O PixelForge pode reescrever o `pftools.json` e apagar as quatro entradas personalizadas; acrescente-as de novo se acontecer.
+- O PixelForge pode reescrever o `pftools.json` e apagar as cinco entradas personalizadas; acrescente-as de novo se acontecer.
 - As ferramentas só definem o preset de boot se você marcar na aba *Placa e hora*, então o relógio não inicia sozinho depois de reiniciar até que
   você defina um preset de boot.
 - A interface está em português do Brasil.
@@ -527,7 +579,7 @@ Dicas aprendidas na prática:
 patches/                 diff contra o WLED (commit em WLED_BASE_COMMIT.txt)
 lowram_libs/             AnimatedGIF (tabelas reduzidas) e GifDecoder (todas as arquiteturas)
 usermods/mqtt_rules/     motor de regras + readme
-ferramentas/             ferramentas relogio, gifstudio, mqtt, pixelstudio (fonte, script de build, gzip)
+ferramentas/             ferramentas relogio, gifstudio, mqtt, pixelstudio, jogos (fonte, script de build, gzip); nav.snip.html é a barra do topo comum
 platformio_override.ini  ambientes de compilação para a D1 R2
 docs/img/                prints e gráficos de memória
 ```

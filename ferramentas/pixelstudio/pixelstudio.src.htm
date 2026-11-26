@@ -750,7 +750,13 @@ function initEvents(){
     const n=clamp(+$('recN').value|0,2,120);if(frames.length===1&&!frames[0].px.some(v=>v)){frames=[]}snap();MR.rec=n;$('mrRec').textContent='■ Gravando…'};
   $('mrSnap').onclick=()=>{if(!MR.lastPx)return toast('Inicie o espelho antes.');snap();const f=newFrame(fitTo(MR.lastPx,MR.size[0],MR.size[1],W,H));frames.splice(cur+1,0,f);cur++;refreshAll();toast('Quadro capturado.','ok')};
   addEventListener('keydown',keyHandler);addEventListener('resize',()=>{layout();redraw()});
-  addEventListener('beforeunload',()=>{if(LIVE.on){try{navigator.sendBeacon&&0}catch(e){}}});
+  // saiu da página com o modo ao vivo ligado: devolve a placa como estava
+  addEventListener('pagehide',()=>{if(!LIVE.on)return;LIVE.on=false;const ws=LIVE.ws,sv=LIVE.saved;LIVE.ws=null;if(!sv)return;
+    const body=sv.pl>=0?{pl:sv.pl}:sv.ps>0?{ps:sv.ps}:{on:sv.on,bri:sv.bri,seg:(sv.seg||[]).map(s=>({id:s.id,start:s.start,stop:s.stop,startY:s.startY,stopY:s.stopY,grp:s.grp,spc:s.spc,of:s.of,on:s.on,bri:s.bri,col:s.col,fx:s.fx,sx:s.sx,ix:s.ix,pal:s.pal,c1:s.c1,c2:s.c2,c3:s.c3,o1:s.o1,o2:s.o2,o3:s.o3,n:s.n,sel:s.sel,rev:s.rev,mi:s.mi,frz:false}))};
+    // a conexão já aberta é o caminho mais garantido (mensagens pequenas, uma por segmento); o pedido HTTP fica de reserva
+    if(ws&&ws.readyState===1){try{const list=body.seg?[{on:body.on,bri:body.bri},...body.seg.map(s=>({seg:s}))]:[{seg:{id:0,frz:false}},body];for(const m of list)ws.send(JSON.stringify(m))}catch(e){}}
+    try{ws&&ws.close()}catch(e){}
+    fetch(BASE+'/json/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),keepalive:true}).catch(()=>{})});
 }
 const fromHexStr=h=>parseInt(String(h).replace('#',''),16)&0xFFFFFF;
 async function ensureGif(){if(typeof GifWriter!=='undefined')return;
@@ -778,7 +784,7 @@ async function boardInfo(){
 (function(){
   var q=new URLSearchParams(location.search),ip=q.get('ip'),base=ip?'http://'+ip:'';
   if(!ip&&location.protocol==='file:'){try{ip=localStorage.getItem('pxs.ip')||'';if(ip)base='http://'+ip}catch(e){}}
-  var items=[['/','🏠 WLED'],['/pixelforge.htm','🧰 PixelForge'],['/relogio.htm','⏱ Relógio'],['/gifstudio.htm','🎞 GIFs'],['/mqttrules.htm','📡 MQTT'],['/pixelstudio.htm','🎨 Pixel Estúdio']];
+  var items=[['/','🏠 WLED'],['/pixelforge.htm','🧰 PixelForge'],['/relogio.htm','⏱ Relógio'],['/gifstudio.htm','🎞 GIFs'],['/mqttrules.htm','📡 MQTT'],['/pixelstudio.htm','🎨 Pixel Estúdio'],['/jogos.htm','🎮 Jogos']];
   var here=location.pathname.replace(/\.gz$/,'').split('/').pop();
   var bar=document.createElement('nav');bar.id='pfnav';
   var css=document.createElement('style');

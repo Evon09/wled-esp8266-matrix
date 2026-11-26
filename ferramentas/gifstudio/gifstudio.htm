@@ -516,7 +516,7 @@ function initEvents(){
 (function(){
   var q=new URLSearchParams(location.search),ip=q.get('ip'),base=ip?'http://'+ip:'';
   if(!ip&&location.protocol==='file:'){try{ip=localStorage.getItem('pxs.ip')||'';if(ip)base='http://'+ip}catch(e){}}
-  var items=[['/','🏠 WLED'],['/pixelforge.htm','🧰 PixelForge'],['/relogio.htm','⏱ Relógio'],['/gifstudio.htm','🎞 GIFs'],['/mqttrules.htm','📡 MQTT'],['/pixelstudio.htm','🎨 Pixel Estúdio']];
+  var items=[['/','🏠 WLED'],['/pixelforge.htm','🧰 PixelForge'],['/relogio.htm','⏱ Relógio'],['/gifstudio.htm','🎞 GIFs'],['/mqttrules.htm','📡 MQTT'],['/pixelstudio.htm','🎨 Pixel Estúdio'],['/jogos.htm','🎮 Jogos']];
   var here=location.pathname.replace(/\.gz$/,'').split('/').pop();
   var bar=document.createElement('nav');bar.id='pfnav';
   var css=document.createElement('style');

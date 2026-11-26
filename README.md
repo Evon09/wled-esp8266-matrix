@@ -6,7 +6,7 @@ A set of changes on top of [WLED](https://github.com/wled/WLED) (17.0.0-devV5, c
 **16x16 LED matrix driven by a Wemos D1 R2 (ESP8266, 4 MB flash, ~80 KB RAM)**.
 
 WLED turns the Image/GIF effect off on the ESP8266 because the GIF decoder needs about 24 KB of RAM.
-This project makes it work, trims the firmware to leave room, and adds four web tools and an MQTT
+This project makes it work, trims the firmware to leave room, and adds five web tools and an MQTT
 rules engine, all running on the board itself.
 
 > Everything here was built and tested on a real board. It is a personal project, not an official WLED
@@ -23,13 +23,14 @@ rules engine, all running on the board itself.
 6. [Tool 2: Estúdio de GIFs](#tool-2-estúdio-de-gifs)
 7. [Tool 3: Regras MQTT (rules)](#tool-3-regras-mqtt-rules)
 8. [Tool 4: Pixel Estúdio (pixel art, sprites, GIF, screen mirror)](#tool-4-pixel-estúdio-pixel-art-sprites-gif-and-screen-mirror)
-9. [MQTT rules usermod](#mqtt-rules-usermod)
-10. [Files and API used on the board](#files-and-api-used-on-the-board)
-11. [Build and install](#build-and-install)
-12. [Limitations](#limitations)
-13. [Security notes](#security-notes)
-14. [Not done](#not-done)
-15. [Repository layout](#repository-layout)
+9. [Tool 5: Jogos na Matriz (games)](#tool-5-jogos-na-matriz-games)
+10. [MQTT rules usermod](#mqtt-rules-usermod)
+11. [Files and API used on the board](#files-and-api-used-on-the-board)
+12. [Build and install](#build-and-install)
+13. [Limitations](#limitations)
+14. [Security notes](#security-notes)
+15. [Not done](#not-done)
+16. [Repository layout](#repository-layout)
 
 ## What you get
 
@@ -40,6 +41,7 @@ rules engine, all running on the board itself.
 | Clock, date, weather, sensor, GIFs and effects as screens | tool **Relógio LED** |
 | Several images to one GIF, sprite sheets, categories | tool **Estúdio de GIFs** |
 | Pixel-art editor with frames, sprites, GIF export and **screen mirror** | tool **Pixel Estúdio** |
+| Ten games for PC and phone, 1 or 2 players | tool **Jogos na Matriz** |
 | MQTT: message → action on the matrix; state change → message; time/weekday/temperature/humidity rules | usermod `mqtt_rules` + tool **Regras MQTT** |
 
 Firmware size on the D1 R2: flash 86.1 % (899,715 of 1,044,464 bytes), RAM 59.3 % static at build time,
@@ -49,7 +51,7 @@ about 17 KB of free heap when idle (see [memory](#the-esp8266-and-its-memory)).
 
 1. Build and flash the firmware ([Build and install](#build-and-install)).
 2. Open `http://BOARD-IP/` once, set the LED output (pin, 256 LEDs, colour order) and the 2D matrix size in the WLED settings.
-3. Upload the four tool pages (gzip files in `ferramentas/`) and register them in `pftools.json`.
+3. Upload the five tool pages (gzip files in `ferramentas/`) and register them in `pftools.json`.
 4. Open `http://BOARD-IP/relogio.htm` to build the clock, `/gifstudio.htm` to make GIFs, `/mqttrules.htm` to create MQTT rules, `/pixelstudio.htm` to draw, make sprites and mirror the screen.
 5. **Keep a single browser tab open on the board while a GIF is playing** (see [memory](#the-esp8266-and-its-memory)).
 
@@ -394,6 +396,56 @@ page gives when it is opened from the board, plus a synthetic test image.
 - **Not verified**: capturing a real screen or window (the browser asks the person for permission, which a script cannot give), the camera source, the downloaded copy opened as a
   `file://` page, and touch screens.
 
+## Tool 5: Jogos na Matriz (games)
+
+Ten games for the 16x16 matrix, played from a PC or a phone: open `http://BOARD-IP/jogos.htm`. The game runs in the browser, which draws it on screen and sends it to the
+matrix. Without a board it still plays on screen.
+
+![Games menu](docs/img/games-menu.jpg)
+
+| Game | Players | What it is |
+|---|---|---|
+| Tetris | 1 | seven pieces, ghost piece, next piece, levels |
+| Pong | 1 or 2 | against the board (3 difficulties) or a friend, up to 7; paddles on the sides or top/bottom |
+| Cobrinha (snake) | 1 or 2 | walls wrap or kill; two snakes in 2-player mode |
+| Tijolos (brick breaker) | 1 | four brick layouts, two-hit bricks from level 2, 3 lives |
+| Plataforma (platformer) | 1 | three levels with scrolling, coins, spikes, enemies you can stomp, one-way platforms |
+| Invasores (invaders) | 1 | waves of ships, shields, bombs |
+| Pássaro (flappy) | 1 | fly between the pipes |
+| Corrida (racing) | 1 | four lanes, turbo |
+| Tron (light trails) | 1 or 2 | against the board or a friend, best of 5 |
+| Genius (Simon) | 1 | repeat the colour sequence |
+
+### Controls
+
+| | PC keyboard | Phone / tablet | Gamepad (USB or Bluetooth) |
+|---|---|---|---|
+| 1 player | arrows or WASD, `space` = A, `X` = B | on-screen pad and buttons; drag on the screen in Pong, Tijolos and Invasores; tap in Pássaro and Genius | pad or left stick, buttons A / B, Start pauses |
+| 2 players | P1 `WASD` + `space`; P2 arrows + `Enter` | one pad for each player on the same device; in Pong with top/bottom paddles the second pad is turned to face the other player | one controller per player |
+
+`P` pauses, `R` restarts, `Esc` returns to the menu. The bar has pause, restart, sound, matrix on/off, full screen and, on a PC, a button that shows the on-screen controls.
+
+| Phone, landscape (touch) | PC |
+|---|---|
+| ![Tetris on a phone](docs/img/games-tetris-phone.jpg) | ![Platformer on a PC](docs/img/games-platform-pc.jpg) |
+
+### Things to know
+
+- **Two players share one device.** Two phones cannot play against each other: the board has no way to relay inputs fast enough.
+- Open the games on **one device only**. While a game is open it takes the whole matrix; going back (or leaving the page) restores the previous segments, preset or playlist.
+- The matrix is updated about 6 to 14 times per second (as often as the picture changes, up to that), measured on the board. The screen of your device is smoother than the matrix.
+- High scores are kept in the browser.
+- The games are designed for 16x16; on other sizes the picture is centred and cropped.
+
+### What was verified
+
+- Script tests (`node ferramentas/jogos/test/test_games.js`): hundreds of random matches in every option combination without errors; each platformer level can be finished
+  (a search using the real game physics reaches the flag); automatic players clear bricks, fly through pipes and repeat Genius sequences; line clearing, game over and winners behave.
+- In the browser, on the board: keyboard play, simulated touch events (walk and jump with two fingers, two Pong pads, drag), phone portrait and landscape layouts,
+  the picture on the matrix, restore on leaving the page, and 3.4 minutes of continuous play with no reboot (lowest free heap 10.8 KB).
+- The board restarted once during an earlier, unpaced network test; the cause was not identified and it did not happen again.
+- **Not verified**: a real phone and real fingers, a physical gamepad, sound, full screen on iOS.
+
 ## MQTT rules usermod
 
 `usermods/mqtt_rules` keeps the rules in `/mqttrules.jsonl` (one JSON object per line, up to 760
@@ -413,7 +465,7 @@ conditions on temperature gated correctly, and value-triggered rules fired once 
 
 | On the board (LittleFS) | What |
 |---|---|
-| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz`, `pixelstudio.htm.gz` | the four tool pages |
+| `relogio.htm.gz`, `gifstudio.htm.gz`, `mqttrules.htm.gz`, `pixelstudio.htm.gz`, `jogos.htm.gz` | the five tool pages |
 | `pftools.json` | the list shown in PixelForge → *Other tools* |
 | `relogio-config.json` | state of the Clock tool |
 | `relogio-cfg-backup.json`, `relogio-presets-backup.json`, `mqtt-cfg-backup.json` | backups made before the tools change the configuration |
@@ -496,7 +548,7 @@ Tips learned the hard way:
 
 **Tools**
 - Made for a single-segment 16x16 matrix. Other sizes work in principle but were not tested.
-- PixelForge can rewrite `pftools.json` and drop the four custom entries; add them again if that happens.
+- PixelForge can rewrite `pftools.json` and drop the five custom entries; add them again if that happens.
 - The tools do not set the boot preset unless you tick it in the *Board and time* tab, so the clock does not start by itself after a reboot until you
   set a boot preset.
 - The interface is in Portuguese (Brazil).
@@ -529,7 +581,7 @@ Tips learned the hard way:
 patches/                 diff against WLED (commit in WLED_BASE_COMMIT.txt)
 lowram_libs/             AnimatedGIF (reduced tables) and GifDecoder (all architectures)
 usermods/mqtt_rules/     rules engine + readme
-ferramentas/             relogio, gifstudio, mqtt, pixelstudio tools (source, build script, gzip)
+ferramentas/             relogio, gifstudio, mqtt, pixelstudio, jogos tools (source, build script, gzip); nav.snip.html is their shared top bar
 platformio_override.ini  build environments for the D1 R2
 docs/img/                screenshots and memory charts
 ```
