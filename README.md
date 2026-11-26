@@ -219,8 +219,11 @@ rain, storm or snow**. It can carry the **temperature** under the drawing (colou
   Estúdio de GIFs, so you can use them in other places (extra screens, MQTT rules).
 - It updates only while this page is open, like the temperature. If the clock is already running when the page is opened, updates resume without sending again.
 - The drawing is made for 16x16.
-- **Verified** against a simulated board on the PC: the presets and playlist, the file alternation, turning the screen off, saving the ten files and the category, and that the GIFs
-  open (16x16, 12 frames). **Not verified on the real board yet**: playing these GIFs on the matrix and uploading a new one while another is playing (free memory is short then).
+- **Memory:** while a GIF plays the board has very little free memory, so the page waits for the weather screen to leave before uploading, and the drawing stays at most 14 s
+  (WLED's memory guard acts after 15 s).
+- **Verified** against a simulated board (file alternation, turning the screen off, saving the ten files and the category) and on the real board: the GIFs play on the matrix,
+  the clock cycle shows the weather screen, and new drawings were uploaded while the clock ran, with no reboot in about 20 minutes of tests. With the page open, free memory
+  during the weather screen was 7.5 to 8.2 KB, and the board refused a few requests (HTTP 503) in those moments. **Not verified**: running it for hours.
 
 ### Tab 📡 Sensor (button, motion, door)
 
@@ -415,7 +418,8 @@ switch between them without stopping. (The picture in the screenshot is a synthe
 - From another origin (`localhost` with `?ip=`) the page reached the board (info, WebSocket, upload and the GIF library), which is what the downloaded copy does.
 - Webcam: tested with a synthetic camera: the button, the mirrored default, switching between two cameras and to the screen, the messages for a refused, missing or busy camera,
   the picture on the matrix, and restoring the board on stop.
-- **Not verified**: capturing a real screen or window and a real camera (the browser asks the person for permission, which a script cannot give), a hidden tab, the downloaded copy opened as a
+- A real webcam was later used and its picture was seen on the matrix.
+- **Not verified**: capturing a real screen or window (the browser asks the person for permission, which a script cannot give), a hidden tab, the downloaded copy opened as a
   `file://` page, and touch screens.
 
 ## Tool 5: Jogos na Matriz (games)

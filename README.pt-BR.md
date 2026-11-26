@@ -219,8 +219,11 @@ garoa, chuva, tempestade ou neve**. Ela pode levar a **temperatura** embaixo do 
   Estúdio de GIFs, para usar em outros lugares (telas extras, regras MQTT).
 - Só atualiza enquanto esta página estiver aberta, como a temperatura. Se o relógio já estiver rodando quando a página for aberta, a atualização volta sem enviar de novo.
 - O desenho foi feito para 16x16.
-- **Verificado** contra uma placa simulada no PC: os presets e a playlist, a alternância dos arquivos, desligar a tela, salvar os dez arquivos e a categoria, e que os GIFs
-  abrem (16x16, 12 quadros). **Ainda não verificado na placa de verdade**: tocar esses GIFs na matriz e enviar um novo enquanto outro toca (a memória livre fica curta nessa hora).
+- **Memória:** enquanto um GIF toca a placa fica com muito pouca memória livre, por isso a página espera a tela do clima sair antes de enviar, e o desenho fica no máximo 14 s
+  (a proteção de memória do WLED age depois de 15 s).
+- **Verificado** contra uma placa simulada (alternância dos arquivos, desligar a tela, salvar os dez arquivos e a categoria) e na placa de verdade: os GIFs tocam na matriz,
+  o ciclo do relógio mostra a tela do clima, e desenhos novos foram enviados com o relógio rodando, sem reinício em uns 20 minutos de testes. Com a página aberta, a memória
+  livre durante a tela do clima ficou entre 7,5 e 8,2 KB, e a placa recusou alguns pedidos (HTTP 503) nesses momentos. **Não verificado**: funcionamento por horas.
 
 ### Aba 📡 Sensor (botão, movimento, porta)
 
@@ -414,7 +417,8 @@ dá para trocar entre elas sem parar. (A imagem do print é um teste sintético 
 - De outra origem (`localhost` com `?ip=`) a página alcançou a placa (informações, WebSocket, envio de arquivo e a biblioteca de GIFs), que é o que a cópia baixada faz.
 - Webcam: testada com uma câmera sintética: o botão, o espelhamento padrão, a troca entre duas câmeras e para a tela, os avisos de câmera recusada, ausente ou ocupada,
   a imagem na matriz e a restauração da placa ao parar.
-- **Não verificado**: capturar uma tela ou janela e uma câmera de verdade (o navegador pede permissão à pessoa, e um script não consegue dar), uma aba escondida, a cópia baixada aberta como página `file://` e telas de toque.
+- Depois uma webcam de verdade foi usada e a imagem foi vista na matriz.
+- **Não verificado**: capturar uma tela ou janela de verdade (o navegador pede permissão à pessoa, e um script não consegue dar), uma aba escondida, a cópia baixada aberta como página `file://` e telas de toque.
 
 ## Ferramenta 5: Jogos na Matriz
 

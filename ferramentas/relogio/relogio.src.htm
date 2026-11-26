@@ -262,7 +262,7 @@ details>summary{cursor:pointer;color:var(--mu);padding:6px 0;list-style:none}det
       <h2><span class="num">2</span> Desenho do tempo no relógio</h2>
       <div class="hint">Uma animação que muda sozinha conforme o tempo na sua cidade: sol, lua, nuvens, neblina, garoa, chuva, tempestade ou neve.</div>
       <label class="sw"><input type="checkbox" data-b="anim.on"><i></i><span><b>Mostrar no ciclo do relógio</b></span></label>
-      <div class="row"><label class="col"><span class="lbl">Fica na tela (segundos)</span><input type="number" min="1" max="600" data-b="anim.dur" data-t="n"></label>
+      <div class="row"><label class="col"><span class="lbl">Fica na tela (1 a 14 segundos)</span><input type="number" min="1" max="14" data-b="anim.dur" data-t="n"></label>
         <label class="sw"><input type="checkbox" data-b="anim.temp"><i></i><span>Com a temperatura embaixo</span></label></div>
       <div class="wxnow"><canvas id="wxNow" width="160" height="160"></canvas><div><div class="lbl">Agora</div><b id="wxNowName">escolha a cidade</b><div class="small mu">É assim que aparece na matriz.</div></div></div>
       <div class="lbl">Todos os desenhos (clique em um para ver na matriz)</div>
@@ -493,7 +493,7 @@ const extraSkipped=ex=>ex.on&&ex.t==='gif'&&gifTooBig(GIFI[ex.file]); // GIF gra
 function activeScreens(){
   const a=SCREENS.filter(([k])=>k==='hora'||S.screens[k].on).filter(([k])=>!noData(k))
     .map(([k,n])=>({key:k,name:n,dur:S.screens[k].dur,items:screenItems(k)}));
-  if(S.anim.on&&W.code!=null)a.splice(1,0,{key:'anim',name:'Clima animado',dur:S.anim.dur,extra:{t:'gif',file:W.file||WX_FILES[0]},items:[]}); // logo depois da hora
+  if(S.anim.on&&W.code!=null)a.splice(1,0,{key:'anim',name:'Clima animado',dur:Math.max(1,Math.min(WX_MAX_DUR,S.anim.dur)),extra:{t:'gif',file:W.file||WX_FILES[0]},items:[]}); // logo depois da hora
   S.extras.forEach((ex,i)=>{if(ex.on&&!extraSkipped(ex))a.push({key:'ex'+i,name:extraName(ex),dur:ex.dur,extra:ex,xi:i,items:[]})});
   return a;
 }
@@ -626,7 +626,14 @@ function buildPresets(){
     P[PRESET_OFF]={n:'Sensor: apagar',on:false}}
   return P;
 }
+// com um GIF tocando a placa quase não tem memória livre: o envio espera a tela seguinte
+async function waitNoGif(){
+  for(let i=0;i<60;i++){let st=null;try{st=await jget('/json/state')}catch(e){}
+    if(st){if(!(st.seg||[]).some(x=>x.stop>0&&x.fx===53))return;
+      if(st.pl<0){try{await jpost('/json/state',{seg:{id:0,fx:0}})}catch(e){}await sleep(800);return}} // GIF parado na tela, fora do ciclo: não vai sair sozinho
+    await sleep(1000)}}
 async function pushPresets(){
+  await waitNoGif();
   let cur={};try{cur=await jget('/presets.json')}catch(e){}
   await backupOnce('/presets.json','relogio-presets-backup.json',cur);
   await syncWeatherGif(cur);
@@ -666,6 +673,7 @@ function wxSchedule(){clearInterval(wxTimer);wxTimer=null;
   if(S.clima.auto&&S.clima.lat!=null)wxTimer=setInterval(async()=>{if(await fetchWx()&&applied&&!dirty){try{await pushPresets();log('Clima atualizado na placa: '+W.t+S.clima.suffix+' e '+W.h+'%','ok')}catch(e){log(e.message,'er')}}},Math.max(5,S.clima.every)*60000)}
 
 /* ---------- desenho animado do tempo ---------- */
+const WX_MAX_DUR=14; // a proteção de memória da placa age depois de 15 s com pouca memória livre, que é o caso com um GIF tocando
 const WX_FILES=['clima-agora-a.gif','clima-agora-b.gif']; // dois nomes alternados: nunca se grava por cima do que a placa está tocando
 async function ensureWriter(){if(typeof GifWriter!=='undefined')return;
   await new Promise((res,rej)=>{const e=document.createElement('script');e.src=BASE+'/omggif.js';e.onload=res;e.onerror=()=>rej(new Error('não carregou o gerador de GIF da placa (omggif.js)'));document.head.appendChild(e)})}
@@ -687,7 +695,7 @@ async function tryWx(kind){
   catch(e){log(e.message,'er')}}
 async function saveAllWx(){
   const b=$('btnWxSave');b.disabled=true;
-  try{await ensureWriter();
+  try{await ensureWriter();await waitNoGif();
     let idx={v:1,cats:[],map:{}};try{const j=await jget('/gifstudio.json');if(j&&Array.isArray(j.cats))idx={v:1,cats:j.cats,map:j.map||{}}}catch(e){}
     let cat=idx.cats.find(c=>c.name.toLowerCase()==='clima');if(!cat){cat={id:'clima',name:'Clima',color:'#38d6ff'};idx.cats.push(cat)}
     let n=0;for(const[k]of WX_KINDS){const file='clima-'+k+'.gif';b.textContent=`Salvando ${++n} de ${WX_KINDS.length}…`;await uploadGif(file,wxGif(k,null,GifWriter));idx.map[file]=cat.id;delete GIFI[file];await sleep(250)}
