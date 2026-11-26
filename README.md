@@ -409,8 +409,27 @@ switch between them without stopping. (The picture in the screenshot is a synthe
   button, **Baixar a ferramenta para abrir no PC**: save `pixelstudio.html`, double-click it, and type the board's IP the first time (or open it as `pixelstudio.html?ip=192.168.0.170`).
   Everything else (drawing, saving, live) works from either page.
 
+#### Camera on a phone
+
+A phone does **not** ask for camera permission on this page: browsers only allow the live camera (and screen capture) on `https` pages, and the board serves plain `http`. So the tab has
+three buttons that work from the board, on any phone, because they use the phone's own camera app or gallery:
+
+- **📸 Tirar foto**: the photo stays on the matrix.
+- **🎥 Gravar vídeo**: the recorded clip plays on the matrix in a loop.
+- **🖼 Escolher arquivo**: a picture or video you already have.
+
+The same crop, fit, flip and colour adjustments apply, and *Gravar no editor* turns them into frames.
+
+For a **live** camera on the board's page there is an advanced option in Chrome (Android or PC), which the page explains: add the board's address in
+`chrome://flags/#unsafely-treat-insecure-origin-as-secure`, enable it and relaunch. It makes Chrome treat that address as secure although the traffic is not encrypted, so add only
+your board's address and disable it afterwards. iPhones have no such option.
+
+Verified: in an emulated phone and on the real board over `http`, a test picture given to the buttons' file input appeared on the matrix; a recorded test clip played and looped
+(emulated). **Not verified**: a physical phone's camera app, iPhone video formats, and the Chrome option.
+
 ### What was verified
 
+- Leaving or stopping the live mode now restores a **running playlist** too (before, only a single effect or layout came back; fixed and checked on the board).
 - On the board: drawing tools, undo, selection, sprite creation, the movement generator (8 frames), GIF creation (the generated GIF was read back: 16x16, 8 frames), saving to the
   board and playing it.
 - Live editing: the matrix showed exactly the pixels drawn in the editor (compared pixel by pixel through the live view).
@@ -644,6 +663,9 @@ Tips learned the hard way:
 - WLED refuses allocations below 9 KB, so avoid very large presets or many segments.
 - With MQTT on, large GIFs may not play while the web UI is busy.
 - Flash is at 86 %. Removing more features is the way to make room, not adding them.
+- **Opening a tool while the clock shows a GIF (such as the weather drawing) can restart the board.** The clock alone ran 5.5 minutes with no restart (7.7 to 8.7 KB free during the GIF), but the
+  board restarted a few times while tools were being opened over it. Games and Pixel Estúdio now stop the GIF and retry before taking the matrix: 5 openings during the GIF screen worked with no
+  restart, and one restart still happened on a later opening. If you use the tools often, turn the weather drawing off or stop the clock first.
 - Recovery after a lock-up: power-cycle the board.
 
 **Network**

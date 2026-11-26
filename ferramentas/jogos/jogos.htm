@@ -484,22 +484,26 @@ function gm(o){if(!NET.relay)return false;o.id=NET.id;return wsSend(JSON.stringi
 const LIVE={on:false,failed:false,prev:null,saved:null,lastSend:0,frames:0};
 let liveQ=Promise.resolve();
 const liveStart=()=>liveQ=liveQ.then(doStart),liveStop=()=>liveQ=liveQ.then(doStop);
+// com um GIF tocando a placa quase não tem memória livre: primeiro para o GIF e espera a memória voltar, só depois toma a matriz
+async function freeGif(st){const g=(st.seg||[]).filter(s=>s.fx===53&&s.stop>0);if(!g.length)return;
+  await jpost('/json/state',{pl:-1,seg:g.map(s=>({id:s.id,fx:0}))});await sleep(1500)}
 async function doStart(){
   if(LIVE.on||!playing||remote||!wantMatrix)return;
   let st=null; // o estado de antes é lido uma vez só: uma nova tentativa não pode guardar a matriz já tomada pelo jogo
   for(let n=0;;n++){
-    try{if(!st){st=await jget('/json/state');LIVE.saved=st}
+    try{if(!st){st=await jget('/json/state');LIVE.saved=st;await freeGif(st)}
       const segs=[{id:0,start:0,stop:MW,startY:0,stopY:MH,grp:1,spc:0,of:0,on:true,rev:false,mi:false,fx:0,frz:false}];for(const s of st.seg||[])if(s.id>0)segs.push({id:s.id,stop:0});
       await jpost('/json/state',{on:true,pl:-1,seg:segs});await sleep(350);await wsOpen();LIVE.on=true;LIVE.failed=false;LIVE.prev=null;break}
-    catch(e){if(n<2){await sleep(800);continue}LIVE.failed=true;toast('Não consegui usar a matriz: '+e.message+'. O jogo aparece aqui na tela.');break}}
+    catch(e){if(n<9&&playing){await sleep(1200);continue}LIVE.failed=true;toast('Não consegui usar a matriz: '+e.message+'. O jogo aparece aqui na tela.');break}}
   matBtns();updateView();if(LIVE.on&&(!playing||!wantMatrix))await doStop()}
-function restoreBody(){const sv=LIVE.saved;if(!sv)return null;if(sv.pl>=0)return{pl:sv.pl};if(sv.ps>0)return{ps:sv.ps};
+function restoreBody(){const sv=LIVE.saved;if(!sv)return null;if(sv.pl>0)return{ps:sv.pl};if(sv.ps>0)return{ps:sv.ps};
   return{on:sv.on,bri:sv.bri,seg:(sv.seg||[]).map(s=>({id:s.id,start:s.start,stop:s.stop,startY:s.startY,stopY:s.stopY,grp:s.grp,spc:s.spc,of:s.of,on:s.on,bri:s.bri,col:s.col,fx:s.fx,sx:s.sx,ix:s.ix,pal:s.pal,c1:s.c1,c2:s.c2,c3:s.c3,o1:s.o1,o2:s.o2,o3:s.o3,n:s.n,sel:s.sel,rev:s.rev,mi:s.mi,frz:false}))}}
 async function doStop(){
   if(!LIVE.on)return;LIVE.on=false;matBtns();
   try{await jpost('/json/state',{seg:{id:0,frz:false}});const b=restoreBody();if(b)await jpost('/json/state',b)}catch(e){toast('Aviso ao restaurar a placa: '+e.message)}}
 // ao sair da página a conexão WebSocket já aberta é o caminho mais garantido: a placa pode recusar um pedido HTTP novo enquanto serve a próxima página
-function sendRestore(b){const list=Array.isArray(b.seg)?[{on:b.on,bri:b.bri},...b.seg.map(s=>({seg:s}))]:[{seg:{id:0,frz:false}},b];for(const m of list)wsSend(JSON.stringify(m))}
+// devolve true se tudo foi enviado. Aplicar um preset já descongela os segmentos, então basta uma mensagem
+function sendRestore(b){const list=Array.isArray(b.seg)?[{on:b.on,bri:b.bri},...b.seg.map(s=>({seg:s}))]:[b];return list.every(m=>wsSend(JSON.stringify(m)))}
 function fitMatrix(px){if(MW===N&&MH===N)return px;const o=new Uint32Array(MW*MH),ox=(MW-N)>>1,oy=(MH-N)>>1;for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){const X=x-ox,Y=y-oy;if(X>=0&&Y>=0&&X<N&&Y<N)o[y*MW+x]=px[Y*N+X]}return o}
 // A placa (ESP8266) só aceita mensagens WebSocket de até ~528 bytes: cada quadro vira mensagens pequenas, só com o que mudou.
 function encodeFrame(px,prev){const toks=[];let i=0;const n=px.length,hx=c=>(c&0xFFFFFF).toString(16).padStart(6,'0');
@@ -736,7 +740,7 @@ function init(){
   addEventListener('popstate',()=>closeGame());
   // saiu da página: avisa o outro aparelho e devolve a placa como estava
   addEventListener('pagehide',()=>{if(hosting())gm({t:'x'});if(remote)gm({t:'l',p:remote.p});
-    if(LIVE.on){LIVE.on=false;const b=restoreBody();if(b){sendRestore(b);jpost('/json/state',b,{keepalive:true}).catch(()=>{})}}try{NET.ws&&NET.ws.close()}catch(e){}});
+    if(LIVE.on){LIVE.on=false;const b=restoreBody();if(b&&(b.ps||!sendRestore(b)))jpost('/json/state',b,{keepalive:true}).catch(()=>{})}try{NET.ws&&NET.ws.close()}catch(e){}});
   addEventListener('contextmenu',e=>{if(playing)e.preventDefault()});
   setInterval(netTick,1000);boardInfo();
 }

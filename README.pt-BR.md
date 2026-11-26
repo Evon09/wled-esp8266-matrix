@@ -408,8 +408,27 @@ dá para trocar entre elas sem parar. (A imagem do print é um teste sintético 
   botão **Baixar a ferramenta para abrir no PC**: salve o `pixelstudio.html`, dê dois cliques e digite o IP da placa na primeira vez (ou abra como `pixelstudio.html?ip=192.168.0.170`).
   O resto (desenhar, salvar, ao vivo) funciona nas duas páginas.
 
+#### Câmera no celular
+
+No celular o navegador **não pede** a permissão da câmera nesta página: a câmera ao vivo (e a captura de tela) só é liberada em páginas `https`, e a placa usa `http` simples. Por isso a aba tem
+três botões que funcionam direto da placa, em qualquer celular, porque usam o app de câmera ou a galeria do próprio aparelho:
+
+- **📸 Tirar foto**: a foto fica na matriz.
+- **🎥 Gravar vídeo**: o vídeo gravado toca na matriz em repetição.
+- **🖼 Escolher arquivo**: uma imagem ou vídeo que você já tem.
+
+Valem os mesmos ajustes de recorte, encaixe, espelhamento e cor, e o *Gravar no editor* transforma em quadros.
+
+Para a câmera **ao vivo** na página da placa existe uma opção avançada no Chrome (Android ou PC), que a própria página explica: coloque o endereço da placa em
+`chrome://flags/#unsafely-treat-insecure-origin-as-secure`, ative e reinicie o navegador. Isso faz o Chrome tratar esse endereço como seguro mesmo sem criptografia; coloque só o endereço
+da sua placa e desative depois. No iPhone essa opção não existe.
+
+Verificado: em um celular simulado e na placa de verdade por `http`, uma imagem de teste entregue ao botão apareceu na matriz; um vídeo de teste gravado tocou em repetição
+(simulado). **Não verificado**: o app de câmera de um celular de verdade, os formatos de vídeo do iPhone e a opção do Chrome.
+
 ### O que foi verificado
 
+- Parar ou sair do modo ao vivo agora devolve também uma **playlist que estava rodando** (antes só voltava um efeito ou layout; corrigido e conferido na placa).
 - Na placa: ferramentas de desenho, desfazer, seleção, criação de sprite, o gerador de movimento (8 quadros), criação do GIF (o GIF gerado foi lido de volta: 16x16, 8 quadros), salvar na
   placa e tocar.
 - Edição ao vivo: a matriz mostrou exatamente os pixels desenhados no editor (comparado pixel a pixel pela visualização ao vivo).
@@ -642,6 +661,9 @@ Dicas aprendidas na prática:
 - O WLED recusa alocações abaixo de 9 KB; evite presets muito grandes ou muitos segmentos.
 - Com o MQTT ligado, GIFs grandes podem não tocar enquanto o painel web está ocupado.
 - A flash está em 86 %. Para abrir espaço é preciso remover recursos, não acrescentar.
+- **Abrir uma ferramenta enquanto o relógio mostra um GIF (como o desenho do tempo) pode reiniciar a placa.** O relógio sozinho rodou 5,5 minutos sem reiniciar (7,7 a 8,7 KB livres durante o GIF), mas a
+  placa reiniciou algumas vezes quando ferramentas eram abertas por cima dele. Os Jogos e o Pixel Estúdio agora param o GIF e insistem antes de assumir a matriz: 5 aberturas na hora do GIF funcionaram
+  sem reinício, e ainda houve um reinício em uma abertura posterior. Se você usa muito as ferramentas, desligue o desenho do tempo ou pare o relógio antes.
 - Para sair de um travamento: desligue e ligue a placa.
 
 **Rede**
