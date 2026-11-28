@@ -42,7 +42,7 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 | Várias imagens em um GIF, sprite sheets, categorias | ferramenta **Estúdio de GIFs** |
 | Editor de pixel art com quadros, sprites, exportação de GIF e **espelho de tela** | ferramenta **Pixel Estúdio** |
 | Dez jogos para PC e celular, 1 ou 2 jogadores | ferramenta **Jogos na Matriz** |
-| **Notificações do celular** (Android): o ícone do aplicativo que avisou aparece na matriz | ferramenta **Regras MQTT**, aba **Notificações** |
+| **Notificações do celular** (Android): o nome do aplicativo que avisou passa na matriz | ferramenta **Regras MQTT**, aba **Notificações** |
 | MQTT: mensagem → ação na matriz; mudança de estado → mensagem; regras por hora, dia da semana, temperatura e umidade | usermod `mqtt_rules` + ferramenta **Regras MQTT** |
 
 Tamanho do firmware na D1 R2: flash 86,1 % (899.715 de 1.044.464 bytes), RAM 59,3 % estática na compilação e
@@ -307,15 +307,18 @@ tamanho da matriz e o uso do sistema de arquivos (arquivos, KB).
 
 ### Aba 🔔 Notificações do celular
 
-Quando o celular recebe uma notificação, a matriz mostra por alguns segundos um ícone animado do aplicativo e volta ao que estava rodando.
-Link direto: `http://IP-DA-PLACA/mqttrules.htm#avisos`.
+Quando o celular recebe uma notificação, o nome do aplicativo passa uma vez pela matriz, na cor dele, e ela volta ao que estava rodando
+(cerca de 11 segundos num nome comprido). Link direto: `http://IP-DA-PLACA/mqttrules.htm#avisos`.
 
-![Os sete ícones de aviso: WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS e outro app](docs/img/notification-icons.png)
+![Quadros capturados da matriz: WhatsApp em verde e Instagram em rosa](docs/img/notification-matrix.png)
 
-1. **Na placa:** marque os aplicativos (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** ou **outro app**, pelo nome do pacote),
-   escolha os segundos e toque em **Criar os avisos na matriz**. A página envia os ícones (`aviso-*.gif`) e cria uma regra comum por aplicativo,
-   todas no tópico `%dev%/aviso`, com o nome do pacote como conteúdo. Desmarcar um aplicativo apaga a regra dele; as outras regras não mudam.
+1. **Na placa:** marque os aplicativos (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** ou **outro app**, pelo nome do pacote) e toque em
+   **Criar os avisos na matriz**. A página cria uma regra comum por aplicativo, todas no tópico `%dev%/aviso`, com o nome do pacote como
+   conteúdo. Desmarcar um aplicativo apaga a regra dele; as outras regras não mudam. Texto, cor e tamanho podem ser mudados na própria regra.
    **▶ Testar** mostra um aviso na hora.
+
+   Uma versão anterior mostrava um ícone animado (GIF). A placa reiniciou num dos quatro avisos de teste com ele, por isso os avisos agora usam
+   texto rolando, que gasta bem menos memória.
 2. **No celular (Android):** um fluxo no app [Automate](https://llamalab.com/automate/), da LlamaLab. A página traz o passo a passo e os três
    textos para copiar, já preenchidos com o endereço da placa:
 
@@ -333,12 +336,10 @@ Link direto: `http://IP-DA-PLACA/mqttrules.htm#avisos`.
 Limites: funciona só no Wi-Fi de casa; reserve o IP da placa no roteador; um pedido que chega enquanto um GIF toca pode ser recusado (aquele aviso
 se perde); uma notificação que se atualiza (um vídeo tocando) pode repetir; um aviso com a matriz desligada pode ligá-la.
 
-**Testado** numa placa simulada (regras, envio de arquivos, tela no celular e no PC) e na placa de verdade: a página cria as regras e envia os
-ícones, cada aviso de teste dispara a sua regra e o relógio volta depois. **Não confirmado:** que os ícones aparecem na matriz (as capturas da
-visualização ao vivo saíram pretas, inclusive com um GIF que já funcionava, provavelmente porque a própria captura ocupa memória). **Não testado:**
-o fluxo do Automate num celular de verdade (os nomes dos blocos e as expressões vêm da documentação do app). Nesses testes a placa reiniciou duas
-vezes enquanto recebia um arquivo; voltou sozinha, com as regras intactas.
-Numa rodada seguinte de quatro avisos de teste, ela também reiniciou no quarto, então **os avisos com GIF ainda não são confiáveis** nesta placa.
+**Testado** numa placa simulada (regras, tela no celular e no PC) e na placa de verdade: dez avisos em texto seguidos sem reiniciar, cada um
+voltando ao relógio, com o texto confirmado em capturas da visualização ao vivo. **Não testado:** o fluxo do Automate num celular de verdade (os
+nomes dos blocos e as expressões vêm da documentação do app). Durante os testes a placa reiniciou duas vezes ao receber um arquivo e voltou
+sozinha, com as regras intactas.
 
 ### Aba 🔌 Conexão
 

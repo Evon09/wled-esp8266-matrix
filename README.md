@@ -43,7 +43,7 @@ rules engine, all running on the board itself.
 | Several images to one GIF, sprite sheets, categories | tool **Estúdio de GIFs** |
 | Pixel-art editor with frames, sprites, GIF export and **screen mirror** | tool **Pixel Estúdio** |
 | Ten games for PC and phone, 1 or 2 players | tool **Jogos na Matriz** |
-| **Phone notifications** (Android): the icon of the app that notified appears on the matrix | tool **Regras MQTT**, tab **Notificações** |
+| **Phone notifications** (Android): the name of the app that notified scrolls on the matrix | tool **Regras MQTT**, tab **Notificações** |
 | MQTT: message → action on the matrix; state change → message; time/weekday/temperature/humidity rules | usermod `mqtt_rules` + tool **Regras MQTT** |
 
 Firmware size on the D1 R2: flash 86.1 % (899,715 of 1,044,464 bytes), RAM 59.3 % static at build time,
@@ -307,15 +307,18 @@ changes and has **Save rules to the board**. Rules are checked while you type (e
 
 ### Tab 🔔 Notificações do celular (phone notifications)
 
-When the phone gets a notification, the matrix shows an animated icon of the app for a few seconds and goes back to what was running.
-Direct link: `http://BOARD-IP/mqttrules.htm#avisos`.
+When the phone gets a notification, the app's name scrolls once across the matrix in its colour, and the matrix goes back to what was running
+(about 11 seconds for a long name). Direct link: `http://BOARD-IP/mqttrules.htm#avisos`.
 
-![The seven notification icons: WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS and any other app](docs/img/notification-icons.png)
+![Frames captured from the matrix: WhatsApp in green and Instagram in pink](docs/img/notification-matrix.png)
 
-1. **On the board:** tick the apps (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** or **another app** by its package name),
-   choose the seconds and press **Criar os avisos na matriz**. The page uploads the icons (`aviso-*.gif`) and creates one ordinary rule per app,
-   all on the topic `%dev%/aviso`, with the app's package name as the content. Unticking an app removes its rule; the other rules are not touched.
+1. **On the board:** tick the apps (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** or **another app** by its package name) and press
+   **Criar os avisos na matriz**. The page creates one ordinary rule per app, all on the topic `%dev%/aviso`, with the app's package name as the
+   content. Unticking an app removes its rule; the other rules are not touched. Text, colour and size can be changed in the rule itself.
    **▶ Testar** shows one notification right away.
+
+   An earlier version showed an animated icon (GIF). The board restarted during one of four test notifications with it, so notifications now use
+   scrolling text, which needs much less memory.
 2. **On the phone (Android):** a flow in the [Automate](https://llamalab.com/automate/) app by LlamaLab. The page gives the steps and the three
    texts to copy, already filled in with the board's address:
 
@@ -333,12 +336,9 @@ Direct link: `http://BOARD-IP/mqttrules.htm#avisos`.
 Limits: it works only on the home Wi-Fi; reserve the board's IP in the router; a request that arrives while a GIF is playing may be refused (that
 notification is lost); a notification that keeps updating (a video playing) may repeat; one that arrives with the matrix off may turn it on.
 
-**Tested** with a simulated board (rules, uploads, phone and PC layout) and on the real board: the page creates the rules and uploads the icons, each
-test notification fires its rule, and the clock comes back afterwards. **Not confirmed:** that the icons are visible on the matrix (live-view
-captures came out black, also with an icon known to work, probably because the capture itself takes memory). **Not tested:** the Automate flow on a
-real phone (its block names and expressions come from the app's documentation). During these tests the board restarted twice while receiving a file;
-it came back by itself with the rules intact.
-In a later run of four test notifications in a row it also restarted during the fourth one, so **GIF notifications are not reliable yet** on this board.
+**Tested** with a simulated board (rules, phone and PC layout) and on the real board: ten text notifications in a row without a restart, each one
+back to the clock, with the text confirmed in live-view captures. **Not tested:** the Automate flow on a real phone (its block names and expressions
+come from the app's documentation). While testing, the board restarted twice when receiving a file and came back by itself with the rules intact.
 
 ### Tab 🔌 Conexão (connection)
 
