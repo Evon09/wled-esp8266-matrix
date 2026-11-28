@@ -45,7 +45,7 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 | **Notificações do celular** (Android): o ícone animado do aplicativo que avisou aparece na matriz | ferramenta **Regras MQTT**, aba **Notificações** |
 | MQTT: mensagem → ação na matriz; mudança de estado → mensagem; regras por hora, dia da semana, temperatura e umidade | usermod `mqtt_rules` + ferramenta **Regras MQTT** |
 
-Tamanho do firmware na D1 R2: flash 86,1 % (899.715 de 1.044.464 bytes), RAM 59,3 % estática na compilação e
+Tamanho do firmware na D1 R2: flash 87,2 % (910.571 de 1.044.464 bytes), RAM 59,8 % estática na compilação e
 cerca de 17 KB de heap livre parada (veja a [memória](#o-esp8266-e-a-memória-dele)).
 
 ## Começo rápido
@@ -73,7 +73,7 @@ Observações:
 - Se nenhuma porta serial aparecer, instale o driver do chip USB da placa (CH340 ou CP210x).
 - O Windows pode avisar sobre rodar um `.bat` baixado da internet. Você pode ler antes o que ele faz em [`instalador/instalar.ps1`](instalador/instalar.ps1). A liberação de script vale só para aquela janela.
 - Para experimentar sem mexer em placa: `INSTALAR.bat -Acao firmware -Simular -Porta COM3`.
-- **Testado:** a opção 3 na placa de verdade (duas vezes), a opção 4 a partir de uma cópia limpa de um clone local do WLED com as dependências já baixadas (firmware do mesmo tamanho do publicado),
+- **Testado:** a opção 3 na placa de verdade (duas vezes), a opção 4 a partir de uma cópia limpa de um clone local do WLED com as dependências já baixadas (firmware do mesmo tamanho do publicado na época),
   e a opção 2 só em simulação. **Não testado:** gravar de verdade uma placa com este instalador, o download do `esptool` e um PC sem nenhuma das ferramentas.
 
 ## O que foi alterado e por quê
@@ -280,7 +280,8 @@ matriz; os ícones de aviso não.
 
 ![Cartão do horário de dormir no celular](docs/img/mobile-clock-sleep.jpg)
 
-**Testado** numa placa simulada. **Ainda não testado:** um temporizador disparando de verdade na placa.
+**Testado** na placa de verdade com horários alguns minutos à frente: a matriz apagou e voltou com o relógio nos minutos marcados, e só os
+temporizadores mudaram na configuração da placa.
 
 ## Ferramenta 2: Estúdio de GIFs
 
@@ -350,8 +351,11 @@ exemplo) ela continua desligada. Link direto: `http://IP-DA-PLACA/mqttrules.htm#
 Limites: funciona só no Wi-Fi de casa; reserve o IP da placa no roteador; um pedido que chega enquanto um GIF toca pode ser recusado (aquele aviso
 se perde); uma notificação que se atualiza (um vídeo tocando) pode repetir.
 
-**Testado** numa placa simulada (regras, tela no celular e no PC) e compilando o firmware. **Ainda não testado:** os ícones desenhados pelo firmware
-novo na placa de verdade e o fluxo do Automate num celular de verdade (os nomes dos blocos e as expressões vêm da documentação do app).
+![Os quatro ícones capturados da matriz de verdade](docs/img/notification-matrix.png)
+
+**Testado** na placa de verdade: os quatro ícones padrão confirmados em capturas da visualização ao vivo, por cima do relógio rodando, mais doze
+avisos de teste seguidos sem reiniciar, e um enviado com a matriz apagada, que continuou apagada. **Não testado:** o fluxo do Automate num celular
+de verdade (os nomes dos blocos e as expressões vêm da documentação do app).
 
 ### Aba 🔌 Conexão
 
@@ -724,6 +728,8 @@ Dicas aprendidas na prática:
 - A troca de imagem pode esperar até uns 10 s se o heap estiver curto (por exemplo com muitas páginas abertas).
 
 **Memória**
+- A placa já reiniciou algumas vezes enquanto recebia um arquivo de uma página ou do `curl`; voltou sozinha, com os arquivos intactos. Confira o
+  resultado depois de enviar algo.
 - Enquanto um GIF toca, o heap livre é de só uns 9 KB: **mantenha uma aba aberta** e evite a pré-visualização ao vivo (veja a [seção de memória](#o-esp8266-e-a-memória-dele)).
 - O WLED recusa alocações abaixo de 9 KB; evite presets muito grandes ou muitos segmentos.
 - Com o MQTT ligado, GIFs grandes podem não tocar enquanto o painel web está ocupado.

@@ -46,7 +46,7 @@ rules engine, all running on the board itself.
 | **Phone notifications** (Android): the animated icon of the app that notified appears on the matrix | tool **Regras MQTT**, tab **Notificações** |
 | MQTT: message → action on the matrix; state change → message; time/weekday/temperature/humidity rules | usermod `mqtt_rules` + tool **Regras MQTT** |
 
-Firmware size on the D1 R2: flash 86.1 % (899,715 of 1,044,464 bytes), RAM 59.3 % static at build time,
+Firmware size on the D1 R2: flash 87.2 % (910,571 of 1,044,464 bytes), RAM 59.8 % static at build time,
 about 17 KB of free heap when idle (see [memory](#the-esp8266-and-its-memory)).
 
 ## Quick start
@@ -74,7 +74,7 @@ Notes:
 - If no serial port appears, install the driver of the board's USB chip (CH340 or CP210x).
 - Windows may warn about running a downloaded `.bat`. You can read what it does in [`instalador/instalar.ps1`](instalador/instalar.ps1) first. The script policy bypass applies only to that window.
 - To try it without touching a board: `INSTALAR.bat -Acao firmware -Simular -Porta COM3`.
-- **Tested:** option 3 on the real board (twice), option 4 from a clean copy of a local WLED clone with its dependencies already downloaded (same firmware size as the published one),
+- **Tested:** option 3 on the real board (twice), option 4 from a clean copy of a local WLED clone with its dependencies already downloaded (same size as the firmware published at that time),
   and option 2 only as a simulation. **Not tested:** really flashing a board with this script, the `esptool` download, and a PC that has none of the tools.
 
 ## What was changed, and why
@@ -279,7 +279,8 @@ the night, it stays lit until the next time. MQTT rules with other actions can s
 
 ![Sleep time card on a phone](docs/img/mobile-clock-sleep.jpg)
 
-**Tested** with a simulated board. **Not yet tested:** a timer actually firing on the real board.
+**Tested** on the real board with times a few minutes ahead: the matrix turned off and came back with the clock at the set minutes, and only the
+timers changed in the board's configuration.
 
 ## Tool 2: Estúdio de GIFs
 
@@ -349,8 +350,11 @@ Direct link: `http://BOARD-IP/mqttrules.htm#avisos`.
 Limits: it works only on the home Wi-Fi; reserve the board's IP in the router; a request that arrives while a GIF is playing may be refused (that
 notification is lost); a notification that keeps updating (a video playing) may repeat.
 
-**Tested** with a simulated board (rules, phone and PC layout) and by compiling the firmware. **Not yet tested:** the icons drawn by the new
-firmware on the real board, and the Automate flow on a real phone (its block names and expressions come from the app's documentation).
+![The four icons captured from the real matrix](docs/img/notification-matrix.png)
+
+**Tested** on the real board: the four default icons confirmed in live-view captures over the running clock, twelve more test notifications in a row
+without a restart, and one sent with the matrix off, which stayed off. **Not tested:** the Automate flow on a real phone (its block names and
+expressions come from the app's documentation).
 
 ### Tab 🔌 Conexão (connection)
 
@@ -725,6 +729,8 @@ Tips learned the hard way:
 - Switching images can wait up to about 10 s if the heap is short (for example while many web pages are open).
 
 **Memory**
+- The board has restarted a few times while receiving a file from a web page or `curl`; it came back by itself with the files intact. Check the result
+  after sending something.
 - While a GIF plays, free heap is only about 9 KB: **keep one browser tab open** and avoid the live preview (see the [memory section](#the-esp8266-and-its-memory)).
 - WLED refuses allocations below 9 KB, so avoid very large presets or many segments.
 - With MQTT on, large GIFs may not play while the web UI is busy.
