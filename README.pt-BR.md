@@ -338,6 +338,7 @@ se perde); uma notificação que se atualiza (um vídeo tocando) pode repetir; u
 visualização ao vivo saíram pretas, inclusive com um GIF que já funcionava, provavelmente porque a própria captura ocupa memória). **Não testado:**
 o fluxo do Automate num celular de verdade (os nomes dos blocos e as expressões vêm da documentação do app). Nesses testes a placa reiniciou duas
 vezes enquanto recebia um arquivo; voltou sozinha, com as regras intactas.
+Numa rodada seguinte de quatro avisos de teste, ela também reiniciou no quarto, então **os avisos com GIF ainda não são confiáveis** nesta placa.
 
 ### Aba 🔌 Conexão
 

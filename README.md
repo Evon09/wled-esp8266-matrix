@@ -338,6 +338,7 @@ test notification fires its rule, and the clock comes back afterwards. **Not con
 captures came out black, also with an icon known to work, probably because the capture itself takes memory). **Not tested:** the Automate flow on a
 real phone (its block names and expressions come from the app's documentation). During these tests the board restarted twice while receiving a file;
 it came back by itself with the rules intact.
+In a later run of four test notifications in a row it also restarted during the fourth one, so **GIF notifications are not reliable yet** on this board.
 
 ### Tab 🔌 Conexão (connection)
 
