@@ -573,13 +573,16 @@ async function waitNoGif(){
     await sleep(1000)}
   throw new Error('a placa não saiu da tela com GIF; pare o GIF e tente de novo')
 }
-async function sendIcon(k){
+// um pedido de cada vez e com pausas: a placa tem pouca memória. `files` = lista de arquivos dela (nome → tamanho)
+async function sendIcon(k,files){
   const bytes=Uint8Array.from(atob(ICONES[k]),c=>c.charCodeAt(0)),name=ntFile(k);
   await waitNoGif();
-  try{const r=await fetch(BASE+'/'+name+'?cb='+Date.now(),{cache:'no-store'});if(r.ok){const old=new Uint8Array(await r.arrayBuffer());if(old.length===bytes.length&&old.every((b,i)=>b===bytes[i]))return}}catch(e){}
+  // só baixa para comparar se o arquivo existe: pedir um que não existe faz a placa montar a página de erro
+  if(files[name]===bytes.length){try{const r=await fetch(BASE+'/'+name+'?cb='+Date.now(),{cache:'no-store'});if(r.ok){const old=new Uint8Array(await r.arrayBuffer());if(old.length===bytes.length&&old.every((b,i)=>b===bytes[i]))return}}catch(e){}}
+  await sleep(1000);
   const fd=new FormData();fd.append('data',new Blob([bytes],{type:'image/gif'}),name);
   const r=await fetch(BASE+'/upload',{method:'POST',body:fd});if(!r.ok)throw new Error('upload '+name+' → HTTP '+r.status);
-  await sleep(300);
+  await sleep(1000);
 }
 async function createNotices(){
   const picked=APPS.filter(a=>NT.on[a.k]),sec=Math.max(2,Math.min(120,Math.round(+NT.sec)||6)),pkg=NT.pkg.trim();
@@ -595,8 +598,9 @@ async function createNotices(){
       if(!r){r={id:++uid,kind:'m',app:a.k,name:'Aviso '+a.n,on:true,topic:NT_TOPIC,cond:a.c,val:a.v,act:{type:'gif',file:ntFile(a.k),fromPayload:false},back:{on:true,sec:sec,ps:ps,mem:true,wait:true},reply:{on:false,topic:'%dev%/resposta',payload:'ok'}};S.rules.push(r)}
       r.on=true;r.back.on=true;r.back.sec=sec;if(a.k==='outro')r.val=pkg});
     const {errors}=compile();if(errors.length)throw new Error(errors[0]);
-    let n=0;for(const a of picked){st.textContent=`Enviando ícone ${++n} de ${picked.length}…`;await sendIcon(a.k)}
-    GIFS=null;st.textContent='Salvando as regras…';await waitNoGif();
+    const files={};(await jget('/edit?list=/')).forEach(f=>files[f.name.replace(/^\//,'')]=f.size);
+    let n=0;for(const a of picked){st.textContent=`Enviando ícone ${++n} de ${picked.length}…`;await sendIcon(a.k,files)}
+    GIFS=null;st.textContent='Salvando as regras…';await waitNoGif();await sleep(1000);
     if(!(await saveRules(picked.length?`Pronto! ${picked.length} aviso(s) na matriz. Use “▶ Testar” e depois configure o celular.`:'Avisos removidos.')))throw new Error('as regras não foram salvas');
     NT.sec=sec;$('ntSec').value=sec;save();ntTexts();st.innerHTML='<span class="ok">✔ Salvo na placa.</span>';
   }catch(e){S.rules=JSON.parse(before);dirty=wasDirty;save();updateSaveBar();st.innerHTML=`<span class="er">Erro: ${esc(e.message)}</span>`;toast('Erro: '+e.message,'er')}

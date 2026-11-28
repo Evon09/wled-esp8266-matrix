@@ -333,8 +333,11 @@ Direct link: `http://BOARD-IP/mqttrules.htm#avisos`.
 Limits: it works only on the home Wi-Fi; reserve the board's IP in the router; a request that arrives while a GIF is playing may be refused (that
 notification is lost); a notification that keeps updating (a video playing) may repeat; one that arrives with the matrix off may turn it on.
 
-**Tested** with a simulated board (rules, uploads, phone and PC layout). **Not yet tested:** the icons on a real board, and the Automate flow on a
-real phone (its block names and expressions come from the app's documentation).
+**Tested** with a simulated board (rules, uploads, phone and PC layout) and on the real board: the page creates the rules and uploads the icons, each
+test notification fires its rule, and the clock comes back afterwards. **Not confirmed:** that the icons are visible on the matrix (live-view
+captures came out black, also with an icon known to work, probably because the capture itself takes memory). **Not tested:** the Automate flow on a
+real phone (its block names and expressions come from the app's documentation). During these tests the board restarted twice while receiving a file;
+it came back by itself with the rules intact.
 
 ### Tab 🔌 Conexão (connection)
 

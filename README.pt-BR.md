@@ -333,8 +333,11 @@ Link direto: `http://IP-DA-PLACA/mqttrules.htm#avisos`.
 Limites: funciona só no Wi-Fi de casa; reserve o IP da placa no roteador; um pedido que chega enquanto um GIF toca pode ser recusado (aquele aviso
 se perde); uma notificação que se atualiza (um vídeo tocando) pode repetir; um aviso com a matriz desligada pode ligá-la.
 
-**Testado** numa placa simulada (regras, envio de arquivos, tela no celular e no PC). **Ainda não testado:** os ícones numa placa de verdade e o
-fluxo do Automate num celular de verdade (os nomes dos blocos e as expressões vêm da documentação do app).
+**Testado** numa placa simulada (regras, envio de arquivos, tela no celular e no PC) e na placa de verdade: a página cria as regras e envia os
+ícones, cada aviso de teste dispara a sua regra e o relógio volta depois. **Não confirmado:** que os ícones aparecem na matriz (as capturas da
+visualização ao vivo saíram pretas, inclusive com um GIF que já funcionava, provavelmente porque a própria captura ocupa memória). **Não testado:**
+o fluxo do Automate num celular de verdade (os nomes dos blocos e as expressões vêm da documentação do app). Nesses testes a placa reiniciou duas
+vezes enquanto recebia um arquivo; voltou sozinha, com as regras intactas.
 
 ### Aba 🔌 Conexão
 
