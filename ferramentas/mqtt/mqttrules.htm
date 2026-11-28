@@ -82,6 +82,17 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
 .day span{display:inline-block;min-width:44px;text-align:center;padding:7px 8px;border-radius:10px;border:1px solid var(--bd);background:#10141b;color:var(--mu);font-size:13px;font-weight:600}
 .day input:checked+span{background:var(--ac);border-color:var(--ac);color:#1a1205}.day input:focus-visible+span{outline:2px solid var(--ac)}
 .tabs .short{display:none}
+.apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;margin:10px 0}
+.app{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.app.sel{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.app label{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:13.5px;text-align:center}
+.app img{width:76px;height:76px;image-rendering:pixelated;background:#000;border-radius:8px;border:6px solid #000}
+.app input[type=checkbox]{width:20px;height:20px;accent-color:var(--ac)}
+.app input[type=text]{width:100%;min-width:0;font-size:12px}
+.app .btn{width:100%;padding:6px;min-height:34px;font-size:13px;margin-top:auto}
+ol.steps{margin:8px 0;padding-left:20px}ol.steps li{margin-bottom:12px}
+.copy{display:flex;gap:8px;align-items:flex-start;margin-top:4px}
+.copy code{flex:1;min-width:0;background:#0b0d11;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font:12.5px/1.5 Consolas,monospace;overflow-wrap:anywhere;user-select:all}
 
 /* ---------- celular ---------- */
 @media(max-width:700px){
@@ -90,6 +101,7 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
   .tabs{top:0;gap:2px;padding:3px;overflow:visible;z-index:20}
   .tabs button{flex:1 1 0;min-width:0;padding:6px 1px;font-size:11px;line-height:1.35;white-space:normal}
   .tabs .full{display:none}.tabs .short,.tabs button>span:not(.full){display:block}
+  .apps{grid-template-columns:1fr 1fr}.copy{flex-direction:column}.copy code{width:100%;flex:none}.copy .btn{width:100%}
   .card{padding:12px;margin-bottom:10px}.rule{padding:10px}
   /* nome na primeira linha; subir, descer, copiar e apagar numa linha própria */
   .rhead{gap:8px}.rhead input[type=text]{flex:1 1 calc(100% - 60px);min-width:0}.rhead .ib{width:auto;flex:1;height:40px;font-size:15px}
@@ -112,6 +124,7 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
 <main class="wrap">
 <nav class="tabs" id="tabs">
   <button data-tab="conn">🔌 <span>Conexão</span></button>
+  <button data-tab="nt">🔔 <span class="full">Notificações do celular</span><span class="short">Avisos</span></button>
   <button data-tab="rx">📥 <span class="full">Quando chegar mensagem</span><span class="short">Mensagem</span></button>
   <button data-tab="tx">📤 <span class="full">Quando algo mudar</span><span class="short">Mudança</span></button>
   <button data-tab="tm">⏰ <span class="full">Por hora e clima</span><span class="short">Hora</span></button>
@@ -154,6 +167,39 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
     <div class="hint">A placa <b>reinicia uma vez</b> (uns 10 segundos). Uma cópia da configuração anterior é guardada antes.</div>
     <div class="row"><button class="btn primary big" id="btnConn">Gravar conexão e reiniciar a placa</button><span id="connState" class="small"></span></div>
     <div class="warnbox" id="memWarn">⚠ O MQTT usa memória da placa (uns 3 a 5 KB). Com ele ligado, GIFs maiores podem não tocar enquanto você usa o painel web. Se isso incomodar, desligue o MQTT aqui.</div>
+  </div>
+</section>
+
+<!-- ================= NOTIFICAÇÕES ================= -->
+<section class="pane" data-pane="nt">
+  <div class="card">
+    <h2><span class="num">1</span> Quais avisos mostrar na matriz?</h2>
+    <div class="hint">Quando o celular avisar, a matriz mostra o ícone do aplicativo por alguns segundos e volta ao que estava rodando. Com os passos abaixo, só o <b>nome do aplicativo</b> chega à placa: nunca o remetente nem o texto da mensagem.</div>
+    <div class="apps" id="appGrid"></div>
+    <div class="row"><span class="mu">Mostrar cada aviso por</span><input type="number" id="ntSec" min="2" max="120" style="width:70px"><span class="mu">segundos</span></div>
+    <div class="row"><button class="btn primary big" id="btnNt">Criar os avisos na matriz</button><span id="ntState" class="small"></span></div>
+    <div class="small mu">Cria uma regra para cada aplicativo marcado e apaga as dos desmarcados. As outras regras não mudam. Para trocar o ícone por um texto ou outro GIF, edite a regra na aba <b>Quando chegar mensagem</b>.</div>
+    <div class="warnbox">⚠ Um aviso que chega com a matriz <b>desligada</b> pode ligá-la de novo.</div>
+  </div>
+  <div class="card">
+    <h2><span class="num">2</span> Configurar o celular (Android)</h2>
+    <div class="hint">Use o app <b>Automate</b>, da LlamaLab (Play Store). Ele lê a notificação e envia o nome do aplicativo direto para a placa <b>pelo Wi-Fi de casa</b>, sem passar pela internet. Fora de casa os avisos não chegam. Os nomes dos blocos são os do app, em inglês.</div>
+    <ol class="steps">
+      <li>No Automate, crie um fluxo novo (<b>+</b>). Permita o <b>acesso às notificações</b> quando ele pedir e, nos ajustes do Android, deixe o app <b>sem restrição de bateria</b>, senão o Android pode fechá-lo.</li>
+      <li>Depois do bloco <b>Flow beginning</b>, adicione <b>Notification posted</b>: em <b>Proceed</b> escolha <b>When transition</b>, deixe <b>Package</b> vazio e, na saída <b>Package</b>, crie a variável <span class="tag">pkg</span>.</li>
+      <li>Ligue a saída <b>YES</b> a um bloco <b>Expression true</b> com esta expressão (ela deixa passar só os aplicativos marcados acima):
+        <div class="copy"><code id="cpExpr"></code><button class="btn" data-copy="cpExpr">Copiar</button></div></li>
+      <li>Ligue o <b>YES</b> a um bloco <b>Failure catch</b> e a saída normal dele (a que <b>não</b> é a FAIL) a um bloco <b>HTTP request</b>:
+        <div class="small mu" style="margin-top:6px">Request URL</div><div class="copy"><code id="cpUrl"></code><button class="btn" data-copy="cpUrl">Copiar</button></div>
+        <div class="small mu" style="margin-top:6px">Request method: <b>POST</b></div>
+        <div class="small mu" style="margin-top:6px">Request content type</div><div class="copy"><code id="cpType">"application/json"</code><button class="btn" data-copy="cpType">Copiar</button></div>
+        <div class="small mu" style="margin-top:6px">Request content body</div><div class="copy"><code id="cpBody"></code><button class="btn" data-copy="cpBody">Copiar</button></div>
+        <div class="small mu">Esses textos são <b>expressões</b> (as aspas fazem parte). Se o campo estiver em modo de texto, mude para o modo de expressão.</div></li>
+      <li>Volte ao <b>Notification posted</b> com todas as saídas que sobraram: o <b>NO</b> do <b>Expression true</b>, a do <b>HTTP request</b> e a <b>FAIL</b> do <b>Failure catch</b> (é o que acontece fora de casa). O <b>NO</b> do próprio <b>Notification posted</b> também volta para ele.</li>
+      <li>Toque em <b>Start</b> e peça para alguém mandar uma mensagem. O que a placa recebeu aparece na aba <b>Testar</b>.</li>
+    </ol>
+    <div class="infobox">Reserve o IP da placa no seu roteador: se o endereço mudar, é preciso atualizar a <b>Request URL</b>. Enquanto um GIF toca, a placa pode recusar um pedido, e aquele aviso se perde. Uma notificação que se atualiza (um vídeo tocando, por exemplo) pode repetir o aviso.</div>
+    <div class="small mu">Usando outro app, que publique em MQTT? Publique o nome do pacote (por exemplo <span class="tag">com.whatsapp</span>) no tópico <span class="tag" id="ntTopic"></span> do broker da aba Conexão. Num broker público, qualquer pessoa pode ler e enviar mensagens nesse tópico.</div>
   </div>
 </section>
 
@@ -482,20 +528,122 @@ function updateChips(){
   $('chipRules').textContent=`${m.n} regra(s) na placa · ${m.hits} acionada(s)`;
 }
 
+/* ---------- notificações do celular ---------- */
+/* gerado por icones.py: não edite à mão */
+const ICONES={
+whatsapp:'R0lGODlhEAAQAPEAAAAAAPAjHB/CV////yH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAACkQQIECBAgAARBgQIEKJEiQITJgQIUaJEiRITJgQocaNEiRIVBoSocaNEiRIlCoSocaNEiRIlCpQocaNEiRIlSpQocaJEiRIlSpQocaNEiRIlSpQoUeNEiRIlSoQoUeJGiRslCoQoUaLGjRsnCgQoUaLEjRslAoQoUaJEiRIlAoQoEKJEiQIBAhQIECBAgAABAgUAIfkEBBIAAAAsAAAAABAAEAAAApEECBCiRIkCEQYECFGiRIkSEyYEKHGjRIkSEyaEqHGjRIkSFQaEqHGjRIkSJQqUKHGjRIkSJUqUKHGiRIkSJUqUKHGjRIkSJUqUKFHjRIkSJUqEKFHiRokbJQqEKFGixo0bJwoEKFGixI0bJQKEKFGiRIkSJQKEKBCiRIkCAQIUCBAgQIAAAQIECBAgQIAAAQIFACH5BAQSAAAALAAAAAAQABAAAAKRBAgQIECAABEGBAgQokSJAhMmBAhRokSJEhMmBChxo0SJEhUGhKhxo0SJEiUKhKhxo0SJEiUKlChxo0SJEiVKlChxokSJEiVKlChxo0SJEiVKlChR40SJEiVKhChR4kaJGyUKhChRosaNGycKBChRosSNGyUChChRokSJEiUChCgQokSJAgECFAgQIECAAAECBQAh+QQEFgAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIEKJEiQIBAgQIUaJEiRIFAgQocaNEiRIlAoSocaNEiRIlCoSocaNEiRIlCpQocaNEiRIlSpQocaJEiRIlSpQocaNEiRIlSpQoUeNEiRIlSoQoUeJGiRslCoQoUaLGjRsnCgQoUaLEjRslAoQoUaJEiRIlAoQoEKJEiQIBAhQIECBAgAABAgUAOw==',
+instagram:'R0lGODlhEAAQAPQAAAAAANAgoMAgoLAgoLAgsKAgsJAgsJAwwIAwwHAw0GAw0PAjHNAwgNAgkOBAcOBAgOBQYP///+BgUPBwUPBwQPCAMPCQMPCgMPCwQPDAQAAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAAFyCAABMJAFMaBIImyLADANIEwEIVxIMiygMviPEwTCANRGAeyLMsCOQ/TRFEURdEBIsuiSJDzRE0gDEQRHQiSTBIUPUwTRQMYFdGBINQkRc4TNUE0EJFxIBU1RVD0MGATRENUGIdVUZEUOQ/TREJEFIZlVdEkgZHzRE0QDURxWVZETVIUPUwTCQOBXZYFRtQkQc4TNYEwYNhlWVEURVH0ME0gZBiIXZZVUZMEOQ/TBECGYZdlVdQkQc7DACAAZBh2WVZFTRLkAEAIACH5BAQSAAAALAAAAAAQABAAAAXIIMA0gTAQhXEgSLIsgPMwTSAMRGEcyLKAywI5D9NEURRF0bEsyyJBzhM1gTAQRQQey5JMEhQ9TBNFQ1REB4JQkxQ5T9QEETgQkXEgFTVFUPQwTRANUWEcVkVFUuQ8INNEQkQUhmVV0SRFzhM1QTQQxWVZETWBUhQ9TBMJA4FdlhVRkwQ5T9QEwoBhlwVaURRFUfQwTSBkGHZZVkVNEuQ8TBMAGYhhl2VV1CRBzsMAAJBh2GVZFTVJkAMAIAAAAAAAAAAAAAAAQAgAIfkEBBIAAAAsAAAAABAAEAAABcggAATCQBTGgSCJsiwAwDSBMBCFcSDIsoDL4jxMEwgDURgHsizLAjkP00RRFEXRASLLokiQ80RNIAxEER0IkkwSFD1ME0UDGBXRgSDUJEXOEzVBNBCRcSAVNUVQ9DBgE0RDVBiHVVGRFDkP00RCRBSGZVXRJIGR80RNEA1EcVlWRE1SFD1MEwkDgV2WBUbUJEHOEzWBMGDYZVlRFEVR9DBNIGQYiF2WVVGTBDkP0wRAhmGXZVXUJEHOwwAgAGQYdllWRU0S5ABACAAh+QQEFgAAACwAAAAAEAAQAAAFyCAABMJAFMaBIImiAADANIEwEIVxIEiigArgPEwTCANRGAeCJIoCOQ/TRFEURdEBIkiiSJDzRE0gDEQRHQiSTBIUPUwTRQMYFdGBINQkRc4TNUE0EJFxIBU1RVD0MGATRENUGIdVUZEUOQ/TREJEFIZlVdEkgZHzRE0QDURxWVZETVIUPUwTCQOBXZYFRtQkQc4TNYEwYNhlWVEURVH0ME0gZBiIXZZVUZMEOQ/TBECGYZdlVdQkQc7DACAAZBh2WVZFTRLkAEAIADs=',
+gmail:'R0lGODlhEAAQAPEAAAAAAP/EAPAjHP///yH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAACkQQIECBAgAARBgQIECBAgAATJgQIECBAgAATJtS4cePGjRsXRpS4cePGjRs3StSocePGjRsnTtQ4cePGjRs1TtS4UePGjRM3TtS4ceLGjRo3TtS4caPGiRs3TtS4ceNEjRs3TtS4cePGjRs3TtS4cePGjRs3TtS4cePGjRs3TgQIECBAgAABAgQIECBAgAABAgUAIfkEBBIAAAAsAAAAABAAEAAAApEECBAgQIAAEQYECBAgQIAAEybUuHHjxo0bEyaUuHHjxo0bF0bUqHHjxo0bJ07UOHHjxo0bNU7UuFHjxo0TN07UuHHixo0aN07UuHGjxokbN07UuHHjRI0bN07UuHHjxo0bN07UuHHjxo0bN07UuHHjxo0bN04ECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIFACH5BAQSAAAALAAAAAAQABAAAAKRBAgQIECAABEGBAgQIECAABMmBAgQIECAABMm1Lhx48aNGxdGlLhx48aNGzdK1Khx48aNGydO1Dhx48aNGzVO1LhR48aNEzdO1Lhx4saNGjdO1Lhxo8aJGzdO1Lhx40SNGzdO1Lhx48aNGzdO1Lhx48aNGzdO1Lhx48aNGzdOBAgQIECAAAECBAgQIECAAAECBQAh+QQEFgAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIECBAgAABAgQIECBAgAABAtS4cePGjRs3TpS4cePGjRs3StSocePGjRsnTtQ4cePGjRs1TtS4UePGjRM3TtS4ceLGjRo3TtS4caPGiRs3TtS4ceNEjRs3TtS4cePGjRs3TtS4cePGjRs3TtS4cePGjRs3TgQIECBAgAABAgQIECBAgAABAgUAOw==',
+youtube:'R0lGODlhEAAQAPEAAAAAAP/EAPAjHP///yH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAACkQQIECBAgAARBgQIECBAgAATJgQIECBAgAATJoQoUaJEiRIVBpQoUaJEiRIlSpQoUeJEiRIlSpQoUeLGiRIlSpQoUeLGjRMlSpQoUeLGjRslSpQoUeLGjRMlSpQoUeLGiRIlSpQoUeJEiRIlSpQoUaJEiRIlSoQoUaJEiRIlCgQIECBAgAABAgQIECBAgAABAgUAIfkEBBIAAAAsAAAAABAAEAAAApEECBAgQIAAEQYECBAgQIAAEyaEKFGiRIkSEyaUKFGiRIkSFUaUKFHiRIkSJUqUKFHixokSJUqUKFHixo0TJUqUKFHixo0bJUqUKFHixo0TJUqUKFHixokSJUqUKFHiRIkSJUqUKFGiRIkSJUqEKFGiRIkSJQoECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIFACH5BAQSAAAALAAAAAAQABAAAAKRBAgQIECAABEGBAgQIECAABMmBAgQIECAABMmhChRokSJEhUGlChRokSJEiVKlChR4kSJEiVKlChR4saJEiVKlChR4saNEyVKlChR4saNGyVKlChR4saNEyVKlChR4saJEiVKlChR4kSJEiVKlChRokSJEiVKhChRokSJEiUKBAgQIECAAAECBAgQIECAAAECBQAh+QQEFgAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIECBAgAABAgQIECBAgAABAoQoUaJEiRIlCpQoUaJEiRIlSpQoUeJEiRIlSpQoUeLGiRIlSpQoUeLGjRMlSpQoUeLGjRslSpQoUeLGjRMlSpQoUeLGiRIlSpQoUeJEiRIlSpQoUaJEiRIlSoQoUaJEiRIlCgQIECBAgAABAgQIECBAgAABAgUAOw==',
+telegram:'R0lGODlhEAAQAPIAAAAAAPAjHCm29v///7ji/wAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAACAiKCIQgREAICgiIoIiEREIICKCIiIiKBEAgiIiIigiM4ICICIoIiKDMyMCKCIigjMzMzgiIoIyMzM4NDOCIiIzODNDgzMjIigiIoNDMzMoIgKCIiIzODMjggIgIigyI4MzIgIIICKCIyIjKAIAgCAiIigiIoAAAAAIIiKCAgAACAAAgAAAAAgAkAAh+QQEEgAAACwAAAAAEAAQAAADlggAAIIiIgIIEQCAICIiKCISgREAIigiIoIiEREIIiKCIiIyOBEAgiIiIigzM4ICIiIoMjODMyMiKCIzgzNDMzgiIoIzMzNIMzOCIiIiKDM0gzMiIggiIoIzMzMoIgCCIiIzKDMjggIAIigyIoIjIgAIACKCIiIiKAAAgAAgIigiAIAAAAAIAACAAAAACAAAgAAAAAgAkAAh+QQEEgAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAACAiKCIQgREAICgiIoIiEREIICKCIiIiKBEAgiIiIigiM4ICICIoIiKDMyMCKCIigjMzMzgiIoIyMzM4NDOCIiIzODNDgzMjIigiIoNDMzMoIgKCIiIzODMjggIgIigyI4MzIgIIICKCIyIjKAIAgCAiIigiIoAAAAAIIiKCAgAACAAAgAAAAAgAkAAh+QQEFgAAACwAAAAAEAAQAAADlggAAIAAAAAIAACAACAiKCIAgAAAICgiIoIiAgAIICKCIiIiKAIAgiIiIigiM4ICICIoIiKDMyMCKCIigjMzMzgiIoIyMzM4NDOCIiIzODNDgzMjIigiIoNDMzMoIgKCIiIzODMjggIgIigyI4MzIgIIICKCIyIjKAIAgCAiIigiIoAAAAAIIiKCAgAACAAAgAAAAAgAkAA7',
+sms:'R0lGODlhEAAQAPEAAAAAAB6Q/////wAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEFgAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIECBAgAABAgSYMGHChAkTAkSYMGHChAkTBkSYMGHChAkTBkQYUWHChAkTBkQYUWHChAkTBkSYMGHChAkTBkSYMGHChAkTBkSYMGHChAkTBgSYMGHChAkTAgQIMGFCgAABAgQIMGFAgAABAgQIMCFAgAABAgQIMCBAgAABAgQIECBAgAABAgUAIfkEBBYAAAAsAAAAABAAEAAAApEECBAgQIAAAQIECBAgQIAAAQIEmDBhwoQJEwJEmDBhwoQJEwZEmDBhwoQJEwZEGFFhRIUJEwZEGFFhRIUJEwZEmDBhwoQJEwZEmDBhwoQJEwZEmDBhwoQJEwYEmDBhwoQJEwIECDBhQoAAAQIECDBhQIAAAQIECDAhQIAAAQIECDAgQIAAAQIECBAgQIAAAQIFACH5BAQWAAAALAAAAAAQABAAAAKRBAgQIECAAAECBAgQIECAAAECBJgwYcKECRMCRJgwYcKECRMGRJgwYcKECRMGRBhRYUSFERUGRBhRYUSFERUGRJgwYcKECRMGRJgwYcKECRMGRJgwYcKECRMGBJgwYcKECRMCBAgwYUKAAAECBAgwYUCAAAECBAgwIUCAAAECBAgwIECAAAECBAgQIECAAAECBQAh+QQEGQAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIECBAgAABAgSYMGHChAkTAkSYMGHChAkTBkSYMGHChAkTBkQYUWFEhREVBkQYUWFEhREVBkSYMGHChAkTBkSYMGHChAkTBkSYMGHChAkTBgSYMGHChAkTAgQIMGFCgAABAgQIMGFAgAABAgQIMCFAgAABAgQIMCBAgAABAgQIECBAgAABAgUAOw==',
+outro:'R0lGODlhEAAQAPIAAAAAAPAjHP/EAP///8mKAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEDwAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAAAAgKAAQgREAAAgAIoAAEREIAACCIiICCBEAgAAiIigiAoAAACAoIiKCIgIACAAigyIiIigAAIAgMiIoIiKAAAAgOCMigiICAAgAIoIiIiIoAACAIiIiKCIiggBAREhERIRERAQIAACAAAAACAAAgAAAREgEAIAAAAAIAESAAAAACAAAgAAAAAgAkAAh+QQEDwAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAAAAiCAAQgREAAAggAoAAEREIACCCIiIACBEAgCAiIigiAIAAACIoIiKCIgAACCAygiIiIggAAIAiIyIoIgKAAAAyOCIigiIAAAggIoIiIiIIAACCIiIiKCIigABEREhERIRERAAIAACAAAAACAAAgAAAQEhEAIAAAAAIAECEAAAACAAAgAAAAAgAkAAh+QQEDwAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAAAAgKAAQgREAAAgAIoAAEREIAACCIiICCBEAgAAiIigiAoAAACAoIiKCIgIACAAigyIiIigAAIAgMiIoIiKAAAAgOCMigiICAAgAIoIiIiIoAACAIiIiKCIiggBAREhERIRERAQIAACAAAAACAAAgAAAREgEAIAAAAAIAESAAAAACAAAgAAAAAgAkAAh+QQEDwAAACwAAAAAEAAQAAADlggAAIAAAAAIAACAAAAAKAIAgAAAAAgAIIIAAAAIAACAIiIiCAAAgAAgIigiIoAAAAAoIiKCIiIACAAggiMiIigCAIAAIiMoIiKCAAAAKDMigiIiAAgAIIIiIiIoAgCAICIiKCIiggIAREhERIREREQIAACAAAAACAAAgABAREgAAIAAAAAIQASAAAAACAAAgAAAAAgAkAA7'};
+const NT_TOPIC='%dev%/aviso';
+// c/v: condição da regra na placa; pk: pacotes que o celular deixa passar
+const APPS=[
+  {k:'whatsapp',n:'WhatsApp',c:'c',v:'com.whatsapp',pk:['com.whatsapp','com.whatsapp.w4b']},
+  {k:'instagram',n:'Instagram',c:'=',v:'com.instagram.android',pk:['com.instagram.android']},
+  {k:'gmail',n:'Gmail',c:'=',v:'com.google.android.gm',pk:['com.google.android.gm']},
+  {k:'youtube',n:'YouTube',c:'=',v:'com.google.android.youtube',pk:['com.google.android.youtube']},
+  {k:'telegram',n:'Telegram',c:'c',v:'org.telegram',pk:['org.telegram.messenger']},
+  {k:'sms',n:'SMS',c:'c',v:'messaging',pk:['com.google.android.apps.messaging','com.samsung.android.messaging']},
+  {k:'outro',n:'Outro app',c:'=',v:'',pk:[]}
+];
+let NT=null; // marcações da tela: {on:{app:true},pkg:'',sec:6}
+const ntRule=k=>S.rules.find(r=>r.kind==='m'&&r.app===k);
+const ntFile=k=>'aviso-'+k+'.gif';
+function ntLoad(){
+  const have=APPS.filter(a=>ntRule(a.k)),o=ntRule('outro'),f=have.length?ntRule(have[0].k):null;
+  NT={on:{},pkg:o?o.val:'',sec:f&&f.back?f.back.sec:6};
+  (have.length?have.map(a=>a.k):['whatsapp','instagram','gmail','youtube']).forEach(k=>NT.on[k]=true);
+}
+function ntPackages(){const a=[];APPS.forEach(x=>{if(!NT.on[x.k])return;if(x.k==='outro'){if(NT.pkg.trim())a.push(NT.pkg.trim())}else a.push(...x.pk)});return a}
+function ntTexts(){
+  const t=NT_TOPIC.replace('%dev%',devTopic()),host=(INFO&&INFO.ip)||qs.get('ip')||location.hostname||'IP-DA-PLACA';
+  $('cpExpr').textContent='contains('+JSON.stringify(ntPackages())+', pkg)';
+  $('cpUrl').textContent=JSON.stringify('http://'+host+'/json/state');
+  $('cpBody').textContent='jsonEncode({"mqttr": {"test": {"t": '+JSON.stringify(t)+', "p": pkg}}})';
+  $('ntTopic').textContent=t;
+}
+function renderNt(){
+  if(!NT)ntLoad();
+  $('appGrid').innerHTML=APPS.map(a=>`<div class="app ${NT.on[a.k]?'sel':''}"><label><img alt="" src="data:image/gif;base64,${ICONES[a.k]}"><span>${a.n}</span><input type="checkbox" data-app="${a.k}" ${NT.on[a.k]?'checked':''}></label>
+    ${a.k==='outro'?`<input type="text" id="ntPkg" placeholder="nome do pacote" value="${esc(NT.pkg)}" autocapitalize="none" spellcheck="false">`:''}<button class="btn" data-try="${a.k}">▶ Testar</button></div>`).join('');
+  $('ntSec').value=NT.sec;
+  $('ntState').innerHTML=INFO&&!INFO.mqttr?'<span class="er">O firmware desta placa não tem o módulo de regras.</span>':'';
+  ntTexts();
+}
+// não grava arquivos enquanto um GIF toca: a placa fica com pouca memória
+async function waitNoGif(){
+  for(let i=0;i<60;i++){let st=null;try{st=await jget('/json/state')}catch(e){}
+    if(st){if(!(st.seg||[]).some(x=>x.stop>0&&x.fx===53))return;
+      if(st.pl<0){try{await jpost('/json/state',{seg:{id:0,fx:0}})}catch(e){}await sleep(800);return}}
+    await sleep(1000)}
+  throw new Error('a placa não saiu da tela com GIF; pare o GIF e tente de novo')
+}
+async function sendIcon(k){
+  const bytes=Uint8Array.from(atob(ICONES[k]),c=>c.charCodeAt(0)),name=ntFile(k);
+  await waitNoGif();
+  try{const r=await fetch(BASE+'/'+name+'?cb='+Date.now(),{cache:'no-store'});if(r.ok){const old=new Uint8Array(await r.arrayBuffer());if(old.length===bytes.length&&old.every((b,i)=>b===bytes[i]))return}}catch(e){}
+  const fd=new FormData();fd.append('data',new Blob([bytes],{type:'image/gif'}),name);
+  const r=await fetch(BASE+'/upload',{method:'POST',body:fd});if(!r.ok)throw new Error('upload '+name+' → HTTP '+r.status);
+  await sleep(300);
+}
+async function createNotices(){
+  const picked=APPS.filter(a=>NT.on[a.k]),sec=Math.max(2,Math.min(120,Math.round(+NT.sec)||6)),pkg=NT.pkg.trim();
+  if(NT.on.outro&&!/^\w+(\.\w+)+$/.test(pkg)){toast('Em “Outro app”, digite o nome do pacote (ex.: com.exemplo.app).','er');return}
+  if(!INFO){toast('Sem conexão com a placa.','er');return}
+  if(!INFO.mqttr){toast('O firmware desta placa não tem o módulo de regras.','er');return}
+  const b=$('btnNt'),st=$('ntState'),before=JSON.stringify(S.rules),wasDirty=dirty;b.disabled=true;
+  try{
+    await ensurePresets();
+    const ps=PRESETS.some(p=>p[0]===210)?210:PRESETS.length?PRESETS[0][0]:210;
+    S.rules=S.rules.filter(r=>!r.app||NT.on[r.app]);
+    picked.forEach(a=>{let r=ntRule(a.k);
+      if(!r){r={id:++uid,kind:'m',app:a.k,name:'Aviso '+a.n,on:true,topic:NT_TOPIC,cond:a.c,val:a.v,act:{type:'gif',file:ntFile(a.k),fromPayload:false},back:{on:true,sec:sec,ps:ps,mem:true,wait:true},reply:{on:false,topic:'%dev%/resposta',payload:'ok'}};S.rules.push(r)}
+      r.on=true;r.back.on=true;r.back.sec=sec;if(a.k==='outro')r.val=pkg});
+    const {errors}=compile();if(errors.length)throw new Error(errors[0]);
+    let n=0;for(const a of picked){st.textContent=`Enviando ícone ${++n} de ${picked.length}…`;await sendIcon(a.k)}
+    GIFS=null;st.textContent='Salvando as regras…';await waitNoGif();
+    if(!(await saveRules(picked.length?`Pronto! ${picked.length} aviso(s) na matriz. Use “▶ Testar” e depois configure o celular.`:'Avisos removidos.')))throw new Error('as regras não foram salvas');
+    NT.sec=sec;$('ntSec').value=sec;save();ntTexts();st.innerHTML='<span class="ok">✔ Salvo na placa.</span>';
+  }catch(e){S.rules=JSON.parse(before);dirty=wasDirty;save();updateSaveBar();st.innerHTML=`<span class="er">Erro: ${esc(e.message)}</span>`;toast('Erro: '+e.message,'er')}
+  b.disabled=false;
+}
+async function tryNotice(k){
+  const r=ntRule(k);
+  if(!r||dirty){toast(r?'Salve as regras antes de testar.':'Primeiro marque o app e clique em “Criar os avisos na matriz”.','er');return}
+  const a=APPS.find(x=>x.k===k),p=k==='outro'?r.val:a.pk[0];
+  try{await jpost('/json/state',{mqttr:{test:{t:r.topic.replace(/%dev%/g,devTopic()),p}}});toast('Aviso de teste enviado para a matriz.','ok')}catch(e){toast('A placa não aceitou agora, tente de novo: '+e.message,'er')}
+}
+function copyText(id){
+  const t=$(id).textContent,done=()=>toast('Copiado.','ok');
+  // a página da placa é http: sem navigator.clipboard, copia por um campo temporário
+  const old=()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}a.remove();ok?done():toast('Não consegui copiar: selecione o texto.','er')};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,old);else old();
+}
+function initNt(){
+  const pane=document.querySelector('[data-pane=nt]');
+  pane.addEventListener('change',e=>{const k=e.target.dataset.app;if(k){NT.on[k]=e.target.checked;e.target.closest('.app').classList.toggle('sel',e.target.checked);ntTexts()}});
+  pane.addEventListener('input',e=>{if(e.target.id==='ntPkg'){NT.pkg=e.target.value;ntTexts()}else if(e.target.id==='ntSec')NT.sec=e.target.value});
+  pane.addEventListener('click',e=>{const t=e.target.closest('[data-try]');if(t){tryNotice(t.dataset.try);return}const c=e.target.closest('[data-copy]');if(c)copyText(c.dataset.copy)});
+  $('btnNt').onclick=createNotices;
+}
+
 /* ---------- ações ---------- */
-async function saveRules(){
+async function saveRules(okMsg){
   const {lines,errors}=compile();
-  if(errors.length){toast(errors[0],'er');return}
-  $('btnSave').disabled=true;
+  if(errors.length){toast(errors[0],'er');return false}
+  $('btnSave').disabled=true;let ok=false;
   try{
     if(lines.length)await upload('mqttrules.jsonl',lines.join('\n')+'\n');
     else{try{await fetch(BASE+'/edit?func=delete&path='+encodeURIComponent('/mqttrules.jsonl'))}catch(e){}} // sem regras: apaga o arquivo
     await upload('mqttrules-ui.json',JSON.stringify({rules:S.rules,sens:S.sens}));
     await jpost('/json/state',{mqttr:{reload:1}});await sleep(1500);
     INFO=await jget('/json/info');updateChips();dirty=false;updateSaveBar();
-    const m=INFO.mqttr;toast(`Salvo! ${m?m.n:lines.length} regra(s) na placa${m&&m.con?'':' (MQTT ainda desconectado: ligue-o na aba Conexão)'}.`,'ok');
+    const m=INFO.mqttr;ok=true;toast(typeof okMsg==='string'?okMsg:`Salvo! ${m?m.n:lines.length} regra(s) na placa${m&&m.con?'':' (MQTT ainda desconectado: ligue-o na aba Conexão)'}.`,'ok');
   }catch(e){toast('Erro ao salvar: '+e.message,'er')}
-  $('btnSave').disabled=false;
+  $('btnSave').disabled=false;return ok;
 }
 async function saveConn(){
   const c=S.conn;
@@ -527,7 +675,8 @@ function showTab(k){tab=k;document.querySelectorAll('.pane').forEach(p=>p.classL
   clearInterval(pollT);pollT=null;
   if(k==='test'){const first=S.rules.find(r=>r.kind==='m');if(!$('tTopic').value)$('tTopic').value=first?first.topic:'%dev%/texto';cmdHint();poll();pollT=setInterval(poll,2500)}
   if(k==='rx'||k==='tx'||k==='tm'){Promise.all([ensurePresets(),ensureGifs(),ensureFx()]).then(renderRules)}
-  $('saveBar').classList.toggle('hide',k==='conn')}
+  if(k==='nt')renderNt();
+  $('saveBar').classList.toggle('hide',k==='conn'||k==='nt')}
 function openExamples(btn){
   closeMenu();const r=btn.getBoundingClientRect(),m=document.createElement('div');m.className='menu';m.id='menu';
   m.innerHTML=EXAMPLES.map((e,i)=>`<button data-ex="${i}">${esc(e[0])}<small>${esc(e[1])}</small></button>`).join('');
@@ -550,14 +699,14 @@ function initEvents(){
     const d=e.target.closest('[data-del],[data-dup],[data-up],[data-down]');
     if(d){const ds=d.dataset,i=+(ds.del??ds.dup??ds.up??ds.down);
       if(ds.del!==undefined)S.rules.splice(i,1);
-      else if(ds.dup!==undefined)S.rules.splice(i+1,0,Object.assign(JSON.parse(JSON.stringify(S.rules[i])),{id:++uid,name:(S.rules[i].name+' (cópia)').slice(0,24)}));
+      else if(ds.dup!==undefined)S.rules.splice(i+1,0,Object.assign(JSON.parse(JSON.stringify(S.rules[i])),{id:++uid,app:undefined,name:(S.rules[i].name+' (cópia)').slice(0,24)}));
       else{const j=ds.up!==undefined?i-1:i+1;if(j>=0&&j<S.rules.length)[S.rules[i],S.rules[j]]=[S.rules[j],S.rules[i]]}
       markDirty();save();renderRules();return}
     const gp=e.target.closest('[data-gpick]');if(gp){const rl=gp.closest('.rule');if(rl){S.rules[+rl.dataset.i].act.file=gp.dataset.gpick;markDirty();save();renderRules()}return}
     const ex=e.target.closest('[data-ex]');if(ex){const r=EXAMPLES[+ex.dataset.ex][2]();r.id=++uid;S.rules.push(r);closeMenu();markDirty();save();Promise.all([ensurePresets(),ensureGifs()]).then(renderRules);toast('Regra de exemplo adicionada.','ok');return}
     if(!e.target.closest('#btnEx'))closeMenu()});
   $('btnEx').onclick=e=>{e.stopPropagation();openExamples(e.currentTarget)};
-  $('btnSave').onclick=saveRules;$('btnConn').onclick=saveConn;$('btnSim').onclick=simulate;
+  $('btnSave').onclick=()=>saveRules();initNt();$('btnConn').onclick=saveConn;$('btnSim').onclick=simulate;
   $('tTopic').addEventListener('input',cmdHint);$('tPayload').addEventListener('input',cmdHint);
   $('btnUniq').onclick=()=>{S.conn.dev='wled/'+Math.random().toString(36).slice(2,10);fillForm();save()};
   $('btnPub').onclick=()=>{const b=BROKERS[0];S.conn.broker=b[1];S.conn.port=1883;S.conn.user='';if(!S.conn.dev||/^wled\/[0-9a-f]{6}$/.test(S.conn.dev))S.conn.dev='wled/'+Math.random().toString(36).slice(2,10);S.conn.en=true;fillForm();save();toast('Preenchido com '+b[0]+'. Clique em “Gravar conexão”.','ok')};
@@ -567,7 +716,8 @@ function initEvents(){
   try{const l=localStorage.getItem('mqttrules');if(l){const o=JSON.parse(l);if(o&&Array.isArray(o.rules)){S.rules=o.rules;if(o.sens)S.sens=o.sens}}}catch(e){}
   if(await exists('/mqttrules-ui.json')){try{const b=await jget('/mqttrules-ui.json');if(b&&Array.isArray(b.rules))S.rules=b.rules;if(b&&b.sens)S.sens=b.sens}catch(e){}}
   S.rules.forEach(r=>{r.id=++uid;if(r.back){if(r.back.mem===undefined)r.back.mem=true;if(r.back.wait===undefined)r.back.wait=true}});
-  showTab('conn');await load();renderRules();dirty=false;updateSaveBar();
+  showTab('conn');await load();renderRules();dirty=false;updateSaveBar();NT=null;
+  if(location.hash==='#avisos')showTab('nt');else if(tab==='nt')renderNt();
 })();
 </script>
 <!--PFNAV-->

@@ -43,6 +43,7 @@ rules engine, all running on the board itself.
 | Several images to one GIF, sprite sheets, categories | tool **Estúdio de GIFs** |
 | Pixel-art editor with frames, sprites, GIF export and **screen mirror** | tool **Pixel Estúdio** |
 | Ten games for PC and phone, 1 or 2 players | tool **Jogos na Matriz** |
+| **Phone notifications** (Android): the icon of the app that notified appears on the matrix | tool **Regras MQTT**, tab **Notificações** |
 | MQTT: message → action on the matrix; state change → message; time/weekday/temperature/humidity rules | usermod `mqtt_rules` + tool **Regras MQTT** |
 
 Firmware size on the D1 R2: flash 86.1 % (899,715 of 1,044,464 bytes), RAM 59.3 % static at build time,
@@ -303,6 +304,37 @@ matrix size and the filesystem use (files, KB).
 `http://BOARD-IP/mqttrules.htm`. Writes the rules file used by the `mqtt_rules` usermod (see below). Header chips: board connected,
 **MQTT connected to the broker**, and how many rules are on the board and how many fired. The bar at the bottom shows if there are unsaved
 changes and has **Save rules to the board**. Rules are checked while you type (errors appear in that bar).
+
+### Tab 🔔 Notificações do celular (phone notifications)
+
+When the phone gets a notification, the matrix shows an animated icon of the app for a few seconds and goes back to what was running.
+Direct link: `http://BOARD-IP/mqttrules.htm#avisos`.
+
+![The seven notification icons: WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS and any other app](docs/img/notification-icons.png)
+
+1. **On the board:** tick the apps (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** or **another app** by its package name),
+   choose the seconds and press **Criar os avisos na matriz**. The page uploads the icons (`aviso-*.gif`) and creates one ordinary rule per app,
+   all on the topic `%dev%/aviso`, with the app's package name as the content. Unticking an app removes its rule; the other rules are not touched.
+   **▶ Testar** shows one notification right away.
+2. **On the phone (Android):** a flow in the [Automate](https://llamalab.com/automate/) app by LlamaLab. The page gives the steps and the three
+   texts to copy, already filled in with the board's address:
+
+   | Block | Setting |
+   |---|---|
+   | Notification posted | *Proceed:* When transition; *Package:* empty; output *Package* into the variable `pkg` |
+   | Expression true | `contains(["com.whatsapp", …], pkg)`, so only the ticked apps go on |
+   | Failure catch | before the request, so being away from home does not stop the flow |
+   | HTTP request | POST `"http://BOARD-IP/json/state"`, type `"application/json"`, body `jsonEncode({"mqttr": {"test": {"t": "<device topic>/aviso", "p": pkg}}})` |
+
+   The request uses the rules usermod's `test` command, so **no broker is needed** and nothing leaves the home network.
+   Only the package name is sent, never the sender or the message. Another app that publishes the package name to `<device topic>/aviso`
+   over MQTT triggers the same rules.
+
+Limits: it works only on the home Wi-Fi; reserve the board's IP in the router; a request that arrives while a GIF is playing may be refused (that
+notification is lost); a notification that keeps updating (a video playing) may repeat; one that arrives with the matrix off may turn it on.
+
+**Tested** with a simulated board (rules, uploads, phone and PC layout). **Not yet tested:** the icons on a real board, and the Automate flow on a
+real phone (its block names and expressions come from the app's documentation).
 
 ### Tab 🔌 Conexão (connection)
 
@@ -579,11 +611,11 @@ The steps now come in order (images, speed, preview, save) and the buttons are l
 
 ### Regras MQTT
 
-The five tabs fit the width with short names, the days of the week are buttons and the time field is readable.
+The six tabs fit the width with short names, the days of the week are buttons and the time field is readable.
 
 <table>
-<tr><th>Message rule</th><th>Timed rule</th><th>Test</th></tr>
-<tr><td valign="top"><img src="docs/img/mobile-mqtt-rule.jpg" width="230" alt="Message rule"></td><td valign="top"><img src="docs/img/mobile-mqtt-timed.jpg" width="230" alt="Timed rule"></td><td valign="top"><img src="docs/img/mobile-mqtt-test.jpg" width="230" alt="Test"></td></tr>
+<tr><th>Notifications</th><th>Message rule</th><th>Timed rule</th><th>Test</th></tr>
+<tr><td valign="top"><img src="docs/img/mobile-mqtt-notifications.jpg" width="230" alt="Phone notifications"></td><td valign="top"><img src="docs/img/mobile-mqtt-rule.jpg" width="230" alt="Message rule"></td><td valign="top"><img src="docs/img/mobile-mqtt-timed.jpg" width="230" alt="Timed rule"></td><td valign="top"><img src="docs/img/mobile-mqtt-test.jpg" width="230" alt="Test"></td></tr>
 </table>
 
 ### Jogos na Matriz
