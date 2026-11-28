@@ -43,7 +43,7 @@ rules engine, all running on the board itself.
 | Several images to one GIF, sprite sheets, categories | tool **Estúdio de GIFs** |
 | Pixel-art editor with frames, sprites, GIF export and **screen mirror** | tool **Pixel Estúdio** |
 | Ten games for PC and phone, 1 or 2 players | tool **Jogos na Matriz** |
-| **Phone notifications** (Android): the name of the app that notified scrolls on the matrix | tool **Regras MQTT**, tab **Notificações** |
+| **Phone notifications** (Android): the animated icon of the app that notified appears on the matrix | tool **Regras MQTT**, tab **Notificações** |
 | MQTT: message → action on the matrix; state change → message; time/weekday/temperature/humidity rules | usermod `mqtt_rules` + tool **Regras MQTT** |
 
 Firmware size on the D1 R2: flash 86.1 % (899,715 of 1,044,464 bytes), RAM 59.3 % static at build time,
@@ -270,6 +270,17 @@ It is saved from the **Board and time** tab (the board restarts once).
 - **4 · Write to the board:** saves time, zone, format, boot behaviour and sensor to the board's configuration. **The board restarts once
   (about 10 s)** and a copy of the previous configuration is kept first.
 
+### 🌙 Sleep time (card **Desligar para dormir**, tab Relógio)
+
+Choose when the matrix turns **off** and when it comes back **with the clock**, every day, and press **Salvar horário na placa**. It uses WLED's own
+timers (preset 214 turns it off, preset 210 starts the clock), so it works with the page closed, without restarting the board. Other timers you made
+are kept (timers that start preset 210 or 214 are replaced). Times are in the **board's** time (shown on the card). If the board is powered on during
+the night, it stays lit until the next time. MQTT rules with other actions can still turn the matrix on; notification icons do not.
+
+![Sleep time card on a phone](docs/img/mobile-clock-sleep.jpg)
+
+**Tested** with a simulated board. **Not yet tested:** a timer actually firing on the real board.
+
 ## Tool 2: Estúdio de GIFs
 
 `http://BOARD-IP/gifstudio.htm`. Builds GIFs in the browser and saves them to the board, organised in categories. The header shows the
@@ -307,18 +318,20 @@ changes and has **Save rules to the board**. Rules are checked while you type (e
 
 ### Tab 🔔 Notificações do celular (phone notifications)
 
-When the phone gets a notification, the app's name scrolls once across the matrix in its colour, and the matrix goes back to what was running
-(about 11 seconds for a long name). Direct link: `http://BOARD-IP/mqttrules.htm#avisos`.
+When the phone gets a notification, an animated icon of the app appears on the matrix for a few seconds. The firmware paints it **over** whatever
+is running, so the clock or effect goes on underneath and nothing has to be restored. A matrix that is off (for example at sleep time) stays off.
+Direct link: `http://BOARD-IP/mqttrules.htm#avisos`.
 
-![Frames captured from the matrix: WhatsApp in green and Instagram in pink](docs/img/notification-matrix.png)
+![The seven notification icons: WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS and any other app](docs/img/notification-icons.png)
 
-1. **On the board:** tick the apps (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** or **another app** by its package name) and press
-   **Criar os avisos na matriz**. The page creates one ordinary rule per app, all on the topic `%dev%/aviso`, with the app's package name as the
-   content. Unticking an app removes its rule; the other rules are not touched. Text, colour and size can be changed in the rule itself.
-   **▶ Testar** shows one notification right away.
+1. **On the board:** tick the apps (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** or **another app** by its package name), choose the seconds
+   and press **Criar os avisos na matriz**. The page creates one ordinary rule per app, all on the topic `%dev%/aviso`, with the app's package name as
+   the content. Unticking an app removes its rule; the other rules are not touched. **▶ Testar** shows one notification right away.
+   Any rule can use the action **Mostrar um ícone de aviso**.
 
-   An earlier version showed an animated icon (GIF). The board restarted during one of four test notifications with it, so notifications now use
-   scrolling text, which needs much less memory.
+   The icons need the firmware of this repository (`{"mqttr":{"icon":"whatsapp","sec":6}}`, see the usermod readme); with an older build the page creates
+   rules with the app name scrolling instead. A first version played the icons as GIF files, and the board restarted during one of four test
+   notifications; drawing them from program memory uses no GIF decoder.
 2. **On the phone (Android):** a flow in the [Automate](https://llamalab.com/automate/) app by LlamaLab. The page gives the steps and the three
    texts to copy, already filled in with the board's address:
 
@@ -334,11 +347,10 @@ When the phone gets a notification, the app's name scrolls once across the matri
    over MQTT triggers the same rules.
 
 Limits: it works only on the home Wi-Fi; reserve the board's IP in the router; a request that arrives while a GIF is playing may be refused (that
-notification is lost); a notification that keeps updating (a video playing) may repeat; one that arrives with the matrix off may turn it on.
+notification is lost); a notification that keeps updating (a video playing) may repeat.
 
-**Tested** with a simulated board (rules, phone and PC layout) and on the real board: ten text notifications in a row without a restart, each one
-back to the clock, with the text confirmed in live-view captures. **Not tested:** the Automate flow on a real phone (its block names and expressions
-come from the app's documentation). While testing, the board restarted twice when receiving a file and came back by itself with the rules intact.
+**Tested** with a simulated board (rules, phone and PC layout) and by compiling the firmware. **Not yet tested:** the icons drawn by the new
+firmware on the real board, and the Automate flow on a real phone (its block names and expressions come from the app's documentation).
 
 ### Tab 🔌 Conexão (connection)
 

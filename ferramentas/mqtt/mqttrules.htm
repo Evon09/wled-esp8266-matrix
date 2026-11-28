@@ -86,6 +86,7 @@ input[type=range]{accent-color:var(--ac);min-width:140px}
 .app{background:var(--card2);border:1px solid var(--bd);border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
 .app.sel{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
 .app label{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:13.5px;text-align:center}
+.app img,.icopv{width:76px;height:76px;image-rendering:pixelated;background:#000;border-radius:8px;border:6px solid #000}
 .app label{width:100%}.app .led{align-self:stretch;background:#000;border-radius:8px;padding:20px 4px;font:700 16px/1.2 Consolas,monospace;overflow:hidden;white-space:nowrap}
 .app input[type=checkbox]{width:20px;height:20px;accent-color:var(--ac)}
 .app input[type=text]{width:100%;min-width:0;font-size:12px}
@@ -174,11 +175,12 @@ ol.steps{margin:8px 0;padding-left:20px}ol.steps li{margin-bottom:12px}
 <section class="pane" data-pane="nt">
   <div class="card">
     <h2><span class="num">1</span> Quais avisos mostrar na matriz?</h2>
-    <div class="hint">Quando o celular avisar, o nome do aplicativo passa na matriz, na cor dele, e ela volta ao que estava rodando. Com os passos abaixo, só o <b>nome do aplicativo</b> chega à placa: nunca o remetente nem o texto da mensagem.</div>
+    <div class="hint">Quando o celular avisar, o ícone animado do aplicativo aparece na matriz por alguns segundos, por cima do que estiver rodando, sem interromper. Com os passos abaixo, só o <b>nome do aplicativo</b> chega à placa: nunca o remetente nem o texto da mensagem.</div>
     <div class="apps" id="appGrid"></div>
+    <div class="row" id="ntSecRow"><span class="mu">Mostrar cada ícone por</span><input type="number" id="ntSec" min="1" max="120" style="width:70px"><span class="mu">segundos</span></div>
     <div class="row"><button class="btn primary big" id="btnNt">Criar os avisos na matriz</button><span id="ntState" class="small"></span></div>
-    <div class="small mu">Cria uma regra para cada aplicativo marcado e apaga as dos desmarcados. As outras regras não mudam. Para mudar o texto, a cor ou o tamanho, edite a regra na aba <b>Quando chegar mensagem</b>.</div>
-    <div class="warnbox">⚠ Um aviso que chega com a matriz <b>desligada</b> pode ligá-la de novo.</div>
+    <div class="small mu">Cria uma regra para cada aplicativo marcado e apaga as dos desmarcados. As outras regras não mudam. Para trocar o ícone por um texto ou um GIF, edite a regra na aba <b>Quando chegar mensagem</b>.</div>
+    <div class="infobox">🌙 Com a matriz <b>desligada</b> (por exemplo no horário de dormir do Relógio), os ícones não aparecem e não ligam a matriz.</div>
   </div>
   <div class="card">
     <h2><span class="num">2</span> Configurar o celular (Android)</h2>
@@ -275,7 +277,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const FONT_NAMES=['Mini 3x6','Pequena 4x8','Console 5x8','Larga 6x9','Alta 5x12'],FONT_C2=[0,64,128,192,255];
 const BROKERS=[['test.mosquitto.org (público)','54.36.178.49'],['broker.hivemq.com (público)','18.197.15.210']];
 const COND=[['*','qualquer conteúdo'],['=','for igual a'],['c','contiver'],['>','for maior que'],['<','for menor que'],['r','estiver entre (a,b)']];
-const ACTS=[['text','Mostrar um texto'],['gif','Tocar um GIF'],['fx','Mostrar um efeito do WLED'],['preset','Aplicar um preset'],['bri','Mudar o brilho'],['power','Ligar ou desligar'],['adv','Comando JSON (avançado)'],['none','Nada (só responder)']];
+const ACTS=[['text','Mostrar um texto'],['gif','Tocar um GIF'],['fx','Mostrar um efeito do WLED'],['icon','Mostrar um ícone de aviso'],['preset','Aplicar um preset'],['bri','Mudar o brilho'],['power','Ligar ou desligar'],['adv','Comando JSON (avançado)'],['none','Nada (só responder)']];
 const EVS=[['ps','um preset for aplicado'],['pw','a matriz ligar ou desligar'],['br','o brilho mudar']];
 const TOK='__N__'; // marca de número sem aspas ({n})
 const MAX_LINE=740;
@@ -332,7 +334,7 @@ const newRule=k=>k==='t'
   :k==='m'
   ?{id:++uid,kind:'m',name:'Nova regra',on:true,topic:'%dev%/texto',cond:'*',val:'',act:{type:'text',text:'{p}',col:'#ffffff',font:2,speed:128},back:{on:true,sec:6,ps:210,mem:true,wait:true},reply:{on:false,topic:'%dev%/resposta',payload:'ok'}}
   :{id:++uid,kind:'e',name:'Nova regra de aviso',on:true,ev:'ps',cond:'*',val:'',topic:'%dev%/evento',payload:'{n}'};
-const defAct=t=>({text:{type:'text',text:'{p}',col:'#ffffff',font:2,speed:128},gif:{type:'gif',file:'',fromPayload:false},fx:{type:'fx',fx:9,sx:128,ix:128,c1:128,c2:128,c3:16,pal:0,col:['#ff2a00','#000000','#0040ff']},
+const defAct=t=>({icon:{type:'icon',icon:'whatsapp',sec:6},text:{type:'text',text:'{p}',col:'#ffffff',font:2,speed:128},gif:{type:'gif',file:'',fromPayload:false},fx:{type:'fx',fx:9,sx:128,ix:128,c1:128,c2:128,c3:16,pal:0,col:['#ff2a00','#000000','#0040ff']},
   preset:{type:'preset',ps:'210'},bri:{type:'bri',mode:'fixed',val:128},power:{type:'power',state:'on'},adv:{type:'adv',json:'{"on":true}'},none:{type:'none'}}[t]);
 const EXAMPLES=[
   ['Mostrar o texto recebido','Quem publicar em %dev%/texto faz a matriz mostrar a mensagem',()=>({kind:'m',name:'Mostrar texto',on:true,topic:'%dev%/texto',cond:'*',val:'',act:{type:'text',text:'{p}',col:'#ffffff',font:2,speed:128},back:{on:true,sec:8,ps:210,mem:true,wait:true},reply:{on:false,topic:'%dev%/resposta',payload:'ok'}})],
@@ -354,6 +356,7 @@ function actObj(a){
     case 'text':return{on:true,pl:-1,seg:[segFull({fx:122,n:a.text||'{p}',col:[rgb(a.col),[0,0,0],[0,0,0]],sx:a.speed,ix:128,c1:0,c2:FONT_C2[a.font],c3:16}),...stops()]};
     case 'gif':return{on:true,pl:-1,seg:[segFull({fx:53,n:a.fromPayload?'{p}':(a.file||''),col:[[255,255,255],[0,0,0],[0,0,0]],sx:128,ix:0}),...stops()]};
     case 'fx':return{on:true,pl:-1,seg:[segFull({fx:a.fx,sx:a.sx,ix:a.ix,pal:a.pal,c1:a.c1,c2:a.c2,c3:a.c3,col:a.col.map(rgb)}),...stops()]};
+    case 'icon':return{mqttr:{icon:a.icon,sec:Math.max(1,Math.min(120,+a.sec||6))}}; // o firmware desenha por cima: não há o que desfazer depois
     case 'preset':return{ps:a.ps==='payload'?TOK:+a.ps};
     case 'bri':return{bri:a.mode==='payload'?TOK:Math.max(1,Math.min(255,+a.val||1))};
     case 'power':return{on:a.state==='toggle'?'t':a.state==='on'};
@@ -373,6 +376,7 @@ function compile(){
     const where=`Regra “${r.name||i+1}”`;
     if(!r.topic&&r.kind==='m'){errors.push(where+': falta o tópico.');return}
     const o={k:r.kind,n:(r.name||'').slice(0,24)};
+    if(r.act&&r.act.type==='icon'&&INFO&&INFO.mqttr&&!INFO.mqttr.ico)errors.push(where+': o firmware desta placa ainda não desenha ícones.');
     if(!r.on)o.e=0;
     if(r.kind!=='t'&&r.cond!=='*'){o.o=r.cond;o.v=String(r.val||'')}
     if(r.kind==='m'){
@@ -380,7 +384,7 @@ function compile(){
       if(r.act.type==='adv'){const e=checkAdv(a);if(e)errors.push(where+': o JSON avançado tem erro ('+e+').')}
       if(r.act.type==='gif'&&!r.act.fromPayload&&!r.act.file)errors.push(where+': escolha um GIF.');
       if(a)o.a=a;
-      if(r.back.on&&r.act.type!=='none'){o.d=Math.max(1,+r.back.sec||1);o.r=JSON.stringify({ps:+r.back.ps});if(r.back.mem!==false)o.b=1;if(r.act.type==='text'&&r.back.wait!==false)o.w=1}
+      if(r.back.on&&!noBack(r.act.type)){o.d=Math.max(1,+r.back.sec||1);o.r=JSON.stringify({ps:+r.back.ps});if(r.back.mem!==false)o.b=1;if(r.act.type==='text'&&r.back.wait!==false)o.w=1}
       if(r.reply.on){o.pt=r.reply.topic;o.pp=r.reply.payload}
     }else if(r.kind==='t'){
       const hm=t=>{const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');return m?(+m[1])*60+(+m[2]):-1};
@@ -396,7 +400,7 @@ function compile(){
       if(r.act.type==='adv'){const e=checkAdv(a);if(e)errors.push(where+': o JSON avançado tem erro ('+e+').')}
       if(r.act.type==='gif'&&!r.act.fromPayload&&!r.act.file)errors.push(where+': escolha um GIF.');
       if(a)o.a=a;
-      if(a&&r.back.on){o.d=Math.max(1,+r.back.sec||1);o.r=JSON.stringify({ps:+r.back.ps});if(r.back.mem!==false)o.b=1;if(r.act.type==='text'&&r.back.wait!==false)o.w=1}
+      if(a&&r.back.on&&!noBack(r.act.type)){o.d=Math.max(1,+r.back.sec||1);o.r=JSON.stringify({ps:+r.back.ps});if(r.back.mem!==false)o.b=1;if(r.act.type==='text'&&r.back.wait!==false)o.w=1}
       if(r.pub&&r.topic){o.pt=r.topic;o.pp=r.payload||''}
       if(!a&&!(r.pub&&r.topic))errors.push(where+': escolha uma ação na matriz ou uma mensagem para publicar.');
     }else{o.ev=r.ev;o.pt=r.topic;o.pp=r.payload;if(!r.topic)errors.push(where+': falta o tópico de destino.')}
@@ -411,6 +415,7 @@ function compile(){
 }
 
 /* ---------- interface das regras ---------- */
+const noBack=t=>t==='none'||t==='icon'; // ações que não precisam de “voltar ao que estava antes”
 function condHtml(p,r){return `<label class="col"><span class="lbl">${r.kind==='m'?'Se o conteúdo':'Se o valor'}</span><select data-b="${p}.cond">${COND.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select></label>
   ${r.cond!=='*'?`<label class="col"><span class="lbl">${r.cond==='r'?'a,b':'valor'}</span><input type="text" data-b="${p}.val" style="min-width:120px"></label>`:''}`}
 function actHtml(p,a){
@@ -423,6 +428,9 @@ function actHtml(p,a){
   else if(t==='gif')h+=`<label class="sw"><input type="checkbox" data-b="${p}.act.fromPayload"><i></i><span>O nome do GIF vem na mensagem</span></label>
     ${a.fromPayload?'<span class="small mu">Ex.: a mensagem “boble1.gif” toca esse arquivo.</span>':gifPicker(p,a)}`;
   else if(t==='fx')h+=fxHtml(p,a);
+  else if(t==='icon')h+=`<label class="col"><span class="lbl">Ícone</span><select data-b="${p}.act.icon">${APPS.map(x=>`<option value="${x.k}">${x.k==='outro'?'Sino':x.n}</option>`).join('')}</select></label>
+    <label class="col"><span class="lbl">Segundos</span><input type="number" min="1" max="120" data-b="${p}.act.sec" data-t="n"></label><img class="icopv" alt="" src="data:image/gif;base64,${ICONES[a.icon]||''}">
+    <span class="small mu" style="width:100%">Aparece por cima do que estiver rodando, sem interromper. Com a matriz desligada, não aparece.</span>`;
   else if(t==='preset')h+=`<label class="col"><span class="lbl">Preset</span><select data-b="${p}.act.ps"><option value="payload">O número vem na mensagem</option>${(PRESETS||[]).map(([id,n])=>`<option value="${id}">${id} · ${esc(n)}</option>`).join('')}${a.ps!=='payload'&&!(PRESETS||[]).some(x=>String(x[0])===String(a.ps))?`<option value="${esc(a.ps)}">${esc(a.ps)}</option>`:''}</select></label>`;
   else if(t==='bri')h+=`<label class="col"><span class="lbl">Brilho</span><select data-b="${p}.act.mode"><option value="fixed">Um valor fixo</option><option value="payload">Número da mensagem (1 a 255)</option></select></label>${a.mode==='fixed'?`<label class="col"><span class="lbl">Valor (1–255)</span><input type="number" min="1" max="255" data-b="${p}.act.val" data-t="n"></label>`:''}`;
   else if(t==='power')h+=`<label class="col"><span class="lbl">Matriz</span><select data-b="${p}.act.state"><option value="on">Ligar</option><option value="off">Desligar</option><option value="toggle">Alternar</option></select></label>`;
@@ -441,7 +449,7 @@ function fxHtml(p,a){
 }
 function backHtml(p,r){
   let h='';
-  if(r.act.type!=='none'){
+  if(!noBack(r.act.type)){
       const txt=r.act.type==='text',bk=r.back,waiting=txt&&bk.wait!==false,mem=bk.mem!==false;
       h+=`<div class="sect"><b>3 · Depois</b><div class="row"><label class="sw"><input type="checkbox" data-b="${p}.back.on"><i></i><span>Voltar ao que estava antes</span></label></div>`;
       if(bk.on){
@@ -465,7 +473,7 @@ function timedHtml(p,r){
     ${r.vr!=='none'?`<label class="col"><span class="lbl">Se for…</span><select data-b="${p}.cond">${OPS.map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select></label><label class="col"><span class="lbl">${r.cond==='r'?'a,b':'valor'}</span><input type="text" data-b="${p}.val" style="min-width:100px;width:110px"></label>`:'<span class="small mu">Sem condição, vale sempre.</span>'}</div></div>
   <div class="sect"><b>3 · A matriz faz (opcional)</b><div class="row">${actHtml(p,r.act)}</div></div>
   ${backHtml(p,r)}
-  <div class="sect"><b>${r.act.type==='none'?'3':'4'} · Publicar uma mensagem</b><div class="row"><label class="sw"><input type="checkbox" data-b="${p}.pub"><i></i><span>Publicar no MQTT</span></label>
+  <div class="sect"><b>${noBack(r.act.type)?'3':'4'} · Publicar uma mensagem</b><div class="row"><label class="sw"><input type="checkbox" data-b="${p}.pub"><i></i><span>Publicar no MQTT</span></label>
     ${r.pub?`<label class="col" style="flex:1;min-width:200px"><span class="lbl">Tópico</span><input type="text" data-b="${p}.topic"></label><label class="col" style="flex:1;min-width:200px"><span class="lbl">Conteúdo (<span class="tag">{hm}</span> hora · <span class="tag">{dw}</span> dia 0=dom · <span class="tag">{t}</span> temp. · <span class="tag">{h}</span> umid.)</span><input type="text" data-b="${p}.payload"></label>`:''}</div></div>`;
   return h;
 }
@@ -477,7 +485,7 @@ function ruleHtml(r,i){
     h+=`<div class="sect"><b>1 · Quando chegar uma mensagem em</b><div class="row"><label class="col" style="flex:1;min-width:230px"><span class="lbl">Tópico (<span class="tag">%dev%</span> = tópico da placa · <span class="tag">+</span> e <span class="tag">#</span> valem como curinga)</span><input type="text" data-b="${p}.topic"></label>${condHtml(p,r)}</div></div>
     <div class="sect"><b>2 · A matriz faz</b><div class="row">${actHtml(p,r.act)}</div></div>`;
     h+=backHtml(p,r);
-    h+=`<div class="sect"><b>${r.act.type==='none'?'3':'4'} · Responder</b><div class="row"><label class="sw"><input type="checkbox" data-b="${p}.reply.on"><i></i><span>Publicar uma resposta</span></label>
+    h+=`<div class="sect"><b>${noBack(r.act.type)?'3':'4'} · Responder</b><div class="row"><label class="sw"><input type="checkbox" data-b="${p}.reply.on"><i></i><span>Publicar uma resposta</span></label>
       ${r.reply.on?`<label class="col" style="flex:1;min-width:200px"><span class="lbl">Tópico</span><input type="text" data-b="${p}.reply.topic"></label><label class="col" style="flex:1;min-width:160px"><span class="lbl">Conteúdo (<span class="tag">{p}</span> = o recebido)</span><input type="text" data-b="${p}.reply.payload"></label>`:''}</div></div>`;
   }else if(r.kind==='t'){
     h+=timedHtml(p,r);
@@ -507,7 +515,7 @@ function onInput(e){
   if(!isConn)markDirty();
   const mt=/^rules\.(\d+)\.act\.type$/.exec(path);
   if(mt){const r=S.rules[+mt[1]];r.act=defAct(v);if(v==='gif'||v==='preset'||v==='fx')prepare(v).then(renderRules);else renderRules()}
-  else if(/\.(cond|on|fromPayload|mode|ev|cat|win|vr|pub)$/.test(path)||/\.(back|reply)\.(on|wait|mem)$/.test(path)||/act\.fx$/.test(path)||/rules\.\d+\.act\.state$/.test(path)){if(/act\.fx$/.test(path)){const a=S.rules[+path.split('.')[1]].act;applyFxDefaults(a)}renderRules()}
+  else if(/\.(cond|on|fromPayload|mode|ev|cat|win|vr|pub)$/.test(path)||/\.(back|reply)\.(on|wait|mem)$/.test(path)||/act\.(fx|icon)$/.test(path)||/rules\.\d+\.act\.state$/.test(path)){if(/act\.fx$/.test(path)){const a=S.rules[+path.split('.')[1]].act;applyFxDefaults(a)}renderRules()}
   save();updateSaveBar();
 }
 async function prepare(t){if(t==='gif')await ensureGifs();if(t==='preset')await ensurePresets();if(t==='fx')await ensureFx()}
@@ -528,6 +536,15 @@ function updateChips(){
 }
 
 /* ---------- notificações do celular ---------- */
+/* gerado por icones.py: não edite à mão */
+const ICONES={
+whatsapp:'R0lGODlhEAAQAPEAAAAAAPAjHB/CV////yH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAACkQQIECBAgAARBgQIEKJEiQITJgQIUaJEiRITJgQocaNEiRIVBoSocaNEiRIlCoSocaNEiRIlCpQocaNEiRIlSpQocaJEiRIlSpQocaNEiRIlSpQoUeNEiRIlSoQoUeJGiRslCoQoUaLGjRsnCgQoUaLEjRslAoQoUaJEiRIlAoQoEKJEiQIBAhQIECBAgAABAgUAIfkEBBIAAAAsAAAAABAAEAAAApEECBCiRIkCEQYECFGiRIkSEyYEKHGjRIkSEyaEqHGjRIkSFQaEqHGjRIkSJQqUKHGjRIkSJUqUKHGiRIkSJUqUKHGjRIkSJUqUKFHjRIkSJUqEKFHiRokbJQqEKFGixo0bJwoEKFGixI0bJQKEKFGiRIkSJQKEKBCiRIkCAQIUCBAgQIAAAQIECBAgQIAAAQIFACH5BAQSAAAALAAAAAAQABAAAAKRBAgQIECAABEGBAgQokSJAhMmBAhRokSJEhMmBChxo0SJEhUGhKhxo0SJEiUKhKhxo0SJEiUKlChxo0SJEiVKlChxokSJEiVKlChxo0SJEiVKlChR40SJEiVKhChR4kaJGyUKhChRosaNGycKBChRosSNGyUChChRokSJEiUChCgQokSJAgECFAgQIECAAAECBQAh+QQEFgAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIEKJEiQIBAgQIUaJEiRIFAgQocaNEiRIlAoSocaNEiRIlCoSocaNEiRIlCpQocaNEiRIlSpQocaJEiRIlSpQocaNEiRIlSpQoUeNEiRIlSoQoUeJGiRslCoQoUaLGjRsnCgQoUaLEjRslAoQoUaJEiRIlAoQoEKJEiQIBAhQIECBAgAABAgUAOw==',
+instagram:'R0lGODlhEAAQAPQAAAAAANAgoMAgoLAgoLAgsKAgsJAgsJAwwIAwwHAw0GAw0PAjHNAwgNAgkOBAcOBAgOBQYP///+BgUPBwUPBwQPCAMPCQMPCgMPCwQPDAQAAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAAFyCAABMJAFMaBIImyLADANIEwEIVxIMiygMviPEwTCANRGAeyLMsCOQ/TRFEURdEBIsuiSJDzRE0gDEQRHQiSTBIUPUwTRQMYFdGBINQkRc4TNUE0EJFxIBU1RVD0MGATRENUGIdVUZEUOQ/TREJEFIZlVdEkgZHzRE0QDURxWVZETVIUPUwTCQOBXZYFRtQkQc4TNYEwYNhlWVEURVH0ME0gZBiIXZZVUZMEOQ/TBECGYZdlVdQkQc7DACAAZBh2WVZFTRLkAEAIACH5BAQSAAAALAAAAAAQABAAAAXIIMA0gTAQhXEgSLIsgPMwTSAMRGEcyLKAywI5D9NEURRF0bEsyyJBzhM1gTAQRQQey5JMEhQ9TBNFQ1REB4JQkxQ5T9QEETgQkXEgFTVFUPQwTRANUWEcVkVFUuQ8INNEQkQUhmVV0SRFzhM1QTQQxWVZETWBUhQ9TBMJA4FdlhVRkwQ5T9QEwoBhlwVaURRFUfQwTSBkGHZZVkVNEuQ8TBMAGYhhl2VV1CRBzsMAAJBh2GVZFTVJkAMAIAAAAAAAAAAAAAAAQAgAIfkEBBIAAAAsAAAAABAAEAAABcggAATCQBTGgSCJsiwAwDSBMBCFcSDIsoDL4jxMEwgDURgHsizLAjkP00RRFEXRASLLokiQ80RNIAxEER0IkkwSFD1ME0UDGBXRgSDUJEXOEzVBNBCRcSAVNUVQ9DBgE0RDVBiHVVGRFDkP00RCRBSGZVXRJIGR80RNEA1EcVlWRE1SFD1MEwkDgV2WBUbUJEHOEzWBMGDYZVlRFEVR9DBNIGQYiF2WVVGTBDkP0wRAhmGXZVXUJEHOwwAgAGQYdllWRU0S5ABACAAh+QQEFgAAACwAAAAAEAAQAAAFyCAABMJAFMaBIImiAADANIEwEIVxIEiigArgPEwTCANRGAeCJIoCOQ/TRFEURdEBIkiiSJDzRE0gDEQRHQiSTBIUPUwTRQMYFdGBINQkRc4TNUE0EJFxIBU1RVD0MGATRENUGIdVUZEUOQ/TREJEFIZlVdEkgZHzRE0QDURxWVZETVIUPUwTCQOBXZYFRtQkQc4TNYEwYNhlWVEURVH0ME0gZBiIXZZVUZMEOQ/TBECGYZdlVdQkQc7DACAAZBh2WVZFTRLkAEAIADs=',
+gmail:'R0lGODlhEAAQAPEAAAAAAP/EAPAjHP///yH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAACkQQIECBAgAARBgQIECBAgAATJgQIECBAgAATJtS4cePGjRsXRpS4cePGjRs3StSocePGjRsnTtQ4cePGjRs1TtS4UePGjRM3TtS4ceLGjRo3TtS4caPGiRs3TtS4ceNEjRs3TtS4cePGjRs3TtS4cePGjRs3TtS4cePGjRs3TgQIECBAgAABAgQIECBAgAABAgUAIfkEBBIAAAAsAAAAABAAEAAAApEECBAgQIAAEQYECBAgQIAAEybUuHHjxo0bEyaUuHHjxo0bF0bUqHHjxo0bJ07UOHHjxo0bNU7UuFHjxo0TN07UuHHixo0aN07UuHGjxokbN07UuHHjRI0bN07UuHHjxo0bN07UuHHjxo0bN07UuHHjxo0bN04ECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIFACH5BAQSAAAALAAAAAAQABAAAAKRBAgQIECAABEGBAgQIECAABMmBAgQIECAABMm1Lhx48aNGxdGlLhx48aNGzdK1Khx48aNGydO1Dhx48aNGzVO1LhR48aNEzdO1Lhx4saNGjdO1Lhxo8aJGzdO1Lhx40SNGzdO1Lhx48aNGzdO1Lhx48aNGzdO1Lhx48aNGzdOBAgQIECAAAECBAgQIECAAAECBQAh+QQEFgAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIECBAgAABAgQIECBAgAABAtS4cePGjRs3TpS4cePGjRs3StSocePGjRsnTtQ4cePGjRs1TtS4UePGjRM3TtS4ceLGjRo3TtS4caPGiRs3TtS4ceNEjRs3TtS4cePGjRs3TtS4cePGjRs3TtS4cePGjRs3TgQIECBAgAABAgQIECBAgAABAgUAOw==',
+youtube:'R0lGODlhEAAQAPEAAAAAAP/EAPAjHP///yH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAACkQQIECBAgAARBgQIECBAgAATJgQIECBAgAATJoQoUaJEiRIVBpQoUaJEiRIlSpQoUeJEiRIlSpQoUeLGiRIlSpQoUeLGjRMlSpQoUeLGjRslSpQoUeLGjRMlSpQoUeLGiRIlSpQoUeJEiRIlSpQoUaJEiRIlSoQoUaJEiRIlCgQIECBAgAABAgQIECBAgAABAgUAIfkEBBIAAAAsAAAAABAAEAAAApEECBAgQIAAEQYECBAgQIAAEyaEKFGiRIkSEyaUKFGiRIkSFUaUKFHiRIkSJUqUKFHixokSJUqUKFHixo0TJUqUKFHixo0bJUqUKFHixo0TJUqUKFHixokSJUqUKFHiRIkSJUqUKFGiRIkSJUqEKFGiRIkSJQoECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIFACH5BAQSAAAALAAAAAAQABAAAAKRBAgQIECAABEGBAgQIECAABMmBAgQIECAABMmhChRokSJEhUGlChRokSJEiVKlChR4kSJEiVKlChR4saJEiVKlChR4saNEyVKlChR4saNGyVKlChR4saNEyVKlChR4saJEiVKlChR4kSJEiVKlChRokSJEiVKhChRokSJEiUKBAgQIECAAAECBAgQIECAAAECBQAh+QQEFgAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIECBAgAABAgQIECBAgAABAoQoUaJEiRIlCpQoUaJEiRIlSpQoUeJEiRIlSpQoUeLGiRIlSpQoUeLGjRMlSpQoUeLGjRslSpQoUeLGjRMlSpQoUeLGiRIlSpQoUeJEiRIlSpQoUaJEiRIlSoQoUaJEiRIlCgQIECBAgAABAgQIECBAgAABAgUAOw==',
+telegram:'R0lGODlhEAAQAPIAAAAAAPAjHCm29v///7ji/wAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEHgAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAACAiKCIQgREAICgiIoIiEREIICKCIiIiKBEAgiIiIigiM4ICICIoIiKDMyMCKCIigjMzMzgiIoIyMzM4NDOCIiIzODNDgzMjIigiIoNDMzMoIgKCIiIzODMjggIgIigyI4MzIgIIICKCIyIjKAIAgCAiIigiIoAAAAAIIiKCAgAACAAAgAAAAAgAkAAh+QQEEgAAACwAAAAAEAAQAAADlggAAIIiIgIIEQCAICIiKCISgREAIigiIoIiEREIIiKCIiIyOBEAgiIiIigzM4ICIiIoMjODMyMiKCIzgzNDMzgiIoIzMzNIMzOCIiIiKDM0gzMiIggiIoIzMzMoIgCCIiIzKDMjggIAIigyIoIjIgAIACKCIiIiKAAAgAAgIigiAIAAAAAIAACAAAAACAAAgAAAAAgAkAAh+QQEEgAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAACAiKCIQgREAICgiIoIiEREIICKCIiIiKBEAgiIiIigiM4ICICIoIiKDMyMCKCIigjMzMzgiIoIyMzM4NDOCIiIzODNDgzMjIigiIoNDMzMoIgKCIiIzODMjggIgIigyI4MzIgIIICKCIyIjKAIAgCAiIigiIoAAAAAIIiKCAgAACAAAgAAAAAgAkAAh+QQEFgAAACwAAAAAEAAQAAADlggAAIAAAAAIAACAACAiKCIAgAAAICgiIoIiAgAIICKCIiIiKAIAgiIiIigiM4ICICIoIiKDMyMCKCIigjMzMzgiIoIyMzM4NDOCIiIzODNDgzMjIigiIoNDMzMoIgKCIiIzODMjggIgIigyI4MzIgIIICKCIyIjKAIAgCAiIigiIoAAAAAIIiKCAgAACAAAgAAAAAgAkAA7',
+sms:'R0lGODlhEAAQAPEAAAAAAB6Q/////wAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEFgAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIECBAgAABAgSYMGHChAkTAkSYMGHChAkTBkSYMGHChAkTBkQYUWHChAkTBkQYUWHChAkTBkSYMGHChAkTBkSYMGHChAkTBkSYMGHChAkTBgSYMGHChAkTAgQIMGFCgAABAgQIMGFAgAABAgQIMCFAgAABAgQIMCBAgAABAgQIECBAgAABAgUAIfkEBBYAAAAsAAAAABAAEAAAApEECBAgQIAAAQIECBAgQIAAAQIEmDBhwoQJEwJEmDBhwoQJEwZEmDBhwoQJEwZEGFFhRIUJEwZEGFFhRIUJEwZEmDBhwoQJEwZEmDBhwoQJEwZEmDBhwoQJEwYEmDBhwoQJEwIECDBhQoAAAQIECDBhQIAAAQIECDAhQIAAAQIECDAgQIAAAQIECBAgQIAAAQIFACH5BAQWAAAALAAAAAAQABAAAAKRBAgQIECAAAECBAgQIECAAAECBJgwYcKECRMCRJgwYcKECRMGRJgwYcKECRMGRBhRYUSFERUGRBhRYUSFERUGRJgwYcKECRMGRJgwYcKECRMGRJgwYcKECRMGBJgwYcKECRMCBAgwYUKAAAECBAgwYUCAAAECBAgwIUCAAAECBAgwIECAAAECBAgQIECAAAECBQAh+QQEGQAAACwAAAAAEAAQAAACkQQIECBAgAABAgQIECBAgAABAgSYMGHChAkTAkSYMGHChAkTBkSYMGHChAkTBkQYUWFEhREVBkQYUWFEhREVBkSYMGHChAkTBkSYMGHChAkTBkSYMGHChAkTBgSYMGHChAkTAgQIMGFCgAABAgQIMGFAgAABAgQIMCFAgAABAgQIMCBAgAABAgQIECBAgAABAgUAOw==',
+outro:'R0lGODlhEAAQAPIAAAAAAPAjHP/EAP///8mKAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEDwAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAAAAgKAAQgREAAAgAIoAAEREIAACCIiICCBEAgAAiIigiAoAAACAoIiKCIgIACAAigyIiIigAAIAgMiIoIiKAAAAgOCMigiICAAgAIoIiIiIoAACAIiIiKCIiggBAREhERIRERAQIAACAAAAACAAAgAAAREgEAIAAAAAIAESAAAAACAAAgAAAAAgAkAAh+QQEDwAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAAAAiCAAQgREAAAggAoAAEREIACCCIiIACBEAgCAiIigiAIAAACIoIiKCIgAACCAygiIiIggAAIAiIyIoIgKAAAAyOCIigiIAAAggIoIiIiIIAACCIiIiKCIigABEREhERIRERAAIAACAAAAACAAAgAAAQEhEAIAAAAAIAECEAAAACAAAgAAAAAgAkAAh+QQEDwAAACwAAAAAEAAQAAADlggAAIAAAAAIEQCAAAAgKAAQgREAAAgAIoAAEREIAACCIiICCBEAgAAiIigiAoAAACAoIiKCIgIACAAigyIiIigAAIAgMiIoIiKAAAAgOCMigiICAAgAIoIiIiIoAACAIiIiKCIiggBAREhERIRERAQIAACAAAAACAAAgAAAREgEAIAAAAAIAESAAAAACAAAgAAAAAgAkAAh+QQEDwAAACwAAAAAEAAQAAADlggAAIAAAAAIAACAAAAAKAIAgAAAAAgAIIIAAAAIAACAIiIiCAAAgAAgIigiIoAAAAAoIiKCIiIACAAggiMiIigCAIAAIiMoIiKCAAAAKDMigiIiAAgAIIIiIiIoAgCAICIiKCIiggIAREhERIREREQIAACAAAAACAAAgABAREgAAIAAAAAIQASAAAAACAAAgAAAAAgAkAA7'};
 const NT_TOPIC='%dev%/aviso';
 // c/v: condição da regra na placa; pk: pacotes que o celular deixa passar; col: cor do nome na matriz
 const APPS=[
@@ -541,12 +558,15 @@ const APPS=[
 ];
 let NT=null; // marcações da tela: {on:{app:true},pkg:''}
 const ntRule=k=>S.rules.find(r=>r.kind==='m'&&r.app===k);
-// texto rolando em vez de GIF: tocar um GIF por cima do relógio reiniciava a placa por falta de memória
-const ntAct=a=>({type:'text',text:a.txt||a.n,col:a.col,font:2,speed:128});
-const ntOldGif=r=>r.act.type==='gif'&&/^aviso-[a-z]+\.gif$/.test(r.act.file); // criada pela versão com ícones
+const iconOk=()=>!!(INFO&&INFO.mqttr&&INFO.mqttr.ico); // firmware que desenha ícones
+// ícone desenhado pelo firmware; num firmware antigo, o nome rolando (um GIF por cima do relógio reiniciava a placa)
+const ntAct=(a,sec)=>iconOk()?{type:'icon',icon:a.k,sec:sec}:{type:'text',text:a.txt||a.n,col:a.col,font:2,speed:128};
+// ação criada por esta aba em outra versão (GIF ou texto sem alterações): pode ser trocada pelo ícone
+const ntAuto=(r,a)=>(r.act.type==='gif'&&/^aviso-[a-z]+\.gif$/.test(r.act.file))||(iconOk()&&r.act.type==='text'&&r.act.text===(a.txt||a.n)&&r.act.col===a.col);
 function ntLoad(){
   const have=APPS.filter(a=>ntRule(a.k)),o=ntRule('outro');
-  NT={on:{},pkg:o?o.val:''};
+  const ic=have.map(a=>ntRule(a.k)).find(r=>r.act.type==='icon');
+  NT={on:{},pkg:o?o.val:'',sec:ic?ic.act.sec:6};
   (have.length?have.map(a=>a.k):['whatsapp','instagram','gmail','youtube']).forEach(k=>NT.on[k]=true);
 }
 function ntPackages(){const a=[];APPS.forEach(x=>{if(!NT.on[x.k])return;if(x.k==='outro'){if(NT.pkg.trim())a.push(NT.pkg.trim())}else a.push(...x.pk)});return a}
@@ -559,9 +579,11 @@ function ntTexts(){
 }
 function renderNt(){
   if(!NT)ntLoad();
-  $('appGrid').innerHTML=APPS.map(a=>`<div class="app ${NT.on[a.k]?'sel':''}"><label><span class="led" style="color:${a.col}">${a.txt||a.n}</span><span>${a.n}</span><input type="checkbox" data-app="${a.k}" ${NT.on[a.k]?'checked':''}></label>
+  $('appGrid').innerHTML=APPS.map(a=>`<div class="app ${NT.on[a.k]?'sel':''}"><label>${iconOk()||!INFO?`<img alt="" src="data:image/gif;base64,${ICONES[a.k]}">`:`<span class="led" style="color:${a.col}">${a.txt||a.n}</span>`}<span>${a.n}</span><input type="checkbox" data-app="${a.k}" ${NT.on[a.k]?'checked':''}></label>
     ${a.k==='outro'?`<input type="text" id="ntPkg" placeholder="nome do pacote" value="${esc(NT.pkg)}" autocapitalize="none" spellcheck="false">`:''}<button class="btn" data-try="${a.k}">▶ Testar</button></div>`).join('');
-  $('ntState').innerHTML=INFO&&!INFO.mqttr?'<span class="er">O firmware desta placa não tem o módulo de regras.</span>':'';
+  $('ntSec').value=NT.sec;$('ntSecRow').classList.toggle('hide',!!INFO&&!iconOk());
+  $('ntState').innerHTML=INFO&&!INFO.mqttr?'<span class="er">O firmware desta placa não tem o módulo de regras.</span>'
+    :INFO&&!iconOk()?'<span class="er">O firmware desta placa ainda não desenha ícones: grave o firmware novo. Até lá, os avisos são criados com o nome rolando.</span>':'';
   ntTexts();
 }
 // não grava arquivos enquanto um GIF toca: a placa fica com pouca memória
@@ -573,7 +595,7 @@ async function waitNoGif(){
   throw new Error('a placa não saiu da tela com GIF; pare o GIF e tente de novo')
 }
 async function createNotices(){
-  const picked=APPS.filter(a=>NT.on[a.k]),pkg=NT.pkg.trim();
+  const picked=APPS.filter(a=>NT.on[a.k]),pkg=NT.pkg.trim(),sec=Math.max(1,Math.min(120,Math.round(+NT.sec)||6));
   if(NT.on.outro&&!/^\w+(\.\w+)+$/.test(pkg)){toast('Em “Outro app”, digite o nome do pacote (ex.: com.exemplo.app).','er');return}
   if(!INFO){toast('Sem conexão com a placa.','er');return}
   if(!INFO.mqttr){toast('O firmware desta placa não tem o módulo de regras.','er');return}
@@ -583,13 +605,14 @@ async function createNotices(){
     const ps=PRESETS.some(p=>p[0]===210)?210:PRESETS.length?PRESETS[0][0]:210;
     S.rules=S.rules.filter(r=>!r.app||NT.on[r.app]);
     picked.forEach(a=>{let r=ntRule(a.k);
-      if(!r){r={id:++uid,kind:'m',app:a.k,name:'Aviso '+a.n,on:true,topic:NT_TOPIC,cond:a.c,val:a.v,act:ntAct(a),back:{on:true,sec:6,ps:ps,mem:true,wait:true},reply:{on:false,topic:'%dev%/resposta',payload:'ok'}};S.rules.push(r)}
-      else if(ntOldGif(r)){r.act=ntAct(a);r.back.sec=6;r.back.wait=true}
+      if(!r){r={id:++uid,kind:'m',app:a.k,name:'Aviso '+a.n,on:true,topic:NT_TOPIC,cond:a.c,val:a.v,act:ntAct(a,sec),back:{on:true,sec:6,ps:ps,mem:true,wait:true},reply:{on:false,topic:'%dev%/resposta',payload:'ok'}};S.rules.push(r)}
+      else if(ntAuto(r,a)){r.act=ntAct(a,sec);r.back.sec=6;r.back.wait=true}
+      if(r.act.type==='icon')r.act.sec=sec;
       r.on=true;r.back.on=true;if(a.k==='outro')r.val=pkg});
     const {errors}=compile();if(errors.length)throw new Error(errors[0]);
     st.textContent='Salvando as regras…';await waitNoGif();await sleep(1000);
     if(!(await saveRules(picked.length?`Pronto! ${picked.length} aviso(s) na matriz. Use “▶ Testar” e depois configure o celular.`:'Avisos removidos.')))throw new Error('as regras não foram salvas');
-    save();ntTexts();st.innerHTML='<span class="ok">✔ Salvo na placa.</span>';
+    NT.sec=sec;$('ntSec').value=sec;save();ntTexts();st.innerHTML='<span class="ok">✔ Salvo na placa.</span>';
   }catch(e){S.rules=JSON.parse(before);dirty=wasDirty;save();updateSaveBar();st.innerHTML=`<span class="er">Erro: ${esc(e.message)}</span>`;toast('Erro: '+e.message,'er')}
   b.disabled=false;
 }
@@ -608,7 +631,7 @@ function copyText(id){
 function initNt(){
   const pane=document.querySelector('[data-pane=nt]');
   pane.addEventListener('change',e=>{const k=e.target.dataset.app;if(k){NT.on[k]=e.target.checked;e.target.closest('.app').classList.toggle('sel',e.target.checked);ntTexts()}});
-  pane.addEventListener('input',e=>{if(e.target.id==='ntPkg'){NT.pkg=e.target.value;ntTexts()}});
+  pane.addEventListener('input',e=>{if(e.target.id==='ntPkg'){NT.pkg=e.target.value;ntTexts()}else if(e.target.id==='ntSec')NT.sec=e.target.value});
   pane.addEventListener('click',e=>{const t=e.target.closest('[data-try]');if(t){tryNotice(t.dataset.try);return}const c=e.target.closest('[data-copy]');if(c)copyText(c.dataset.copy)});
   $('btnNt').onclick=createNotices;
 }

@@ -39,11 +39,15 @@
  *    {"mqttr":{"set":{"t":23.5,"h":60}}}             provide temperature / humidity from another source
  *    {"mqttr":{"reload":1}}                          re-read rules file and re-subscribe
  *    {"mqttr":{"test":{"t":"topic","p":"payload"}}}  simulate an incoming message (works without a broker)
+ *    {"mqttr":{"icon":"whatsapp","sec":6}}           draw a notification icon over the matrix for sec seconds (mqtt_icons.h);
+ *                                                    usable as a rule action. It does not change effects, presets or on/off.
  * Status is added to /json/info as "mqttr": {"n":rules,"hits":count,"con":connected,"log":[...]}
  */
 #include "wled.h"
 
 #ifndef WLED_DISABLE_MQTT
+
+#include "mqtt_icons.h"
 
 #define MR_FILE        "/mqttrules.jsonl"
 #define MR_LINE_MAX    760   // max length of one rule line
@@ -176,6 +180,19 @@ class MqttRulesUsermod : public Usermod {
     bool _first = true;
     bool _varDirty = false, _tickDue = false;
     uint32_t _armed = 0, _lastMin = 0; // _armed: bit per rule (first 32) of the value-triggered timed rules whose condition is currently true
+    // notification icon drawn as an overlay: needs no GIF decoder and leaves the running effect or playlist alone
+    int8_t _icon = -1;
+    unsigned long _icoStart = 0, _icoDur = 0, _icoTrig = 0;
+
+    // starts the named icon for some seconds; an unknown or empty name removes the current one
+    void showIcon(const char* name, int seconds) {
+      _icon = -1;
+      for (uint8_t i = 0; i < sizeof(mrIcons) / sizeof(mrIcons[0]); i++) {
+        if (strcmp_P(name, mrIcons[i].name) == 0) { _icon = i; break; }
+      }
+      _icoStart = millis(); _icoDur = (unsigned long)constrain(seconds, 1, 120) * 1000UL;
+      strip.trigger();
+    }
 
     void addLog(const char* kind, const char* a, const char* b) {
       snprintf(_log[_logHead], MR_LOG_LEN, "%lus %s %s%s%s", millis() / 1000, kind, a, b && *b ? " = " : "", b ? b : "");
@@ -403,6 +420,11 @@ class MqttRulesUsermod : public Usermod {
     void setup() override {}
 
     void loop() override {
+      if (_icon >= 0) { // keep frames coming while an icon is shown, even over a static effect
+        unsigned long now = millis();
+        if (now - _icoStart >= _icoDur) { _icon = -1; strip.trigger(); }
+        else if (now - _icoTrig >= 60) { _icoTrig = now; strip.trigger(); }
+      }
       if (_reload) { _reload = false; subscribeAll(); }
       if (_revert && revertDue()) doRevert();
       if (localTime > 1704067200UL) { // clock is set (after 2024-01-01)
@@ -435,9 +457,33 @@ class MqttRulesUsermod : public Usermod {
 
     void onStateChange(uint8_t mode) override { _evDirty = true; }
 
+    // paints the current icon frame, centred (and enlarged by whole factors on big matrices) on a black background
+    void handleOverlayDraw() override {
+#ifndef WLED_DISABLE_2D
+      if (_icon < 0 || !strip.isMatrix) return;
+      MrIcon ic; memcpy_P(&ic, &mrIcons[_icon], sizeof(ic));
+      uint32_t total = 0;
+      for (uint8_t i = 0; i < MR_ICON_STEPS; i++) total += ic.delay[i] * 10;
+      uint32_t t = (millis() - _icoStart) % total;
+      uint8_t step = 0;
+      while (step < MR_ICON_STEPS - 1 && t >= ic.delay[step] * 10U) t -= ic.delay[step++] * 10U;
+      const uint8_t* px = ic.px + (size_t)ic.frame[step] * MR_ICON_SIZE * MR_ICON_SIZE;
+      const int w = Segment::maxWidth, h = Segment::maxHeight;
+      const int scale = max(1, min(w, h) / MR_ICON_SIZE), size = MR_ICON_SIZE * scale;
+      const int x0 = (w - size) / 2, y0 = (h - size) / 2;
+      for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {
+        int ix = x - x0, iy = y - y0;
+        uint32_t c = 0;
+        if (ix >= 0 && iy >= 0 && ix < size && iy < size) c = pgm_read_dword(ic.pal + pgm_read_byte(px + (iy / scale) * MR_ICON_SIZE + ix / scale));
+        strip.setPixelColor((unsigned)(y * w + x), c);
+      }
+#endif
+    }
+
     void readFromJsonState(JsonObject& root) override {
       JsonObject o = root["mqttr"]; if (o.isNull()) return;
       if (o["reload"]) _reload = true;
+      if (!o["icon"].isNull()) showIcon(o["icon"] | "", o["sec"] | 6);
       JsonObject sv = o["set"]; // {"t":23.5,"h":60}: temperature / humidity from another source (for example the Clock tool's weather)
       if (!sv.isNull()) {
         if (!sv["t"].isNull()) setVar(0, sv["t"].as<float>());
@@ -451,6 +497,7 @@ class MqttRulesUsermod : public Usermod {
       JsonObject o = root.createNestedObject("mqttr");
       o["n"] = _rules; o["hits"] = _hits; o["con"] = WLED_MQTT_CONNECTED; o["subs"] = _nsubs;
       o["clk"] = gMd >= 0; // false until the board knows the time
+      o["ico"] = 1; // this firmware can draw notification icons
       if (gHas[0]) o["vt"] = gVar[0];
       if (gHas[1]) o["vh"] = gVar[1];
       JsonArray l = o.createNestedArray("log");

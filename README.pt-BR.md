@@ -42,7 +42,7 @@ e um motor de regras MQTT, tudo rodando na própria placa.
 | Várias imagens em um GIF, sprite sheets, categorias | ferramenta **Estúdio de GIFs** |
 | Editor de pixel art com quadros, sprites, exportação de GIF e **espelho de tela** | ferramenta **Pixel Estúdio** |
 | Dez jogos para PC e celular, 1 ou 2 jogadores | ferramenta **Jogos na Matriz** |
-| **Notificações do celular** (Android): o nome do aplicativo que avisou passa na matriz | ferramenta **Regras MQTT**, aba **Notificações** |
+| **Notificações do celular** (Android): o ícone animado do aplicativo que avisou aparece na matriz | ferramenta **Regras MQTT**, aba **Notificações** |
 | MQTT: mensagem → ação na matriz; mudança de estado → mensagem; regras por hora, dia da semana, temperatura e umidade | usermod `mqtt_rules` + ferramenta **Regras MQTT** |
 
 Tamanho do firmware na D1 R2: flash 86,1 % (899.715 de 1.044.464 bytes), RAM 59,3 % estática na compilação e
@@ -270,6 +270,18 @@ Ligue **Usar um sensor ou botão** e depois:
 - **4 · Gravar na placa:** grava hora, fuso, formato, comportamento ao ligar e sensor na configuração da placa. **A placa reinicia uma vez
   (uns 10 s)** e uma cópia da configuração anterior é guardada antes.
 
+### 🌙 Horário de dormir (cartão **Desligar para dormir**, aba Relógio)
+
+Escolha a hora em que a matriz **apaga** e a hora em que ela volta **com o relógio**, todos os dias, e toque em **Salvar horário na placa**. Usa os
+temporizadores do próprio WLED (o preset 214 apaga, o preset 210 liga o relógio), então funciona com a página fechada e sem reiniciar a placa. Os
+outros temporizadores que você criou são mantidos (os que aplicam o preset 210 ou 214 são substituídos). Os horários valem na hora **da placa**
+(mostrada no cartão). Se a placa for religada durante a noite, fica acesa até o próximo horário. Regras MQTT com outras ações ainda podem ligar a
+matriz; os ícones de aviso não.
+
+![Cartão do horário de dormir no celular](docs/img/mobile-clock-sleep.jpg)
+
+**Testado** numa placa simulada. **Ainda não testado:** um temporizador disparando de verdade na placa.
+
 ## Ferramenta 2: Estúdio de GIFs
 
 `http://IP-DA-PLACA/gifstudio.htm`. Cria GIFs no navegador e os salva na placa, organizados em categorias. O topo mostra o
@@ -307,18 +319,20 @@ tamanho da matriz e o uso do sistema de arquivos (arquivos, KB).
 
 ### Aba 🔔 Notificações do celular
 
-Quando o celular recebe uma notificação, o nome do aplicativo passa uma vez pela matriz, na cor dele, e ela volta ao que estava rodando
-(cerca de 11 segundos num nome comprido). Link direto: `http://IP-DA-PLACA/mqttrules.htm#avisos`.
+Quando o celular recebe uma notificação, um ícone animado do aplicativo aparece na matriz por alguns segundos. O firmware o desenha **por cima** do
+que estiver rodando, então o relógio ou o efeito continua por baixo e não há nada para restaurar. Com a matriz desligada (no horário de dormir, por
+exemplo) ela continua desligada. Link direto: `http://IP-DA-PLACA/mqttrules.htm#avisos`.
 
-![Quadros capturados da matriz: WhatsApp em verde e Instagram em rosa](docs/img/notification-matrix.png)
+![Os sete ícones de aviso: WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS e outro app](docs/img/notification-icons.png)
 
-1. **Na placa:** marque os aplicativos (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** ou **outro app**, pelo nome do pacote) e toque em
-   **Criar os avisos na matriz**. A página cria uma regra comum por aplicativo, todas no tópico `%dev%/aviso`, com o nome do pacote como
-   conteúdo. Desmarcar um aplicativo apaga a regra dele; as outras regras não mudam. Texto, cor e tamanho podem ser mudados na própria regra.
-   **▶ Testar** mostra um aviso na hora.
+1. **Na placa:** marque os aplicativos (**WhatsApp, Instagram, Gmail, YouTube, Telegram, SMS** ou **outro app**, pelo nome do pacote), escolha os
+   segundos e toque em **Criar os avisos na matriz**. A página cria uma regra comum por aplicativo, todas no tópico `%dev%/aviso`, com o nome do
+   pacote como conteúdo. Desmarcar um aplicativo apaga a regra dele; as outras regras não mudam. **▶ Testar** mostra um aviso na hora.
+   Qualquer regra pode usar a ação **Mostrar um ícone de aviso**.
 
-   Uma versão anterior mostrava um ícone animado (GIF). A placa reiniciou num dos quatro avisos de teste com ele, por isso os avisos agora usam
-   texto rolando, que gasta bem menos memória.
+   Os ícones precisam do firmware deste repositório (`{"mqttr":{"icon":"whatsapp","sec":6}}`, veja o readme do usermod); num firmware antigo a página
+   cria regras com o nome do aplicativo rolando. Uma primeira versão tocava os ícones como arquivos GIF, e a placa reiniciou num dos quatro avisos de
+   teste; desenhando direto da memória de programa não se usa o decodificador de GIF.
 2. **No celular (Android):** um fluxo no app [Automate](https://llamalab.com/automate/), da LlamaLab. A página traz o passo a passo e os três
    textos para copiar, já preenchidos com o endereço da placa:
 
@@ -334,12 +348,10 @@ Quando o celular recebe uma notificação, o nome do aplicativo passa uma vez pe
    por MQTT aciona as mesmas regras.
 
 Limites: funciona só no Wi-Fi de casa; reserve o IP da placa no roteador; um pedido que chega enquanto um GIF toca pode ser recusado (aquele aviso
-se perde); uma notificação que se atualiza (um vídeo tocando) pode repetir; um aviso com a matriz desligada pode ligá-la.
+se perde); uma notificação que se atualiza (um vídeo tocando) pode repetir.
 
-**Testado** numa placa simulada (regras, tela no celular e no PC) e na placa de verdade: dez avisos em texto seguidos sem reiniciar, cada um
-voltando ao relógio, com o texto confirmado em capturas da visualização ao vivo. **Não testado:** o fluxo do Automate num celular de verdade (os
-nomes dos blocos e as expressões vêm da documentação do app). Durante os testes a placa reiniciou duas vezes ao receber um arquivo e voltou
-sozinha, com as regras intactas.
+**Testado** numa placa simulada (regras, tela no celular e no PC) e compilando o firmware. **Ainda não testado:** os ícones desenhados pelo firmware
+novo na placa de verdade e o fluxo do Automate num celular de verdade (os nomes dos blocos e as expressões vêm da documentação do app).
 
 ### Aba 🔌 Conexão
 

@@ -240,6 +240,19 @@ details>summary{cursor:pointer;color:var(--mu);padding:6px 0;list-style:none}det
       </div>
       <div class="col" style="margin-top:8px"><span class="lbl">Brilho da matriz: <b id="briLbl"></b></span><input type="range" min="1" max="255" data-b="bri" data-t="n"></div>
     </div>
+    <div class="card" id="sleepCard">
+      <h2><span class="num">4</span> 🌙 Desligar para dormir</h2>
+      <div class="hint">A matriz apaga na hora de dormir e volta com o relógio na hora de acordar, todos os dias. Quem faz isso é a própria placa, com esta página fechada.</div>
+      <label class="sw"><input type="checkbox" data-b="sleep.on"><i></i><span><b>Usar horário de dormir</b></span></label>
+      <div class="row">
+        <label class="col"><span class="lbl">Apagar às</span><input type="time" data-b="sleep.off"></label>
+        <label class="col"><span class="lbl">Acender às</span><input type="time" data-b="sleep.wake"></label>
+      </div>
+      <div class="small mu" id="sleepNow" style="margin-bottom:10px"></div>
+      <button class="btn primary big" id="btnSleep">Salvar horário na placa</button>
+      <div class="small" id="sleepState" style="margin-top:8px"></div>
+      <div class="small mu" style="margin-top:8px">Se a placa for religada na tomada durante a noite, ela fica acesa até o próximo horário.</div>
+    </div>
   </div>
 
   <!-- ================= TELAS ================= -->
@@ -410,7 +423,7 @@ details>summary{cursor:pointer;color:var(--mu);padding:6px 0;list-style:none}det
 const FONTS_B64=["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"];
 const FONT_NAMES=['Mini 3x6','Pequena 4x8','Console 5x8','Larga 6x9','Alta 5x12'];
 const FONT_C2=[0,64,128,192,255]; // valor do controle "Font size" que escolhe a fonte 0-4 (map 0..255 -> 0..4)
-const PRESET_BASE=201, PRESET_CYCLE=210, PRESET_MSG=211, PRESET_MSG_BACK=212, PRESET_OFF=213; // presets usados por esta ferramenta (200-219)
+const PRESET_BASE=201, PRESET_CYCLE=210, PRESET_MSG=211, PRESET_MSG_BACK=212, PRESET_OFF=213, PRESET_SLEEP=214; // presets usados por esta ferramenta (200-219)
 const SCREENS=[['hora','Hora','Horas e minutos, com o layout da aba Relógio'],['data','Data','Dia e mês'],['temp','Temperatura','Temperatura da sua cidade'],['umid','Umidade','Umidade do ar da sua cidade'],['texto','Texto livre','Uma palavra ou frase sua']];
 const PINS=[['D1',5],['D2',4],['D5',14],['D6',12],['D7',13],['D0',16],['D3',0],['D4',2],['D8',15]];
 const PIN_WARN={16:'sem interrupção',0:'usado no boot',2:'usado no boot',15:'nível baixo no boot'};
@@ -498,7 +511,7 @@ const DEF={ntp:true,ntpHost:'200.160.0.8',tz:23,h12:false,bootClock:true,extras:
   custom:{h:{x:2,y:0,font:2},m:{x:2,y:8,font:2}},
   screens:{hora:{on:true,dur:20},data:{on:true,dur:4,font:2,col:'#7cfc00',fmt:'dm2'},temp:{on:true,dur:4,font:1,col:'#ff5030',unit:true},
     umid:{on:true,dur:4,font:1,col:'#40a0ff',unit:true},texto:{on:false,dur:6,font:2,col:'#ffffff',txt:'OLA'}},
-  clima:{lat:null,lon:null,name:'',every:15,auto:true,suffix:'C'},anim:{on:true,dur:6,temp:true},
+  clima:{lat:null,lon:null,name:'',every:15,auto:true,suffix:'C'},anim:{on:true,dur:6,temp:true},sleep:{on:false,off:'23:00',wake:'07:00'},
   sensor:{on:false,pin:5,type:5,a1:'mensagem',a2:'nada',a3:'nada',msg:'ALERTA',msgDur:5,msgCol:'#ff2020',msgFont:2,cfgPin:-1}};
 let S=JSON.parse(JSON.stringify(DEF));
 function merge(a,b){for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')merge(a[k],b[k]);else a[k]=b[k]}return a}
@@ -715,6 +728,7 @@ function buildPresets(){
     P[PRESET_MSG]=presetState([msg],'Sensor: mensagem',nseg,0);
     P[PRESET_MSG_BACK]={n:'Sensor: mensagem e voltar',on:true,bri:S.bri,playlist:{ps:[PRESET_MSG],dur:[Math.round(se.msgDur*10)],transition:[0],repeat:1,end:PRESET_CYCLE,r:false}};
     P[PRESET_OFF]={n:'Sensor: apagar',on:false}}
+  if(S.sleep.on)P[PRESET_SLEEP]=sleepPreset(); // o envio do relógio apaga os presets 200-239: este precisa voltar
   return P;
 }
 // com um GIF tocando a placa quase não tem memória livre: o envio espera a tela seguinte
@@ -732,6 +746,47 @@ async function pushPresets(){
   const P=buildPresets();Object.assign(cur,P);
   const txt=JSON.stringify(cur);await upload('presets.json',txt);
   return{count:Object.keys(P).length,bytes:txt.length};
+}
+
+/* ---------- dormir e acordar ---------- */
+// usa os temporizadores do próprio WLED: um aplica o preset que apaga, o outro o preset do ciclo do relógio
+const sleepPreset=()=>({n:'Relógio: Dormir',on:false});
+const sleepTimer=t=>!!t&&(t.macro===PRESET_SLEEP||t.macro===PRESET_CYCLE);
+const hhmm=t=>String(t.hour).padStart(2,'0')+':'+String(t.min).padStart(2,'0');
+function sleepFromBoard(){ // o que vale é o que está gravado na placa
+  if(!CFG)return;const ins=(CFG.timers&&CFG.timers.ins)||[],off=ins.find(t=>t.macro===PRESET_SLEEP),wake=ins.find(t=>t.macro===PRESET_CYCLE);
+  S.sleep.on=!!(off&&wake&&off.en&&wake.en);if(off)S.sleep.off=hhmm(off);if(wake)S.sleep.wake=hhmm(wake);
+}
+function sleepNow(){
+  const ok=INFO&&boardYear()>=2025,tm=((INFO&&INFO.time)||'').split(', ')[1]||'';
+  $('sleepNow').innerHTML=ok?`Os horários valem na <b>hora da placa</b>, que agora é <b>${esc(tm.slice(0,tm.lastIndexOf(':')))}${/[AP]M/.test(tm)?' '+tm.slice(-2):''}</b>.`
+    :'<span style="color:var(--wn)">⚠ A placa está sem a hora certa: o horário de dormir só funciona depois de acertar a hora (aba Placa e hora).</span>';
+}
+async function saveSleep(){
+  const sl=S.sleep,re=/^([01]\d|2[0-3]):[0-5]\d$/,st=$('sleepState'),b=$('btnSleep');
+  if(sl.on&&!(re.test(sl.off)&&re.test(sl.wake))){log('Escolha a hora de apagar e a hora de acender.','er');return}
+  if(sl.on&&sl.off===sl.wake){log('Os dois horários são iguais: escolha horários diferentes.','er');return}
+  b.disabled=true;st.textContent='Gravando…';
+  try{
+    await waitNoGif();
+    const cfg=await jget('/cfg.json'),pr=await jget('/presets.json'); // se não der para ler, nada é gravado
+    if(sl.on){
+      if(!pr[PRESET_CYCLE])throw new Error('envie o relógio para a placa primeiro (botão “Enviar relógio para a placa”)');
+      if(!pr[PRESET_SLEEP]||pr[PRESET_SLEEP].on!==false){
+        await backupOnce('/presets.json','relogio-presets-backup.json',pr);
+        pr[PRESET_SLEEP]=sleepPreset();await upload('presets.json',JSON.stringify(pr));await sleep(1000)}
+    }
+    const ins=((cfg.timers&&cfg.timers.ins)||[]).filter(t=>!sleepTimer(t));
+    if(sl.on)[[sl.off,PRESET_SLEEP],[sl.wake,PRESET_CYCLE]].forEach(([t,macro])=>{const[hour,min]=t.split(':').map(Number);ins.push({en:1,hour,min,macro,dow:127})});
+    // só os temporizadores mudam; o mapa de ordem de cores vai junto porque a placa o zera quando não vem
+    await jpost('/json/cfg',{timers:{ins},hw:{com:(cfg.hw&&cfg.hw.com)||[]}});
+    await sleep(2500);CFG=await jget('/cfg.json');
+    const got=((CFG.timers&&CFG.timers.ins)||[]).filter(sleepTimer).length;
+    if(got!==(sl.on?2:0))throw new Error('a placa não guardou o horário; tente de novo');
+    st.innerHTML=sl.on?`<span class="ok">✔ Salvo: apaga às ${esc(sl.off)} e acende às ${esc(sl.wake)}.</span>`:'<span class="ok">✔ Horário de dormir desligado.</span>';
+    log(sl.on?'Horário de dormir gravado na placa.':'Horário de dormir removido.','ok');save();
+  }catch(e){st.innerHTML=`<span style="color:var(--wn)">Erro: ${esc(e.message)}</span>`;log('Erro no horário de dormir: '+e.message,'er')}
+  b.disabled=false;
 }
 
 /* ---------- clima ---------- */
@@ -925,7 +980,7 @@ function fillForm(){
     .concat(S.extras.map((ex,i)=>ex.on?['ex'+i,(ex.t==='gif'?'🎞 ':'✨ ')+extraName(ex).slice(0,14)]:null).filter(Boolean))
     .map(([k,n])=>`<button data-pv="${k}" class="${pvScreen===k?'on':''}">${esc(n)}</button>`).join('');
   document.querySelectorAll('#scrCards .scr').forEach(c=>c.classList.toggle('off',!S.screens[c.dataset.k].on&&c.dataset.k!=='hora'));
-  drawFontChips();drawTimeline();updateWx();updateBanners();updateApplyBtn();
+  drawFontChips();drawTimeline();updateWx();updateBanners();updateApplyBtn();sleepNow();
 }
 function onInput(e){
   const el=e.target;if(!el.dataset||!el.dataset.b)return;
@@ -934,7 +989,7 @@ function onInput(e){
   if(el.dataset.b==='clima.auto'||el.dataset.b==='clima.every')wxSchedule();
   const mxe=/^extras\.(\d+)\.(fx|file)$/.exec(el.dataset.b);
   if(mxe){const ex=S.extras[+mxe[1]];if(mxe[2]==='fx'){applyFxDefaults(ex);buildExtras()}else refreshGifCards()}
-  if(!/^(ntp|ntpHost|tz|h12|bootClock|sensor\.(on|type|pin|a[123]))/.test(el.dataset.b))markDirty(); // só o que muda as telas da matriz
+  if(!/^(ntp|ntpHost|tz|h12|bootClock|sleep\.|sensor\.(on|type|pin|a[123]))/.test(el.dataset.b))markDirty(); // só o que muda as telas da matriz
   save();fillForm();drawPreview();
 }
 function onClick(e){
@@ -1121,7 +1176,7 @@ function initStatic(){
   $('wxGrid').innerHTML=WX_KINDS.map(([k,n])=>`<button data-wxk="${k}" title="Ver na matriz"><canvas data-wx="${k}" width="96" height="96"></canvas>${n}</button>`).join('');
   $('wxGrid').onclick=e=>{const b=e.target.closest('[data-wxk]');if(b)tryWx(b.dataset.wxk)};$('btnWxSave').onclick=saveAllWx;setInterval(wxTick,100);
   $('btnAddGif').onclick=()=>addExtra('gif');$('btnAddFx').onclick=()=>addExtra('fx');
-  $('btnApply').onclick=apply;$('btnStop').onclick=stopClock;$('btnCfg').onclick=applyBoardCfg;$('btnTime').onclick=syncTime;
+  $('btnSleep').onclick=saveSleep;$('btnApply').onclick=apply;$('btnStop').onclick=stopClock;$('btnCfg').onclick=applyBoardCfg;$('btnTime').onclick=syncTime;
   window.addEventListener('resize',drawPreview);
   const pv=$('pv');pv.addEventListener('pointerdown',pvDown);pv.addEventListener('pointermove',pvMove);pv.addEventListener('pointerup',pvUp);pv.addEventListener('pointercancel',pvUp);
   drawThumbs();
@@ -1132,6 +1187,7 @@ function initStatic(){
   initStatic();showTab(t0);window.scrollTo(0,0);fillForm();drawPreview();
   await loadBoard();
   if(await exists('/relogio-config.json')){try{const b=await jget('/relogio-config.json');const keep={ntp:S.ntp,ntpHost:S.ntpHost,tz:S.tz,h12:S.h12,bootClock:S.bootClock};merge(S,b);Object.assign(S,keep);fillForm();drawPreview()}catch(e){}}
+  sleepFromBoard();fillForm();
   wxSchedule();
   buildExtras();if(S.extras.length){await ensureLists();buildExtras();fillForm();refreshGifCards()}
   dirty=false;
